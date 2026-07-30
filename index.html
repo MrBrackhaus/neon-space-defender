@@ -133,20 +133,20 @@
       }
 
       /* Unified Neon Button Classes */
-      .neon-red { color: #ff3333; border-color: rgba(255,51,51,0.2); }
-      .neon-red:hover { background: rgba(255,51,51,0.15); border-color: #ff3333; color: #fff; box-shadow: 0 0 15px rgba(255,51,51,0.4); text-shadow: 0 0 8px #ff3333; letter-spacing: 0.25em; }
+      .neon-red { color: #ff3333; border: 2px solid rgba(255,51,51,0.5); box-shadow: 0 0 8px rgba(255,51,51,0.3), inset 0 0 8px rgba(255,51,51,0.2); text-shadow: 0 0 5px rgba(255,51,51,0.5); }
+      .neon-red:hover { background: rgba(255,51,51,0.15); border-color: #ff3333; color: #fff; box-shadow: 0 0 15px rgba(255,51,51,0.6), inset 0 0 15px rgba(255,51,51,0.4); text-shadow: 0 0 8px #ff3333; letter-spacing: 0.25em; }
 
-      .neon-orange { color: #ff8800; border-color: rgba(255,136,0,0.2); }
-      .neon-orange:hover { background: rgba(255,136,0,0.15); border-color: #ff8800; color: #fff; box-shadow: 0 0 15px rgba(255,136,0,0.4); text-shadow: 0 0 8px #ff8800; letter-spacing: 0.25em; }
+      .neon-orange { color: #ff8800; border: 2px solid rgba(255,136,0,0.5); box-shadow: 0 0 8px rgba(255,136,0,0.3), inset 0 0 8px rgba(255,136,0,0.2); text-shadow: 0 0 5px rgba(255,136,0,0.5); }
+      .neon-orange:hover { background: rgba(255,136,0,0.15); border-color: #ff8800; color: #fff; box-shadow: 0 0 15px rgba(255,136,0,0.6), inset 0 0 15px rgba(255,136,0,0.4); text-shadow: 0 0 8px #ff8800; letter-spacing: 0.25em; }
 
-      .neon-yellow { color: #ffee00; border-color: rgba(255,238,0,0.2); }
-      .neon-yellow:hover { background: rgba(255,238,0,0.15); border-color: #ffee00; color: #fff; box-shadow: 0 0 15px rgba(255,238,0,0.4); text-shadow: 0 0 8px #ffee00; letter-spacing: 0.25em; }
+      .neon-yellow { color: #ffee00; border: 2px solid rgba(255,238,0,0.5); box-shadow: 0 0 8px rgba(255,238,0,0.3), inset 0 0 8px rgba(255,238,0,0.2); text-shadow: 0 0 5px rgba(255,238,0,0.5); }
+      .neon-yellow:hover { background: rgba(255,238,0,0.15); border-color: #ffee00; color: #fff; box-shadow: 0 0 15px rgba(255,238,0,0.6), inset 0 0 15px rgba(255,238,0,0.4); text-shadow: 0 0 8px #ffee00; letter-spacing: 0.25em; }
 
-      .neon-green { color: #00ff44; border-color: rgba(0,255,68,0.2); }
-      .neon-green:hover { background: rgba(0,255,68,0.15); border-color: #00ff44; color: #fff; box-shadow: 0 0 15px rgba(0,255,68,0.4); text-shadow: 0 0 8px #00ff44; letter-spacing: 0.25em; }
+      .neon-green { color: #00ff44; border: 2px solid rgba(0,255,68,0.5); box-shadow: 0 0 8px rgba(0,255,68,0.3), inset 0 0 8px rgba(0,255,68,0.2); text-shadow: 0 0 5px rgba(0,255,68,0.5); }
+      .neon-green:hover { background: rgba(0,255,68,0.15); border-color: #00ff44; color: #fff; box-shadow: 0 0 15px rgba(0,255,68,0.6), inset 0 0 15px rgba(0,255,68,0.4); text-shadow: 0 0 8px #00ff44; letter-spacing: 0.25em; }
 
-      .neon-cyan { color: #00ffff; border-color: rgba(0,255,255,0.2); }
-      .neon-cyan:hover { background: rgba(0,255,255,0.15); border-color: #00ffff; color: #fff; box-shadow: 0 0 15px rgba(0,255,255,0.4); text-shadow: 0 0 8px #00ffff; letter-spacing: 0.25em; }
+      .neon-cyan { color: #00ffff; border: 2px solid rgba(0,255,255,0.5); box-shadow: 0 0 8px rgba(0,255,255,0.3), inset 0 0 8px rgba(0,255,255,0.2); text-shadow: 0 0 5px rgba(0,255,255,0.5); }
+      .neon-cyan:hover { background: rgba(0,255,255,0.15); border-color: #00ffff; color: #fff; box-shadow: 0 0 15px rgba(0,255,255,0.6), inset 0 0 15px rgba(0,255,255,0.4); text-shadow: 0 0 8px #00ffff; letter-spacing: 0.25em; }
 
       .neon-blue { color: #3388ff; border-color: rgba(51,136,255,0.2); }
       .neon-blue:hover { background: rgba(51,136,255,0.15); border-color: #3388ff; color: #fff; box-shadow: 0 0 15px rgba(51,136,255,0.4); text-shadow: 0 0 8px #3388ff; letter-spacing: 0.25em; }
@@ -357,7 +357,18 @@
           box-shadow: 0 0 15px rgba(255,0,255,0.5);
         }
 
+      .scroll-indicator { display: none; }
       @media (max-width: 768px) {
+        .scroll-indicator {
+          display: block; text-align: center; color: #00ffcc;
+          font-family: 'Permanent Marker', cursive; font-size: 0.8rem;
+          margin-top: 10px; animation: bounce 2s infinite; text-shadow: 0 0 5px #00ffcc;
+        }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-10px); }
+          60% { transform: translateY(-5px); }
+        }
         #menu-layer {
           padding-left: 0;
           align-items: center;
@@ -401,17 +412,19 @@
           transform: translateX(-50%);
           width: 95%;
           margin-top: 0 !important;
-          color: #aaa;
+          color: #fff !important;
           font-size: 0.55rem;
+          text-shadow: 0 0 5px #00aaff;
         }
         .menu-controls span {
-          color: #888 !important;
+          color: #ddd !important;
         }
         #menu-highscore {
           bottom: 15px;
           width: 95%;
           font-size: 0.6rem;
-          color: #bbb;
+          color: #fff;
+          text-shadow: 0 0 5px #ffaa00;
         }
       }
     </style>
@@ -482,12 +495,13 @@
           <button id="btn-settings" class="menu-item neon-red">SETTINGS</button>
           <button id="btn-credits" class="menu-item neon-red">CREDITS</button>
         </nav>
+        <div class="scroll-indicator">▼ WEITERE OPTIONEN ▼</div>
       </div>
 
       <div class="menu-controls" style="margin-top: 2rem;">
-        WASD / PFEILTASTEN · Bewegen<br>
-        <span style="color: #aaa;">Auto-Schuss · XP sammeln · Level up</span><br>
-        LEERTASTE · Nova-Bombe / Fähigkeit
+        WASD / PFEILTASTEN · Navigieren<br>
+        <span style="color: #aaa;">Auto-Schuss · Level Up</span><br>
+        LEERTASTE · Spezialfähigkeit
       </div>
 
       <div id="menu-highscore"></div>

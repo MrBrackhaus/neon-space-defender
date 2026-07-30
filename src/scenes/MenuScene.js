@@ -69,15 +69,16 @@ export default class MenuScene extends Phaser.Scene {
         });
 
         // 3. Title Logo (Graffiti Text on the right)
+        const logoScale = isMobile ? 0.45 : 0.75;
         const logo = this.add.image(cw * (isMobile ? 0.5 : 0.65), ch * (isMobile ? 0.15 : 0.4), 'title_logo')
-            .setScale(isMobile ? 0.45 : 0.75);
+            .setScale(logoScale);
         if(isMobile) logo.setDepth(30);
             
         // Subtle floating and pulsing for the logo
         this.tweens.add({
             targets: logo,
             y: logo.y - 15,
-            scale: 0.77,
+            scale: logoScale * 1.05,
             duration: 4000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
 

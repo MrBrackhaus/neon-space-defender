@@ -44,9 +44,9 @@ export default class MenuScene extends Phaser.Scene {
         // ─────────────────── BACKGROUND & VISUALS ───────────────────
 
         // Subtle background with slow pan effect
-        const bg = this.add.image(cw/2, ch/2, 'title_bg')
-            .setDisplaySize(cw * 1.05, ch * 1.05)
-            .setAlpha(0.9);
+        const bg = this.add.image(cw/2, ch/2, 'title_bg').setAlpha(0.9);
+        const scale = Math.max(cw / bg.width, ch / bg.height) * 1.05; // 1.05 to allow panning without showing edges
+        bg.setScale(scale);
             
         this.tweens.add({
             targets: bg, 

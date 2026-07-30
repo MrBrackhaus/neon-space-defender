@@ -102,7 +102,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('nyx_merchant', 'nyx_merchant.png?v=6');
         this.load.image('scrap_merchant', 'scrap_merchant.png?v=6');
         this.load.image('title_bg',     'title_bg_v3.jpg?v=6');
-        this.load.image('mascot_center','mascot_center.png?v=11');
+        this.load.image('mascot_center','mascot_center.png?v=12');
         this.load.image('title_logo',   'title_logo_v2.png?v=7');
         this.load.image('deco_planet',  'deco_planet.jpg?v=6');
         this.load.image('bg',           'bg.jpg?v=6');

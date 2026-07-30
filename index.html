@@ -446,7 +446,64 @@
           text-shadow: 0 0 5px #ffaa00;
         }
       }
+      /* Image Buttons CSS */
+      .menu-item-img {
+        display: block;
+        width: 341px;
+        height: 128px;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        border: none;
+        background-color: transparent;
+        cursor: pointer;
+        margin: 0 auto 10px auto;
+        color: transparent; /* Hide text for screen readers */
+        overflow: hidden;
+      }
+      
+      @media (max-width: 768px) {
+        .menu-item-img {
+          width: 80vw;
+          height: calc(80vw * (128/341)); /* keep aspect ratio */
+          scroll-snap-align: start;
+          flex-shrink: 0;
+        }
+      }
+
+      #btn-newgame { background-image: url('ui/btn_newgame.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-newgame:hover { background-image: url('ui/btn_newgame_hover.png'); } }
+      
+      #btn-techtree { background-image: url('ui/btn_techtree.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-techtree:hover { background-image: url('ui/btn_techtree_hover.png'); } }
+      
+      #btn-shop { background-image: url('ui/btn_shop.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-shop:hover { background-image: url('ui/btn_shop_hover.png'); } }
+      
+      #btn-achievements { background-image: url('ui/btn_achievements.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-achievements:hover { background-image: url('ui/btn_achievements_hover.png'); } }
+      
+      #btn-highscores { background-image: url('ui/btn_highscores.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-highscores:hover { background-image: url('ui/btn_highscores_hover.png'); } }
+      
+      #btn-story { background-image: url('ui/btn_story.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-story:hover { background-image: url('ui/btn_story_hover.png'); } }
+      
+      #btn-settings { background-image: url('ui/btn_settings.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-settings:hover { background-image: url('ui/btn_settings_hover.png'); } }
+      
+      #btn-credits { background-image: url('ui/btn_credits.png'); }
+      @media (hover: hover) and (pointer: fine) { #btn-credits:hover { background-image: url('ui/btn_credits_hover.png'); } }
+
     </style>
+    <link rel="preload" href="ui/btn_newgame_hover.png" as="image">
+    <link rel="preload" href="ui/btn_techtree_hover.png" as="image">
+    <link rel="preload" href="ui/btn_shop_hover.png" as="image">
+    <link rel="preload" href="ui/btn_achievements_hover.png" as="image">
+    <link rel="preload" href="ui/btn_highscores_hover.png" as="image">
+    <link rel="preload" href="ui/btn_story_hover.png" as="image">
+    <link rel="preload" href="ui/btn_settings_hover.png" as="image">
+    <link rel="preload" href="ui/btn_credits_hover.png" as="image">
   </head>
   <body>
     <script>
@@ -505,14 +562,14 @@
         <div class="menu-sep"></div>
 
         <nav class="menu-list">
-          <button id="btn-newgame" class="menu-item neon-red">▶ NEW GAME</button>
-          <button id="btn-techtree" class="menu-item neon-orange">✦ TECH TREE ✦</button>
-          <button id="btn-shop" class="menu-item neon-yellow">✦ SCRAP SHOP (UPGRADES) ✦</button>
-          <button id="btn-achievements" class="menu-item neon-green">✦ ACHIEVEMENTS ✦</button>
-          <button id="btn-highscores" class="menu-item neon-orange">✦ HIGHSCORES ✦</button>
-          <button id="btn-story" class="menu-item neon-orange">STORY-INTRO ANSEHEN</button>
-          <button id="btn-settings" class="menu-item neon-red">SETTINGS</button>
-          <button id="btn-credits" class="menu-item neon-red">CREDITS</button>
+          <button id="btn-newgame" class="menu-item-img">NEW GAME</button>
+          <button id="btn-techtree" class="menu-item-img">TECH TREE</button>
+          <button id="btn-shop" class="menu-item-img">SCRAP SHOP</button>
+          <button id="btn-achievements" class="menu-item-img">ACHIEVEMENTS</button>
+          <button id="btn-highscores" class="menu-item-img">HIGHSCORES</button>
+          <button id="btn-story" class="menu-item-img">STORY-INTRO</button>
+          <button id="btn-settings" class="menu-item-img">SETTINGS</button>
+          <button id="btn-credits" class="menu-item-img">CREDITS</button>
         </nav>
         <div class="scroll-indicator">▼ WEITERE OPTIONEN ▼</div>
       </div>

@@ -4,7 +4,7 @@
  * collision detection, wave progression, and integrates all major game systems.
  * @module GameScene
  */
-\nimport Phaser from 'phaser';
+import Phaser from 'phaser';
 import AudioSystem from '../systems/AudioSystem.js';
 import EnvironmentSystem from '../systems/EnvironmentSystem.js';
 import WeaponSystem from '../systems/WeaponSystem.js';
@@ -20,7 +20,8 @@ import { getMetaStats } from '../systems/MetaUpgrades.js';
 // DATA
 // ═══════════════════════════════════════════════════════
 
-// Global list of in-run upgrades accessible during level up.\nconst UPGRADES = [
+// Global list of in-run upgrades accessible during level up.
+const UPGRADES = [
     { id: 'multi_shot', name: 'DOUBLE BARREL',   desc: '+1 Schuss gleichzeitig (max 6)',     color: '#00ffff' },
     { id: 'speed',      name: 'HYPERDRIVE',       desc: '+20% Bewegungsgeschwindigkeit',       color: '#ffff00' },
     { id: 'damage',     name: 'HEAVY ROUNDS',     desc: '+40% Schaden pro Treffer',           color: '#ff6600' },
@@ -33,7 +34,8 @@ import { getMetaStats } from '../systems/MetaUpgrades.js';
     { id: 'crit',       name: 'KRITISCHE SYSTEME',desc: '20% Chance auf 3x Schaden',          color: '#ffdd00' }
 ];
 
-// Base stats, xp yields, and behavioral flags for all enemy types.\nconst ENEMY_DEFS = {
+// Base stats, xp yields, and behavioral flags for all enemy types.
+const ENEMY_DEFS = {
     basic:   { hp: 30,  speed: 80,  score: 10, xp: 8,  color: 0xff2244, shoots: false },
     fast:    { hp: 15,  speed: 165, score: 15, xp: 10, color: 0xff8800, shoots: false },
     tank:    { hp: 180, speed: 45,  score: 35, xp: 28, color: 0x9900ff, shoots: false },
@@ -53,7 +55,12 @@ import { getMetaStats } from '../systems/MetaUpgrades.js';
     protector: { hp: 200, speed: 30, score: 70, xp: 50, color: 0x00aaff, shoots: false },
 };
 
-/**\n * @description Procedurally determines enemy composition for a given wave.\n * @param {number} wave - Wave index.\n * @returns {Object} Dictionary of enemy types and quantities.\n */\nfunction getWaveComp(wave) {
+/**
+ * @description Procedurally determines enemy composition for a given wave.
+ * @param {number} wave - Wave index.
+ * @returns {Object} Dictionary of enemy types and quantities.
+ */
+function getWaveComp(wave) {
     if (wave % 20 === 0) return { destroyer: 1 };
     if (wave % 15 === 0) return { hivemind: 1 };
     if (wave % 10 === 0) return { mothership: 1 };
@@ -102,7 +109,8 @@ export default class GameScene extends Phaser.Scene {
             const val = parseInt(localStorage.getItem(key));
             return isNaN(val) ? 0 : val;
         };
-        // Load persistent meta-upgrades and apply them as base stat augmentations\n        const pHP = getSafeInt('neon_upg_base_hp') * 20;
+        // Load persistent meta-upgrades and apply them as base stat augmentations
+        const pHP = getSafeInt('neon_upg_base_hp') * 20;
         const pDmg = getSafeInt('neon_upg_base_dmg') * 0.15;
         const pSpd = getSafeInt('neon_upg_base_speed') * 0.05;
         const pMag = getSafeInt('neon_upg_magnet') * 40;
@@ -313,7 +321,8 @@ export default class GameScene extends Phaser.Scene {
         }).setDepth(8);
 
         // Collisions
-        // Core collision setup: Note that overlap is used instead of collide to prevent physics bounce\n        this.physics.add.overlap(this.bullets,  this.enemies,  (b, e) => this.onBulletHitEnemy(b, e));
+        // Core collision setup: Note that overlap is used instead of collide to prevent physics bounce
+        this.physics.add.overlap(this.bullets,  this.enemies,  (b, e) => this.onBulletHitEnemy(b, e));
         this.physics.add.overlap(this.player,   this.enemies,  (p, e) => this.onPlayerTouchEnemy(p, e));
         this.physics.add.overlap(this.player,   this.eBullets, (p, b) => this.onEnemyBulletHit(p, b));
         this.physics.add.overlap(this.player,   this.scraps,   (p, s) => this.onScrapCollect(p, s));

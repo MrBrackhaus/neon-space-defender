@@ -99,14 +99,23 @@ export default class MenuScene extends Phaser.Scene {
 
         // ─────────────────── MASCOT RENDERING ───────────────────
         
-        // Use the large central cat image from the generated AI sheet
-        const mascot = this.add.image(cw - 180, ch - 180, 'mascot_center')
-            .setScale(0.35) // Scale down the massive image
+        // Two cats! One on the right, one mirrored on the left.
+        const mascotScale = isMobile ? 0.13 : 0.28;
+        const mascotY = ch - (isMobile ? 90 : 160);
+        const mascotOffset = isMobile ? 90 : 180;
+        
+        const mascotRight = this.add.image(cw - mascotOffset, mascotY, 'mascot_center')
+            .setScale(mascotScale)
+            .setDepth(5);
+            
+        const mascotLeft = this.add.image(mascotOffset, mascotY, 'mascot_center')
+            .setScale(mascotScale)
+            .setFlipX(true) // Mirror the cat so it raises the opposite paw
             .setDepth(5);
         
-        // Gentle hover effect for the mascot
+        // Gentle hover effect for both mascots
         this.tweens.add({
-            targets: mascot,
+            targets: [mascotRight, mascotLeft],
             y: '-=20',
             duration: 2000,
             yoyo: true,

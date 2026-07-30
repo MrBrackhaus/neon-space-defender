@@ -39,16 +39,16 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('enemy_shooter_sheet', 'enemy_shooter_sheet.png', { frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_elite_sheet',   'enemy_elite_sheet.png',   { frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_boss_sheet',    'enemy_boss_sheet.png',    { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_phantom_sheet', 'enemy_phantom_sheet.png', { frameWidth: 1024, frameHeight: 1024 });
-        this.load.spritesheet('enemy_swarmer_sheet', 'enemy_swarmer_sheet.png', { frameWidth: 1024, frameHeight: 1024 });
-        this.load.spritesheet('enemy_stealth_sheet', 'enemy_stealth_sheet.png', { frameWidth: 1024, frameHeight: 1024 });
-        this.load.spritesheet('enemy_laser_sheet',   'enemy_laser_sheet.png',   { frameWidth: 1024, frameHeight: 1024 });
-        this.load.spritesheet('enemy_carrier_sheet', 'enemy_carrier_sheet.png', { frameWidth: 1024, frameHeight: 1024 });
-        this.load.spritesheet('enemy_hivemind_sheet','enemy_hivemind_sheet.png',{ frameWidth: 1024, frameHeight: 1024 });
+        this.load.spritesheet('enemy_phantom_sheet', 'enemy_phantom_sheet.png', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_swarmer_sheet', 'enemy_swarmer_sheet.png', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_stealth_sheet', 'enemy_stealth_sheet.png', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_laser_sheet',   'enemy_laser_sheet.png',   { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_carrier_sheet', 'enemy_carrier_sheet.png', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_hivemind_sheet','enemy_hivemind_sheet.png',{ frameWidth: 512, frameHeight: 512 });
         this.load.spritesheet('enemy_mothership_sheet','enemy_mothership_sheet.png',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_destroyer_sheet','enemy_destroyer_sheet.png',{ frameWidth: 1024, frameHeight: 1024 });
-        this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png',{ frameWidth: 1024, frameHeight: 1024 });
-        this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png',{ frameWidth: 1024, frameHeight: 1024 });
+        this.load.spritesheet('enemy_destroyer_sheet','enemy_destroyer_sheet.png',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png',{ frameWidth: 512, frameHeight: 512 });
 
         // ── Cinematic intro images ──
         this.load.image('intro_hero',  'intro_hero_anime.jpg');
@@ -124,32 +124,32 @@ export default class BootScene extends Phaser.Scene {
 
         this.anims.create({
             key: 'anim_phantom',
-            frames: this.anims.generateFrameNumbers('enemy_phantom_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_phantom_sheet', { start: 0, end: 3 }),
             frameRate: 6, repeat: -1
         });
         this.anims.create({
             key: 'anim_swarmer',
-            frames: this.anims.generateFrameNumbers('enemy_swarmer_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_swarmer_sheet', { start: 0, end: 3 }),
             frameRate: 12, repeat: -1
         });
         this.anims.create({
             key: 'anim_stealth',
-            frames: this.anims.generateFrameNumbers('enemy_stealth_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_stealth_sheet', { start: 0, end: 3 }),
             frameRate: 4, repeat: -1
         });
         this.anims.create({
             key: 'anim_laser',
-            frames: this.anims.generateFrameNumbers('enemy_laser_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_laser_sheet', { start: 0, end: 3 }),
             frameRate: 5, repeat: -1
         });
         this.anims.create({
             key: 'anim_carrier',
-            frames: this.anims.generateFrameNumbers('enemy_carrier_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_carrier_sheet', { start: 0, end: 3 }),
             frameRate: 3, repeat: -1
         });
         this.anims.create({
             key: 'anim_hivemind',
-            frames: this.anims.generateFrameNumbers('enemy_hivemind_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_hivemind_sheet', { start: 0, end: 3 }),
             frameRate: 4, repeat: -1
         });
         this.anims.create({
@@ -159,17 +159,17 @@ export default class BootScene extends Phaser.Scene {
         });
         this.anims.create({
             key: 'anim_destroyer',
-            frames: this.anims.generateFrameNumbers('enemy_destroyer_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_destroyer_sheet', { start: 0, end: 3 }),
             frameRate: 4, repeat: -1
         });
         this.anims.create({
             key: 'anim_charger',
-            frames: this.anims.generateFrameNumbers('enemy_charger_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_charger_sheet', { start: 0, end: 3 }),
             frameRate: 8, repeat: -1
         });
         this.anims.create({
             key: 'anim_protector',
-            frames: this.anims.generateFrameNumbers('enemy_protector_sheet', { start: 0, end: 0 }),
+            frames: this.anims.generateFrameNumbers('enemy_protector_sheet', { start: 0, end: 3 }),
             frameRate: 6, repeat: -1
         });
 

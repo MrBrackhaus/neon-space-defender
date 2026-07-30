@@ -60,66 +60,66 @@ export default class BootScene extends Phaser.Scene {
         // ─────────────────── ASSET LOADING ───────────────────
 
         //  Player ships (static top-down render with transparency) 
-        this.load.image('ship_standard', 'ship_standard.png');
-        this.load.image('ship_interceptor', 'ship_interceptor.png');
-        this.load.image('ship_dreadnought', 'ship_dreadnought.png');
-        this.load.image('ship_phantom', 'ship_phantom.png');
-        this.load.image('ship_paladin', 'ship_paladin.png');
-        this.load.image('ship_bomber', 'ship_bomber.png');
+        this.load.image('ship_standard', 'ship_standard.png?v=6');
+        this.load.image('ship_interceptor', 'ship_interceptor.png?v=6');
+        this.load.image('ship_dreadnought', 'ship_dreadnought.png?v=6');
+        this.load.image('ship_phantom', 'ship_phantom.png?v=6');
+        this.load.image('ship_paladin', 'ship_paladin.png?v=6');
+        this.load.image('ship_bomber', 'ship_bomber.png?v=6');
 
         // Sprite sheets for enemies (4 frames each, transparent background)
         const FW = 516, FH = 512;
-        this.load.spritesheet('enemy_basic_sheet',   'enemy_basic_sheet.png',   { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_fast_sheet',    'enemy_fast_sheet.png',    { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_tank_sheet',    'enemy_tank_sheet.png',    { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_shooter_sheet', 'enemy_shooter_sheet.png', { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_elite_sheet',   'enemy_elite_sheet.png',   { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_boss_sheet',    'enemy_boss_sheet.png',    { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_phantom_sheet', 'enemy_phantom_sheet.png', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_swarmer_sheet', 'enemy_swarmer_sheet.png', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_stealth_sheet', 'enemy_stealth_sheet.png', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_laser_sheet',   'enemy_laser_sheet.png',   { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_carrier_sheet', 'enemy_carrier_sheet.png', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_hivemind_sheet','enemy_hivemind_sheet.png',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_mothership_sheet','enemy_mothership_sheet.png',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_destroyer_sheet','enemy_destroyer_sheet.png',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_basic_sheet',   'enemy_basic_sheet.png?v=6',   { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_fast_sheet',    'enemy_fast_sheet.png?v=6',    { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_tank_sheet',    'enemy_tank_sheet.png?v=6',    { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_shooter_sheet', 'enemy_shooter_sheet.png?v=6', { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_elite_sheet',   'enemy_elite_sheet.png?v=6',   { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_boss_sheet',    'enemy_boss_sheet.png?v=6',    { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_phantom_sheet', 'enemy_phantom_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_swarmer_sheet', 'enemy_swarmer_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_stealth_sheet', 'enemy_stealth_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_laser_sheet',   'enemy_laser_sheet.png?v=6',   { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_carrier_sheet', 'enemy_carrier_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_hivemind_sheet','enemy_hivemind_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_mothership_sheet','enemy_mothership_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_destroyer_sheet','enemy_destroyer_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
 
         // Cinematic intro images
-        this.load.image('intro_hero',  'intro_hero_anime.jpg');
-        this.load.image('intro_fleet', 'intro_fleet_anime.jpg');
-        this.load.image('intro_ship',  'intro_ship_anime.jpg');
+        this.load.image('intro_hero',  'intro_hero_anime.jpg?v=6');
+        this.load.image('intro_fleet', 'intro_fleet_anime.jpg?v=6');
+        this.load.image('intro_ship',  'intro_ship_anime.jpg?v=6');
 
         // Audio is now fully procedural (Web Audio API in AudioSystem.js). 
         // No external WAV files needed!
         
         // Static images for UI, items, and environment
-        this.load.image('jergeric',     'jergeric.jpg');
-        this.load.image('jergeric_cmd', 'jergeric_cmd.jpg');
-        this.load.image('jergeric_sheet', 'jergeric_sheet.jpg');
-        this.load.image('cat',          'cat.jpg');
-        this.load.image('nyx_merchant', 'nyx_merchant.png');
-        this.load.image('scrap_merchant', 'scrap_merchant.png');
-        this.load.image('title_bg',     'title_bg_v3.jpg');
-        this.load.image('mascot_center','mascot_3.png');
-        this.load.image('title_logo',   'title_logo_v2.jpg');
-        this.load.image('deco_planet',  'deco_planet.jpg');
-        this.load.image('bg',           'bg.jpg');
-        this.load.image('asteroid_1',   'asteroid_1.png');
-        this.load.image('asteroid_2',   'asteroid_2.png');
-        this.load.image('asteroid_3',   'asteroid_3.png');
-        this.load.image('crystal_xp',   'crystal_xp.png');
-        this.load.image('scrap_gear',   'scrap_gear.png');
-        this.load.image('datacube',     'datacube.png');
+        this.load.image('jergeric',     'jergeric.jpg?v=6');
+        this.load.image('jergeric_cmd', 'jergeric_cmd.jpg?v=6');
+        this.load.image('jergeric_sheet', 'jergeric_sheet.jpg?v=6');
+        this.load.image('cat',          'cat.jpg?v=6');
+        this.load.image('nyx_merchant', 'nyx_merchant.png?v=6');
+        this.load.image('scrap_merchant', 'scrap_merchant.png?v=6');
+        this.load.image('title_bg',     'title_bg_v3.jpg?v=6');
+        this.load.image('mascot_center','mascot_3.png?v=6');
+        this.load.image('title_logo',   'title_logo_v2.jpg?v=6');
+        this.load.image('deco_planet',  'deco_planet.jpg?v=6');
+        this.load.image('bg',           'bg.jpg?v=6');
+        this.load.image('asteroid_1',   'asteroid_1.png?v=6');
+        this.load.image('asteroid_2',   'asteroid_2.png?v=6');
+        this.load.image('asteroid_3',   'asteroid_3.png?v=6');
+        this.load.image('crystal_xp',   'crystal_xp.png?v=6');
+        this.load.image('scrap_gear',   'scrap_gear.png?v=6');
+        this.load.image('datacube',     'datacube.png?v=6');
         
         // VFX Images for weapons and projectiles
-        this.load.image('enemy_projectile', 'enemy_projectile.png');
-        this.load.image('orbital_blade',    'orbital_blade.png');
-        this.load.image('missile_bomb',     'missile_bomb.png');
+        this.load.image('enemy_projectile', 'enemy_projectile.png?v=6');
+        this.load.image('orbital_blade',    'orbital_blade.png?v=6');
+        this.load.image('missile_bomb',     'missile_bomb.png?v=6');
         
         // Mascot Pet spritesheet for various states
-        this.load.spritesheet('mascot_sheet', 'assets/mascot_sheet.png?v=3', { frameWidth: 117, frameHeight: 103 });
+        this.load.spritesheet('mascot_sheet', 'assets/mascot_sheet.png?v=6', { frameWidth: 117, frameHeight: 103 });
     }
 
     /**

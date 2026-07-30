@@ -69,7 +69,6 @@ export default class MenuScene extends Phaser.Scene {
 
         // 3. Title Logo (Graffiti Text on the right)
         const logo = this.add.image(cw * 0.65, ch * 0.4, 'title_logo')
-            .setBlendMode(Phaser.BlendModes.ADD) // Additive blending makes the neon text pop against the background
             .setScale(0.75);
             
         // Subtle floating and pulsing for the logo

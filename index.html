@@ -363,35 +363,36 @@
           align-items: center;
         }
         .menu-glass-panel {
-          padding: 1.5rem 1rem;
+          padding: 0;
           width: 90%;
           transform: none;
-        }
-        .menu-title {
-          font-size: 2rem;
-          text-align: center !important;
+          background: none !important;
+          box-shadow: none !important;
+          border: none !important;
         }
         .menu-sub {
-          text-align: center !important;
+          display: none; /* hide alpha build text on mobile for cleaner look */
+        }
+        .menu-sep {
+          display: none;
         }
         .menu-list {
-          flex-direction: row;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          padding-bottom: 10px;
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
+          flex-direction: column;
+          overflow-y: auto;
+          scroll-snap-type: y mandatory;
+          max-height: 140px; /* enough to show 1 full button and a bit of the next */
+          padding-bottom: 20px; /* space for scrolling past the last item */
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
         .menu-list::-webkit-scrollbar {
-          display: none; /* Chrome, Safari and Opera */
+          display: none;
         }
         .menu-list .menu-item {
           font-size: 1rem;
           padding: 0.75rem;
-          white-space: nowrap;
-          flex: 0 0 80%;
-          scroll-snap-align: center;
-          margin: 0 5px; /* some spacing between cards */
+          scroll-snap-align: start;
+          flex-shrink: 0;
         }
         .menu-controls {
           position: fixed;

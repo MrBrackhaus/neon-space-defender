@@ -356,6 +356,48 @@
           color: #ff00ff;
           box-shadow: 0 0 15px rgba(255,0,255,0.5);
         }
+
+      @media (max-width: 768px) {
+        #menu-layer {
+          padding-left: 0;
+          align-items: center;
+        }
+        .menu-glass-panel {
+          padding: 1.5rem 1rem;
+          width: 90%;
+          transform: none;
+        }
+        .menu-title {
+          font-size: 2rem;
+          text-align: center !important;
+        }
+        .menu-sub {
+          text-align: center !important;
+        }
+        .menu-list a {
+          font-size: 1rem;
+          padding: 0.5rem;
+        }
+        .menu-controls {
+          position: fixed;
+          bottom: 50px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 95%;
+          margin-top: 0 !important;
+          color: #aaa;
+          font-size: 0.55rem;
+        }
+        .menu-controls span {
+          color: #888 !important;
+        }
+        #menu-highscore {
+          bottom: 15px;
+          width: 95%;
+          font-size: 0.6rem;
+          color: #bbb;
+        }
+      }
     </style>
   </head>
   <body>

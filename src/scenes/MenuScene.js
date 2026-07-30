@@ -58,7 +58,8 @@ export default class MenuScene extends Phaser.Scene {
         // 2. Deco Planet (Foreground element on the left)
         const planet = this.add.image(cw * 0.2, ch * 0.7, 'deco_planet')
             .setBlendMode(Phaser.BlendModes.SCREEN) // Removes the black background
-            .setAlpha(0.7)
+            .setAlpha(0.8)
+            .setTint(0xff5500) // Tint fiery orange to match the new color scheme
             .setScale(0.8);
             
         this.tweens.add({

@@ -1,7 +1,19 @@
+/**
+ * @file IntroScene.js
+ * @description The cinematic intro scene for the Neon Space Defender game. Handles a slideshow 
+ * of images with typewriter dialogue, Ken Burns camera effects, and scene transitions.
+ * @module IntroScene
+ */
+
 import Phaser from 'phaser';
 
-// Each slide: bg image key, optional tint, crop region (0-1 normalized), dialogue text
-// 'crop' = [normX, normY, normW, normH] — which part of image to show (Ken Burns)
+/**
+ * @constant {Array<Object>} SLIDES
+ * @description Configuration array for each slide in the intro sequence.
+ * Defines image source, visual effects, captions, and narrative dialogue (in German).
+ * Each slide: bg image key, optional tint, crop region (0-1 normalized), dialogue text.
+ * 'crop' = [normX, normY, normW, normH] — which part of image to show (Ken Burns)
+ */
 const SLIDES = [
     {
         img: 'bg', tint: 0x330066, caption: null, dialogue: null, duration: 3000, effect: 'zoom_in',
@@ -43,16 +55,37 @@ const SLIDES = [
     }
 ];
 
+/**
+ * @class IntroScene
+ * @extends Phaser.Scene
+ * @description Manages the narrative introduction of the game. Plays sequential slides with text
+ * and transitions before dropping the player into the main menu.
+ */
 export default class IntroScene extends Phaser.Scene {
-    constructor() { super('IntroScene'); }
+    /**
+     * @constructor
+     * @description Initializes the IntroScene with its scene key.
+     */
+    constructor() { 
+        super('IntroScene'); 
+    }
 
+    /**
+     * @method create
+     * @description Sets up the visual elements for the cinematic (scanlines, letterbox, text fields)
+     * and binds user input to advance or skip the intro.
+     * @returns {void}
+     */
     create() {
         const cw = this.scale.width, ch = this.scale.height;
-        this.cw = cw; this.ch = ch;
+        this.cw = cw; 
+        this.ch = ch;
         this.slideIndex = 0;
         this.typing = false;
 
-        // Scanline overlay (subtle)
+        // ─────────────────── VISUAL OVERLAYS ───────────────────
+
+        // Scanline overlay (subtle, retro CRT feeling)
         const scanlines = this.add.graphics();
         scanlines.setDepth(100);
         for (let y = 0; y < ch; y += 4) {
@@ -60,10 +93,10 @@ export default class IntroScene extends Phaser.Scene {
             scanlines.lineBetween(0, y, cw, y);
         }
 
-        // Main image display
+        // Main image display for slide backgrounds
         this.bgImg = this.add.image(cw / 2, ch / 2, 'bg').setDisplaySize(cw, ch);
 
-        // Vignette
+        // Vignette effect to draw focus to the center
         const vig = this.add.graphics().setDepth(90);
         const vigGrad = this.textures.createCanvas('vig_tex', cw, ch);
         const ctx = vigGrad.getContext();
@@ -75,10 +108,12 @@ export default class IntroScene extends Phaser.Scene {
         vigGrad.refresh();
         this.add.image(cw/2, ch/2, 'vig_tex').setDepth(90);
 
-        // Black bars (cinematic letterbox)
+        // Black bars for cinematic letterbox look
         const barH = ch * 0.09;
         this.add.rectangle(cw/2, barH/2, cw, barH, 0x000000).setDepth(95);
         this.add.rectangle(cw/2, ch - barH/2, cw, barH, 0x000000).setDepth(95);
+
+        // ─────────────────── TEXT UI ELEMENTS ───────────────────
 
         // Caption text (bottom left, inside lower bar)
         this.captionText = this.add.text(40, ch - barH/2, '', {
@@ -86,7 +121,7 @@ export default class IntroScene extends Phaser.Scene {
             color: '#aaaaaa', letterSpacing: 2
         }).setOrigin(0, 0.5).setDepth(99).setAlpha(0);
 
-        // Title card (for first slide)
+        // Title card (displayed only on the first slide)
         this.titleLine1 = this.add.text(cw/2, ch/2 - 40, '', {
             fontFamily: 'Orbitron, monospace', fontSize: '60px', fontStyle: 'bold',
             color: '#ffffff', letterSpacing: 8,
@@ -100,7 +135,7 @@ export default class IntroScene extends Phaser.Scene {
             shadow: { x: 0, y: 0, color: '#00ffff', blur: 15, fill: true }
         }).setOrigin(0.5).setDepth(98).setAlpha(0);
 
-        // Dialogue box (bottom bar area)
+        // Dialogue box (main text in the bottom bar area)
         this.dialogueBg = this.add.graphics().setDepth(97);
         this.dialogueText = this.add.text(cw/2, ch - barH/2, '', {
             fontFamily: 'Orbitron, monospace', fontSize: '15px',
@@ -108,13 +143,13 @@ export default class IntroScene extends Phaser.Scene {
             lineSpacing: 6, stroke: '#000', strokeThickness: 3
         }).setOrigin(0.5, 0.5).setDepth(99).setAlpha(0);
 
-        // Hint
+        // Blinking hint indicating the user can advance the slide
         this.hint = this.add.text(cw - 30, ch - barH / 2, '▶', {
             fontFamily: 'Orbitron', fontSize: '16px', color: '#ff00ff'
         }).setOrigin(1, 0.5).setDepth(99).setAlpha(0);
         this.tweens.add({ targets: this.hint, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
 
-        // Skip
+        // Skip button
         this.add.text(cw - 24, 14, '[ ÜBERSPRINGEN ]', {
             fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#555'
         }).setOrigin(1, 0).setDepth(99).setInteractive({ useHandCursor: true })
@@ -122,22 +157,34 @@ export default class IntroScene extends Phaser.Scene {
           .on('pointerout',  function() { this.setColor('#555'); })
           .on('pointerdown', () => this.goToMenu());
 
-        // Input
+        // ─────────────────── INPUT HANDLING ───────────────────
+        
+        // Input bindings to advance the slides
         this.input.on('pointerdown', () => this.advance());
         this.input.keyboard.on('keydown-SPACE', () => this.advance());
         this.input.keyboard.on('keydown-ENTER', () => this.advance());
         this.input.keyboard.on('keydown-ESC',   () => this.goToMenu());
 
-
+        // Initial fade-in and trigger first slide
         this.cameras.main.fadeIn(1000, 0, 0, 0);
         this.showSlide(0);
     }
 
+    /**
+     * @method showSlide
+     * @description Handles the transition to and rendering of a specific slide index.
+     * Sets background image, applies visual effects (Ken Burns), and starts typewriter effect.
+     * @param {number} index - The index of the slide to display from the SLIDES array.
+     * @returns {void}
+     */
     showSlide(index) {
-        if (index >= SLIDES.length) { this.goToMenu(); return; }
+        if (index >= SLIDES.length) { 
+            this.goToMenu(); 
+            return; 
+        }
+        
         const slide = SLIDES[index];
         const cw = this.cw, ch = this.ch;
-        const barH = ch * 0.09;
 
         // ── Fade out old content first ──
         this.tweens.add({
@@ -150,9 +197,9 @@ export default class IntroScene extends Phaser.Scene {
                 this.bgImg.setDisplaySize(cw, ch);
                 this.bgImg.setTint(slide.tint || 0xffffff);
                 this.bgImg.setPosition(cw/2, ch/2);
-                this.bgImg.setScale(1.1);
+                this.bgImg.setScale(1.1); // Slightly larger to allow for panning/zooming
 
-                // ── Ken Burns effect ──
+                // ── Ken Burns visual effects ──
                 this.tweens.killTweensOf(this.bgImg);
                 switch (slide.effect) {
                     case 'zoom_in':
@@ -176,20 +223,20 @@ export default class IntroScene extends Phaser.Scene {
                 this.bgImg.setAlpha(0);
                 this.tweens.add({ targets: this.bgImg, alpha: 0.85, duration: 800 });
 
-                // ── Caption ──
+                // ── Caption text ──
                 this.captionText.setText(slide.caption || '');
                 if (slide.caption) {
                     this.tweens.add({ targets: this.captionText, alpha: 0.7, duration: 600, delay: 800 });
                 }
 
-                // ── Title card (slide 0 only) ──
+                // ── Title card handling (slide 0 only) ──
                 if (slide.titleCard) {
                     this.titleLine1.setText(slide.titleCard.line1);
                     this.titleLine2.setText(slide.titleCard.line2);
                     this.tweens.add({ targets: this.titleLine1, alpha: 1, duration: 1200, delay: 400 });
                     this.tweens.add({ targets: this.titleLine2, alpha: 0.9, duration: 1200, delay: 800,
                         onComplete: () => {
-                            // Auto advance title card
+                            // Auto advance title card after duration
                             this.time.delayedCall(slide.duration || 3000, () => {
                                 if (this.slideIndex === index) this.advance();
                             });
@@ -198,7 +245,7 @@ export default class IntroScene extends Phaser.Scene {
                     return;
                 }
 
-                // ── Dialogue typewriter ──
+                // ── Dialogue typewriter effect ──
                 if (slide.dialogue) {
                     this.dialogueText.setText('');
                     this.dialogueText.setAlpha(1);
@@ -209,6 +256,7 @@ export default class IntroScene extends Phaser.Scene {
                     const full = slide.dialogue;
                     if (this.typeTimer) this.typeTimer.remove();
 
+                    // Print one character at a time
                     this.typeTimer = this.time.addEvent({
                         delay: 32, repeat: full.length - 1,
                         callback: () => {
@@ -225,23 +273,39 @@ export default class IntroScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @method advance
+     * @description Advances to the next slide or skips the typewriter effect if currently typing.
+     * @returns {void}
+     */
     advance() {
         const slide = SLIDES[this.slideIndex];
 
+        // If currently typing out text, skip to the end of the text
         if (this.typing && slide.dialogue) {
-            // Skip to end of line
-            if (this.typeTimer) { this.typeTimer.remove(); this.typeTimer = null; }
+            if (this.typeTimer) { 
+                this.typeTimer.remove(); 
+                this.typeTimer = null; 
+            }
             this.dialogueText.setText(slide.dialogue);
             this.typing = false;
             this.tweens.add({ targets: this.hint, alpha: 0.8, duration: 200 });
             return;
         }
 
+        // Otherwise move to the next slide
         this.slideIndex++;
         this.showSlide(this.slideIndex);
     }
 
+    /**
+     * @method goToMenu
+     * @description Exits the intro sequence, saves the state to localStorage, 
+     * and transitions to the main MenuScene.
+     * @returns {void}
+     */
     goToMenu() {
+        // Remember that player saw the intro to skip it next time
         localStorage.setItem('neon_intro_seen', '1');
         this.cameras.main.fadeOut(1000, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('MenuScene'));

@@ -1,11 +1,30 @@
+/**
+ * @file EventSystem.js
+ * @description Handles dynamic narrative events and the companion character "Wrench". 
+ * Manages boss intro cutscenes and contextual voice lines/dialogues triggered by gameplay events.
+ * @module EventSystem
+ */
+
 export default class EventSystem {
+    /**
+     * @class EventSystem
+     * @description System for rendering dramatic text events and the mechanic's side commentary.
+     * @param {Phaser.Scene} scene - The main game scene.
+     */
     constructor(scene) {
+        /** @type {Phaser.Scene} Reference to the active scene */
         this.scene = scene;
+        /** @type {boolean} Prevents overlapping global events */
         this.isEventActive = false;
+        /** @type {boolean} Prevents overlapping Wrench dialogues */
         this.isWrenchActive = false;
+        /** @type {number} Timestamp of the last Wrench comment to handle cooldowns */
         this.lastWrenchCommentTime = 0;
         
-        // Massive pool of Wrench messages
+        /** 
+         * @type {Object<string, string[]>} 
+         * Massive pool of German Wrench messages categorized by trigger event type. 
+         */
         this.wrenchMessages = {
             take_damage: [
                 "Oh, ein Asteroid! Komm, wir fliegen direkt rein, das wird lustig!",
@@ -106,6 +125,14 @@ export default class EventSystem {
         };
     }
 
+    // ─────────────────── BOSS EVENT ───────────────────
+
+    /**
+     * @description Pauses game and shows a cinematic Boss introduction sequence without choices.
+     * @param {string} bossType - The identifier for the boss type.
+     * @param {function} callback - Callback function executed when the intro completes.
+     * @returns {void}
+     */
     showBossIntro(bossType, callback) {
         if (this.isEventActive) return;
         this.isEventActive = true;
@@ -123,11 +150,11 @@ export default class EventSystem {
         // Create overlay container
         const container = this.scene.add.container(0, 0).setDepth(1000);
 
-        // Dark background overlay
+        // Dark background overlay to obscure gameplay
         const overlay = this.scene.add.rectangle(centerX, centerY, width, height, 0x000000, 0.7);
         container.add(overlay);
 
-        // Cinematic bars
+        // Cinematic bars sliding in from top and bottom
         const topBar = this.scene.add.rectangle(centerX, -100, width, 150, 0x000000).setStrokeStyle(4, 0xff00ff);
         const bottomBar = this.scene.add.rectangle(centerX, height + 100, width, 150, 0x000000).setStrokeStyle(4, 0xff00ff);
         container.add([topBar, bottomBar]);
@@ -164,7 +191,7 @@ export default class EventSystem {
             backgroundColor: '#000000'
         }).setOrigin(0.5).setAlpha(0);
 
-        // Add Boss Sprite (fallback to simple shape if not loaded)
+        // Add Boss Sprite (fallback to simple shape if texture is not loaded)
         const bossSprite = this.scene.add.sprite(centerX - 200, centerY, bossImageKey);
         
         if (this.scene.textures && !this.scene.textures.exists(bossImageKey)) {
@@ -179,7 +206,7 @@ export default class EventSystem {
         
         container.add([bossSprite, nameText, subText]);
 
-        // Animations
+        // Animations: Slide in the cinematic bars
         this.scene.tweens.add({
             targets: topBar,
             y: 75,
@@ -194,16 +221,17 @@ export default class EventSystem {
             ease: 'Power2'
         });
 
+        // Animations: Fade in and slide the boss information
         this.scene.tweens.add({
             targets: [bossSprite, nameText, subText],
             alpha: 1,
-            x: '+=50', // slight slide effect
+            x: '+=50', // slight slide effect to the right
             duration: 500,
             delay: 300,
             ease: 'Power2'
         });
 
-        // Cleanup and resume
+        // Cleanup and resume after a delay
         this.scene.time.delayedCall(3000, () => {
             this.scene.tweens.add({
                 targets: container,
@@ -221,11 +249,19 @@ export default class EventSystem {
         });
     }
 
+    // ─────────────────── WRENCH DIALOGUE ───────────────────
+
+    /**
+     * @description Triggers a humorous pop-up dialogue from "Wrench" based on an event type.
+     * @param {string} eventType - The key corresponding to the dialogue pool (e.g., 'take_damage', 'heal').
+     * @returns {void}
+     */
     triggerWrenchComment(eventType) {
         if (this.isWrenchActive) return;
         
         const now = this.scene.time.now;
-        if (now - this.lastWrenchCommentTime < 25000) return; // 25s cooldown
+        // Enforce a 25s cooldown between any wrench comments to prevent spam
+        if (now - this.lastWrenchCommentTime < 25000) return; 
         
         const messages = this.wrenchMessages[eventType];
         if (!messages || messages.length === 0) return;
@@ -236,14 +272,14 @@ export default class EventSystem {
         const width = this.scene.scale.width;
         const height = this.scene.scale.height;
 
-        // UI Panel container
+        // UI Panel container configuration
         const panelWidth = 400;
         const panelHeight = 100;
         
         // Start offscreen to the right
         const startX = width + panelWidth / 2;
         const targetX = width - panelWidth / 2 - 20;
-        const startY = height / 4;
+        const startY = height / 4; // Positioned in the upper right quadrant
 
         const container = this.scene.add.container(startX, startY).setDepth(900);
 
@@ -251,7 +287,7 @@ export default class EventSystem {
         const bg = this.scene.add.rectangle(0, 0, panelWidth, panelHeight, 0x000000, 0.8)
             .setStrokeStyle(2, 0xff8800);
         
-        // Wrench portrait
+        // Wrench portrait setup
         const portrait = this.scene.add.sprite(-panelWidth/2 + 50, 0, 'scrap_merchant');
         if (this.scene.textures && !this.scene.textures.exists('scrap_merchant')) {
             portrait.setTexture('__WHITE');
@@ -261,11 +297,11 @@ export default class EventSystem {
             portrait.setDisplaySize(80, 80);
         }
 
-        // Select random message
+        // Select random message from the corresponding category pool
         const randIndex = Math.floor(Math.random() * messages.length);
         const message = messages[randIndex];
         
-        // Text
+        // Title Text
         const titleText = this.scene.add.text(-panelWidth/2 + 100, -30, "WRENCH:", {
             fontSize: '16px',
             fontFamily: 'Courier',
@@ -273,6 +309,7 @@ export default class EventSystem {
             fontStyle: 'bold'
         });
 
+        // Body Text
         const msgText = this.scene.add.text(-panelWidth/2 + 100, -5, message, {
             fontSize: '14px',
             fontFamily: 'Courier',
@@ -282,7 +319,7 @@ export default class EventSystem {
 
         container.add([bg, portrait, titleText, msgText]);
 
-        // Slide in
+        // Slide in animation
         this.scene.tweens.add({
             targets: container,
             x: targetX,
@@ -298,7 +335,7 @@ export default class EventSystem {
                         ease: 'Back.easeIn',
                         onComplete: () => {
                             container.destroy();
-                            this.isWrenchActive = false;
+                            this.isWrenchActive = false; // Free system for next comment
                         }
                     });
                 });

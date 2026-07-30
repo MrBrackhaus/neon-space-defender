@@ -1,27 +1,63 @@
+/**
+ * @file BootScene.js
+ * @description The initial scene of the Neon Space Defender game. Responsible for loading
+ * all game assets (images, spritesheets), setting up the loading bar, creating global
+ * animations, and routing the player to the Intro or Menu scene.
+ * @module BootScene
+ */
+
 import Phaser from 'phaser';
 
+/**
+ * @class BootScene
+ * @extends Phaser.Scene
+ * @description Handles asset preloading, global graphics generation, and animation creation.
+ */
 export default class BootScene extends Phaser.Scene {
-    constructor() { super('BootScene'); }
+    /**
+     * @constructor
+     * @description Initializes the BootScene with its unique scene key.
+     */
+    constructor() { 
+        super('BootScene'); 
+    }
 
+    /**
+     * @method preload
+     * @description Preloads all visual assets required for the game, including spritesheets,
+     * background images, and UI elements. Displays a loading progress bar during the process.
+     * @returns {void}
+     */
     preload() {
         const cw = this.scale.width, ch = this.scale.height;
 
-        // Loading bar
+        // ─────────────────── UI: LOADING BAR ───────────────────
+        
+        // Background for the loading bar
         this.add.rectangle(cw/2, ch/2, 420, 18, 0x111122);
+        
+        // The actual progress bar that fills up
         const bar = this.add.rectangle(cw/2 - 210, ch/2, 0, 14, 0x00ffff).setOrigin(0, 0.5);
+        
+        // Loading text
         this.add.text(cw/2, ch/2 - 44, 'LOADING...', {
             fontFamily: 'Orbitron, monospace', fontSize: '20px', color: '#00ffff',
             stroke: '#000', strokeThickness: 4
         }).setOrigin(0.5);
+        
+        // Subtitle text
         this.add.text(cw/2, ch/2 + 36, 'NEON ROGUELIKE — VOID ANOMALY', {
             fontFamily: 'Orbitron, monospace', fontSize: '11px', color: '#333366',
             letterSpacing: 4
         }).setOrigin(0.5);
 
+        // Update the loading bar width based on load progress
         this.load.on('progress', v => { bar.width = 420 * v; });
 
-        // Set base URL so assets resolve correctly in both dev and GitHub Pages
+        // Set base URL so assets resolve correctly in both local dev and GitHub Pages environments
         this.load.setBaseURL(import.meta.env.BASE_URL);
+
+        // ─────────────────── ASSET LOADING ───────────────────
 
         //  Player ships (static top-down render with transparency) 
         this.load.image('ship_standard', 'ship_standard.png');
@@ -31,7 +67,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('ship_paladin', 'ship_paladin.png');
         this.load.image('ship_bomber', 'ship_bomber.png');
 
-        // ── Sprite sheets for enemies (4 frames each, 516x512 per frame, transparent) ──
+        // Sprite sheets for enemies (4 frames each, transparent background)
         const FW = 516, FH = 512;
         this.load.spritesheet('enemy_basic_sheet',   'enemy_basic_sheet.png',   { frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_fast_sheet',    'enemy_fast_sheet.png',    { frameWidth: FW, frameHeight: FH });
@@ -50,20 +86,22 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png',{ frameWidth: 512, frameHeight: 512 });
         this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png',{ frameWidth: 512, frameHeight: 512 });
 
-        // ── Cinematic intro images ──
+        // Cinematic intro images
         this.load.image('intro_hero',  'intro_hero_anime.jpg');
         this.load.image('intro_fleet', 'intro_fleet_anime.jpg');
         this.load.image('intro_ship',  'intro_ship_anime.jpg');
 
         // Audio is now fully procedural (Web Audio API in AudioSystem.js). 
         // No external WAV files needed!
-        // ── Static images ──
+        
+        // Static images for UI, items, and environment
         this.load.image('jergeric',     'jergeric.jpg');
         this.load.image('jergeric_cmd', 'jergeric_cmd.jpg');
         this.load.image('jergeric_sheet', 'jergeric_sheet.jpg');
         this.load.image('cat',          'cat.jpg');
         this.load.image('nyx_merchant', 'nyx_merchant.png');
         this.load.image('scrap_merchant', 'scrap_merchant.png');
+        this.load.image('title_bg',     'title_bg.jpg');
         this.load.image('bg',           'bg.jpg');
         this.load.image('asteroid_1',   'asteroid_1.png');
         this.load.image('asteroid_2',   'asteroid_2.png');
@@ -72,25 +110,36 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('scrap_gear',   'scrap_gear.png');
         this.load.image('datacube',     'datacube.png');
         
-        // VFX Images
+        // VFX Images for weapons and projectiles
         this.load.image('enemy_projectile', 'enemy_projectile.png');
         this.load.image('orbital_blade',    'orbital_blade.png');
         this.load.image('missile_bomb',     'missile_bomb.png');
         
-        // Mascot Pet
+        // Mascot Pet spritesheet for various states
         this.load.spritesheet('mascot_sheet', 'assets/mascot_sheet.png?v=3', { frameWidth: 117, frameHeight: 103 });
     }
 
+    /**
+     * @method create
+     * @description Executed after all assets are loaded. Generates procedural textures,
+     * creates global animations for all game objects, and handles scene transitions.
+     * @returns {void}
+     */
     create() {
-        // Procedural Particles (Global)
+        // ─────────────────── PROCEDURAL GENERATION ───────────────────
+        
+        // Procedural Particles (Global glow texture)
         const g = this.make.graphics({ add: false });
-        g.fillStyle(0xffffff); g.fillCircle(6,6,6);
+        g.fillStyle(0xffffff); 
+        g.fillCircle(6,6,6);
         g.generateTexture('p_glow', 12, 12);
         g.destroy();
 
-        // 🟢 Sprite sheet animations 🟢──
+        // ─────────────────── ANIMATION CREATION ───────────────────
+
         // (ship_fly no longer needed — player uses static sprite)
-        const FW = 516, FH = 512;
+        
+        // Enemy animations from spritesheets
         this.anims.create({
             key: 'anim_basic',
             frames: this.anims.generateFrameNumbers('enemy_basic_sheet', { start: 0, end: 3 }),
@@ -114,14 +163,13 @@ export default class BootScene extends Phaser.Scene {
         this.anims.create({
             key: 'anim_elite',
             frames: this.anims.generateFrameNumbers('enemy_elite_sheet', { start: 0, end: 3 }),
-            frameRate: 10, repeat: -1  // fast spin for disco ball
+            frameRate: 10, repeat: -1  // fast spin for disco ball effect
         });
         this.anims.create({
             key: 'anim_boss',
             frames: this.anims.generateFrameNumbers('enemy_boss_sheet', { start: 0, end: 3 }),
             frameRate: 4, repeat: -1
         });
-
         this.anims.create({
             key: 'anim_phantom',
             frames: this.anims.generateFrameNumbers('enemy_phantom_sheet', { start: 0, end: 3 }),
@@ -205,6 +253,9 @@ export default class BootScene extends Phaser.Scene {
             frameRate: 10, repeat: -1
         });
 
+        // ─────────────────── SCENE TRANSITION ───────────────────
+
+        // Check if the player has seen the intro before to skip it if desired
         if (localStorage.getItem('neon_intro_seen')) {
             this.scene.start('MenuScene');
         } else {

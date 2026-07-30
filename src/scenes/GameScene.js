@@ -1,4 +1,10 @@
-import Phaser from 'phaser';
+/**
+ * @file GameScene.js
+ * @description Main gameplay scene for Neon Space Defender. Manages core loop, player movement, enemy spawning, 
+ * collision detection, wave progression, and integrates all major game systems.
+ * @module GameScene
+ */
+\nimport Phaser from 'phaser';
 import AudioSystem from '../systems/AudioSystem.js';
 import EnvironmentSystem from '../systems/EnvironmentSystem.js';
 import WeaponSystem from '../systems/WeaponSystem.js';
@@ -14,7 +20,7 @@ import { getMetaStats } from '../systems/MetaUpgrades.js';
 // DATA
 // ═══════════════════════════════════════════════════════
 
-const UPGRADES = [
+// Global list of in-run upgrades accessible during level up.\nconst UPGRADES = [
     { id: 'multi_shot', name: 'DOUBLE BARREL',   desc: '+1 Schuss gleichzeitig (max 6)',     color: '#00ffff' },
     { id: 'speed',      name: 'HYPERDRIVE',       desc: '+20% Bewegungsgeschwindigkeit',       color: '#ffff00' },
     { id: 'damage',     name: 'HEAVY ROUNDS',     desc: '+40% Schaden pro Treffer',           color: '#ff6600' },
@@ -27,7 +33,7 @@ const UPGRADES = [
     { id: 'crit',       name: 'KRITISCHE SYSTEME',desc: '20% Chance auf 3x Schaden',          color: '#ffdd00' }
 ];
 
-const ENEMY_DEFS = {
+// Base stats, xp yields, and behavioral flags for all enemy types.\nconst ENEMY_DEFS = {
     basic:   { hp: 30,  speed: 80,  score: 10, xp: 8,  color: 0xff2244, shoots: false },
     fast:    { hp: 15,  speed: 165, score: 15, xp: 10, color: 0xff8800, shoots: false },
     tank:    { hp: 180, speed: 45,  score: 35, xp: 28, color: 0x9900ff, shoots: false },
@@ -47,7 +53,7 @@ const ENEMY_DEFS = {
     protector: { hp: 200, speed: 30, score: 70, xp: 50, color: 0x00aaff, shoots: false },
 };
 
-function getWaveComp(wave) {
+/**\n * @description Procedurally determines enemy composition for a given wave.\n * @param {number} wave - Wave index.\n * @returns {Object} Dictionary of enemy types and quantities.\n */\nfunction getWaveComp(wave) {
     if (wave % 20 === 0) return { destroyer: 1 };
     if (wave % 15 === 0) return { hivemind: 1 };
     if (wave % 10 === 0) return { mothership: 1 };
@@ -76,9 +82,18 @@ function getWaveComp(wave) {
 // SCENE
 // ═══════════════════════════════════════════════════════
 
+/**
+ * @class GameScene
+ * @extends Phaser.Scene
+ * @description Central scene controlling the gameplay loop, rendering, input handling, and object pooling.
+ */
 export default class GameScene extends Phaser.Scene {
     constructor() { super('GameScene'); }
 
+    /**
+     * @description Bootstraps the scene with provided data, loading player stats, ship class, and meta upgrades.
+     * @param {Object} data - Initialization parameters passed from previous scenes.
+     */
     init(data) {
         this.shipClass = data?.shipClass || localStorage.getItem('neon_selected_ship') || 'standard';
         this.weaponClass = data?.weaponClass || localStorage.getItem('neon_selected_weapon') || 'pulse';
@@ -87,7 +102,7 @@ export default class GameScene extends Phaser.Scene {
             const val = parseInt(localStorage.getItem(key));
             return isNaN(val) ? 0 : val;
         };
-        const pHP = getSafeInt('neon_upg_base_hp') * 20;
+        // Load persistent meta-upgrades and apply them as base stat augmentations\n        const pHP = getSafeInt('neon_upg_base_hp') * 20;
         const pDmg = getSafeInt('neon_upg_base_dmg') * 0.15;
         const pSpd = getSafeInt('neon_upg_base_speed') * 0.05;
         const pMag = getSafeInt('neon_upg_magnet') * 40;
@@ -184,6 +199,9 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // CREATE
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Sets up the scene's objects, UI, inputs, physics groups, and external systems.
+     */
     create() {
         const { width: cw, height: ch } = this.scale;
         this.cw = cw; this.ch = ch;
@@ -295,7 +313,7 @@ export default class GameScene extends Phaser.Scene {
         }).setDepth(8);
 
         // Collisions
-        this.physics.add.overlap(this.bullets,  this.enemies,  (b, e) => this.onBulletHitEnemy(b, e));
+        // Core collision setup: Note that overlap is used instead of collide to prevent physics bounce\n        this.physics.add.overlap(this.bullets,  this.enemies,  (b, e) => this.onBulletHitEnemy(b, e));
         this.physics.add.overlap(this.player,   this.enemies,  (p, e) => this.onPlayerTouchEnemy(p, e));
         this.physics.add.overlap(this.player,   this.eBullets, (p, b) => this.onEnemyBulletHit(p, b));
         this.physics.add.overlap(this.player,   this.scraps,   (p, s) => this.onScrapCollect(p, s));
@@ -450,6 +468,9 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // TEXTURES
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Procedurally generates small textures (particles, bullets, drops) to avoid external image dependencies.
+     */
     generateTextures() {
         // Spritesheets are loaded in BootScene — only generate small procedural assets here
 
@@ -573,6 +594,9 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // HUD
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Initializes all HUD elements (HP, Shield, XP, Boss bar, etc.) and sets them above the game layers.
+     */
     createHUD() {
         const { cw, ch } = this;
         const D = 300;
@@ -621,6 +645,9 @@ export default class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(D+5).setAlpha(0);
     }
 
+    /**
+     * @description Refreshes HUD text and bar sizes based on current player statistics.
+     */
     updateHUD() {
         const { pd, score, waveNum, cw, ch } = this;
 
@@ -650,6 +677,9 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // PLAYER MOVEMENT
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Processes player input (Keyboard, Gamepad, Mouse) and applies velocity and rotation to the ship.
+     */
     handleMovement() {
         const { keys, player, pd } = this;
         
@@ -743,6 +773,9 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // AUTO SHOOT
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Determines target angles and triggers weapon firing logic based on current weapon class and level.
+     */
     autoShoot() {
         if (this.isGameOver || this.betweenWaves) return;
         
@@ -903,6 +936,12 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Spawns a player projectile from the object pool with given coordinates and trajectory.
+     * @param {number} x - Origin X coordinate.
+     * @param {number} y - Origin Y coordinate.
+     * @param {number} angle - Firing angle in radians.
+     */
     fireBullet(x, y, angle) {
         if (this.audioSys) this.audioSys.playShoot(this.weaponClass);
 
@@ -930,6 +969,10 @@ export default class GameScene extends Phaser.Scene {
         b.setVelocity(Math.cos(angle) * 560, Math.sin(angle) * 560);
     }
 
+    /**
+     * @description Locates the closest active enemy to the player.
+     * @returns {Phaser.Physics.Arcade.Sprite|null} The nearest enemy sprite or null if none exist.
+     */
     findNearestEnemy() {
         let best = null, bestDist = Infinity;
         this.enemies.getChildren().forEach(e => {
@@ -940,6 +983,11 @@ export default class GameScene extends Phaser.Scene {
         return best;
     }
 
+    /**
+     * @description Locates a specific number of nearest active enemies.
+     * @param {number} count - Maximum number of enemies to return.
+     * @returns {Array<Phaser.Physics.Arcade.Sprite>} Array of the nearest enemy sprites.
+     */
     findNearestEnemies(count) {
         const alive = this.enemies.getChildren().filter(e => e.active && !e.isHitZone && !e.isDying);
         alive.sort((a, b) => {
@@ -951,6 +999,13 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // ENEMY SPAWNING & AI
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Displays a stylized dialogue box for boss taunts or story events.
+     * @param {string} title - Speaker name or title.
+     * @param {string} text - The message to display.
+     * @param {string} [color='#ff0000'] - Theme color for the dialog borders and title.
+     * @param {number} [duration=4000] - How long the dialog remains on screen in milliseconds.
+     */
     showDialog(title, text, color = '#ff0000', duration = 4000) {
         if (this.dialogBox) this.dialogBox.destroy();
         
@@ -987,6 +1042,11 @@ export default class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: container, y: ch - 70, duration: 400, ease: 'Back.easeOut' });
     }
 
+    /**
+     * @description Spawns an enemy of the specified type at a random edge or fixed boss location.
+     * @param {string} type - Identifier for the enemy type (e.g., 'basic', 'boss').
+     * @returns {Phaser.Physics.Arcade.Sprite} The spawned enemy instance.
+     */
     spawnEnemy(type) {
         const { cw, ch } = this;
         const pad = 50;
@@ -1092,6 +1152,9 @@ export default class GameScene extends Phaser.Scene {
         return e;
     }
 
+    /**
+     * @description Main AI loop iterating over all active enemies to update their velocities, states, and firing patterns.
+     */
     updateEnemies() {
         const { player } = this;
         this.enemies.getChildren().forEach(e => {
@@ -1281,6 +1344,12 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // BOSS AI (Danmaku / Bullet Hell)
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Handles phase transitions and movement patterns specifically for Boss entities.
+     * @param {Phaser.Physics.Arcade.Sprite} boss - The boss sprite instance.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player sprite instance.
+     * @param {number} angle - Angle towards the player.
+     */
     updateBoss(boss, player, angle) {
         const now = this.time.now;
         const t = now / 1000 + boss.tOffset;
@@ -1312,6 +1381,13 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Executes bullet-hell attack patterns based on the current boss phase and modifiers.
+     * @param {Phaser.Physics.Arcade.Sprite} boss - The boss executing the attack.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The target player.
+     * @param {number} angle - Angle towards the player.
+     * @param {number} t - Time offset used for procedural pattern generation.
+     */
     executeBossAttack(boss, player, angle, t) {
         const now = this.time.now;
         const phase = boss.state.phase;
@@ -1382,6 +1458,13 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Spawns an enemy projectile from the pool aiming at a specific angle.
+     * @param {number} x - Origin X coordinate.
+     * @param {number} y - Origin Y coordinate.
+     * @param {number} angle - Trajectory angle in radians.
+     * @param {number} [speed=230] - Velocity magnitude.
+     */
     fireEnemyBullet(x, y, angle, speed = 230) {
         const b = this.eBullets.get(x, y, 'enemy_projectile');
         if (!b) return;
@@ -1400,6 +1483,11 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // COLLISION HANDLERS
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Collision callback when a player projectile strikes an enemy.
+     * @param {Phaser.Physics.Arcade.Image} bullet - The projectile striking the target.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The target being struck.
+     */
     onBulletHitEnemy(bullet, enemy) {
         if (!bullet.active || !enemy.active || enemy.isDying) return;
         
@@ -1477,6 +1565,11 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Collision callback when the player physically collides with an enemy hull.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The enemy colliding with the player.
+     */
     onPlayerTouchEnemy(player, enemy) {
         if (!enemy.active || this.playerInvincible) return;
         const collisionDmg = 10 + (this.waveNum * 2.5) + (this.pd.maxHp * 0.08);
@@ -1487,12 +1580,22 @@ export default class GameScene extends Phaser.Scene {
         this.time.delayedCall(300, () => { if (enemy.active) enemy.setVelocity(0,0); });
     }
 
+    /**
+     * @description Collision callback when an enemy projectile strikes the player.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player.
+     * @param {Phaser.Physics.Arcade.Image} bullet - The enemy projectile.
+     */
     onEnemyBulletHit(player, bullet) {
         if (!bullet.active) return;
         this.eBullets.killAndHide(bullet);
         this.damagePlayer(bullet.damage || 10);
     }
 
+    /**
+     * @description Collision callback when an orbital defense blade slices an enemy.
+     * @param {Phaser.Physics.Arcade.Sprite} blade - The orbital blade.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The target enemy.
+     */
     onOrbitalHitEnemy(blade, enemy) {
         if (!enemy.active || enemy.isDying || enemy.isShielded) return;
         const now = this.time.now;
@@ -1510,6 +1613,11 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Collision callback when an orbital blade blocks an incoming enemy projectile.
+     * @param {Phaser.Physics.Arcade.Sprite} blade - The orbital blade.
+     * @param {Phaser.Physics.Arcade.Image} bullet - The blocked projectile.
+     */
     onOrbitalHitEnemyBullet(blade, bullet) {
         if (!bullet.active) return;
         this.eBullets.killAndHide(bullet);
@@ -1519,6 +1627,10 @@ export default class GameScene extends Phaser.Scene {
         if (this.audioSys) this.audioSys.playHit();
     }
 
+    /**
+     * @description Initiates the death sequence and cleanup for a defeated enemy.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The defeated enemy.
+     */
     killEnemy(enemy) {
         if (this.audioSys) this.audioSys.playExplosion();
         
@@ -1532,6 +1644,10 @@ export default class GameScene extends Phaser.Scene {
         this.onEnemyDied(enemy);
     }
 
+    /**
+     * @description Handles drop generation (XP, scrap, weapons), score calculation, and chain effects upon enemy death.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The enemy that just died.
+     */
     onEnemyDied(enemy) {
         if (this.pd.vampireProtocol) {
             this.healPlayer(1);
@@ -1618,6 +1734,11 @@ export default class GameScene extends Phaser.Scene {
         this.checkWaveComplete();
     }
 
+    /**
+     * @description Spawns a scrap collectible at the specified coordinates.
+     * @param {number} x - X coordinate.
+     * @param {number} y - Y coordinate.
+     */
     spawnScrap(x, y) {
         const s = this.scraps.create(x, y, 'scrap_gear').setDepth(4);
         s.setScale(0.06);
@@ -1628,6 +1749,11 @@ export default class GameScene extends Phaser.Scene {
         s.setDrag(1.2);
     }
 
+    /**
+     * @description Collision callback for collecting scrap currency.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player.
+     * @param {Phaser.Physics.Arcade.Sprite} scrap - The collected scrap.
+     */
     onScrapCollect(player, scrap) {
         if (!scrap.active) return;
         scrap.destroy();
@@ -1643,6 +1769,11 @@ export default class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: pt, y: pt.y - 20, alpha: 0, duration: 600, onComplete: () => pt.destroy() });
     }
 
+    /**
+     * @description Spawns a premium data cube drop.
+     * @param {number} x - X coordinate.
+     * @param {number} y - Y coordinate.
+     */
     spawnCube(x, y) {
         const c = this.cubesGroup.create(x, y, 'datacube').setDepth(4);
         c.setScale(0.06);
@@ -1653,6 +1784,11 @@ export default class GameScene extends Phaser.Scene {
         c.setDrag(1.5);
     }
 
+    /**
+     * @description Spawns a temporary in-run weapon upgrade drop.
+     * @param {number} x - X coordinate.
+     * @param {number} y - Y coordinate.
+     */
     spawnWeaponUpgrade(x, y) {
         const u = this.weaponUpgradesGroup.create(x, y, 'weapon_upgrade_tex').setDepth(4);
         const angle = Math.random() * Math.PI * 2;
@@ -1671,6 +1807,11 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Collision callback for collecting a weapon upgrade. Increases weapon level up to max.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player.
+     * @param {Phaser.Physics.Arcade.Sprite} upgrade - The collected upgrade item.
+     */
     onCollectWeaponUpgrade(player, upgrade) {
         if (!upgrade.active) return;
         upgrade.destroy();
@@ -1689,6 +1830,11 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Collision callback for data cubes (meta-currency).
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player.
+     * @param {Phaser.Physics.Arcade.Sprite} cube - The collected cube.
+     */
     onCollectCube(player, cube) {
         cube.destroy();
         this.pd.cubes++;
@@ -1703,6 +1849,10 @@ export default class GameScene extends Phaser.Scene {
     // DAMAGE / HEAL
     // ─────────────────────────────────────────────────────
     
+    /**
+     * @description Slows time briefly for dramatic effect upon heavy impacts or crits.
+     * @param {number} [intensity=1] - Multiplier for the freeze duration.
+     */
     triggerHitStop(intensity = 1) {
         // Creates a dramatic micro-pause
         this.time.timeScale = 0.05; 
@@ -1713,6 +1863,10 @@ export default class GameScene extends Phaser.Scene {
         }, 40 * intensity);
     }
 
+    /**
+     * @description Applies damage to the player, handling shields, invulnerability frames, and death state.
+     * @param {number} amount - Amount of damage to deal.
+     */
     damagePlayer(amount) {
         if (this.isGameOver || this.playerInvincible || this.player.isInvulnerable || this.player.hasAegis) return;
 
@@ -1778,6 +1932,10 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Restores player HP without exceeding the maximum cap.
+     * @param {number} amount - HP to restore.
+     */
     healPlayer(amount) {
         this.pd.hp = Math.min(this.pd.maxHp, this.pd.hp + amount);
         this.eventSys.triggerWrenchComment('heal');
@@ -1786,6 +1944,12 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // XP / LEVEL UP
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Drops an experience crystal containing a specific XP value.
+     * @param {number} x - X coordinate.
+     * @param {number} y - Y coordinate.
+     * @param {number} amount - Experience points contained.
+     */
     spawnXP(x, y, amount) {
         const c = this.physics.add.image(x, y, 'crystal_xp').setDepth(3);
         c.setScale(0.05);
@@ -1797,6 +1961,9 @@ export default class GameScene extends Phaser.Scene {
         this.crystals.add(c);
     }
 
+    /**
+     * @description Pulls nearby XP crystals, scrap, and upgrades toward the player based on the magnet stat.
+     */
     updateXPMagnet() {
         const px = this.player.x, py = this.player.y;
         const range = this.pd.magnetRange;
@@ -1847,6 +2014,10 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Adds experience points to the player and triggers level up if the threshold is reached.
+     * @param {number} amount - XP to add.
+     */
     addXP(amount) {
         this.pd.xp += amount;
         if (this.pd.xp >= this.pd.xpToNext) {
@@ -1857,6 +2028,9 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Pauses game logic and generates 3 random upgrade choices from the available pool.
+     */
     levelUp() {
         // ── PAUSE EVERYTHING during upgrade selection ──
         this.physics.world.pause();
@@ -1931,6 +2105,10 @@ export default class GameScene extends Phaser.Scene {
         this.showUpgradePanel(choices);
     }
 
+    /**
+     * @description Displays the HTML-based upgrade selection panel.
+     * @param {Array<Object>} choices - The randomly drawn upgrades to offer.
+     */
     showUpgradePanel(choices) {
         const panel = document.getElementById('upgrade-panel');
         const cardContainer = document.getElementById('upgrade-cards');
@@ -1963,6 +2141,10 @@ export default class GameScene extends Phaser.Scene {
         panel.style.display = 'flex';
     }
 
+    /**
+     * @description Applies the chosen upgrade modifier to the player's internal stats.
+     * @param {string} id - The unique identifier of the chosen upgrade.
+     */
     applyUpgrade(id) {
         const pd = this.pd;
         pd.upgLevels[id] = (pd.upgLevels[id] || 0) + 1;
@@ -1993,6 +2175,9 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // ACTIVE ABILITIES (SPACEBAR)
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Triggers the ship-specific active ability upon pressing SPACE, handling respective cooldowns.
+     */
     activateAbility() {
         if (this.isGameOver) return;
         
@@ -2031,6 +2216,9 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Phantom class ability: Grants immense speed and intangibility.
+     */
     activatePhaseShift() {
         this.player.isInvulnerable = true;
         this.player.setAlpha(0.4);
@@ -2045,6 +2233,9 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Bomber class ability: Fires a heavy missile with a massive area of effect.
+     */
     activateCarpetBomb() {
         this.showBanner('CARPET BOMBING!', '#ff00ff');
         
@@ -2089,6 +2280,9 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Dreadnought class ability: Forms a temporary absolute defense barrier.
+     */
     activateAegisShield() {
         this.showBanner('AEGIS SHIELD!', '#ffaa00');
         
@@ -2117,6 +2311,9 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Interceptor class ability: Substantially increases fire rate for a short burst.
+     */
     activateOverdrive() {
         this.showBanner('OVERDRIVE!', '#ff0000');
         this.pd.fireDelay /= 2;
@@ -2127,6 +2324,9 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Paladin class ability: Casts a healing pulse that violently repels and damages enemies.
+     */
     activateHolyNova() {
         this.showBanner('HOLY NOVA!', '#ffff00');
         this.cameras.main.flash(200, 255, 255, 200);
@@ -2148,6 +2348,9 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Standard active: Consumes one Nova charge to wipe standard enemies from the screen and damage bosses.
+     */
     activateNovaBomb() {
         if (this.pd.nova <= 0 || this.isGameOver) return;
         this.pd.nova--;
@@ -2189,6 +2392,9 @@ export default class GameScene extends Phaser.Scene {
         this.checkWaveComplete();
     }
 
+    /**
+     * @description Resizes or repositions the defensive orbital blades to match current upgrade levels.
+     */
     updateOrbitals() {
         const count = this.pd.orbitals;
         const blades = this.orbitalsGroup.getChildren();
@@ -2207,6 +2413,10 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // WAVE SYSTEM
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Initiates the next wave cycle, queuing enemy spawns according to the procedural composition.
+     * @param {number} n - The wave number to commence.
+     */
     startWave(n) {
         this.waveNum = n;
         this.betweenWaves = false;
@@ -2272,6 +2482,9 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Evaluates if all enemies in the current wave are defeated and progresses to the downtime phase.
+     */
     checkWaveComplete() {
         if (this.waveLeft <= 0 && !this.betweenWaves) {
             this.betweenWaves = true;
@@ -2287,6 +2500,9 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * @description Summons the mid-run shop vendor during specific wave intervals.
+     */
     spawnLaserCatMerchant() {
         this.merchant = this.physics.add.sprite(-50, this.ch/2, 'nyx_merchant').setDepth(15);
         this.merchant.setScale(0.12);
@@ -2309,6 +2525,11 @@ export default class GameScene extends Phaser.Scene {
         this.showBanner('DIE KATZE WILL DEIN GELD!', '#aa00ff');
     }
 
+    /**
+     * @description Displays large stylized text across the center of the screen (e.g., Wave notifications).
+     * @param {string} text - Message to show.
+     * @param {string} color - Hex color for the text stroke.
+     */
     showBanner(text, color) {
         const b = this.hud.waveBanner;
         b.setText(text).setColor(color).setAlpha(0);
@@ -2327,6 +2548,12 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // FX
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Emits particle explosions denoting an entity's destruction.
+     * @param {number} x - Impact X coordinate.
+     * @param {number} y - Impact Y coordinate.
+     * @param {number} color - Particle tint color.
+     */
     spawnDeathFX(x, y, color) {
         const em = this.add.particles(x, y, 'p_glow', {
             speed: { min: 50, max: 200 }, scale: { start: 0.5, end: 0 },
@@ -2349,6 +2576,13 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @description Pops up a floating damage or status indicator text.
+     * @param {number} x - X coordinate.
+     * @param {number} y - Y coordinate.
+     * @param {number|string} amount - Value or text to float.
+     * @param {string} [color='#ffff00'] - Text color.
+     */
     showDmgNum(x, y, amount, color = '#ffff00') {
         const isCrit = color === '#ff0055';
         const textVal = typeof amount === 'number' ? `-${Math.round(amount)}` : amount;
@@ -2365,6 +2599,10 @@ export default class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: t, y: y - 55, alpha: 0, duration: 900, onComplete: () => t.destroy() });
     }
 
+    /**
+     * @description Highlights consecutive rapid kills with a combo multiplier notification.
+     * @param {number} count - Current combo sequence count.
+     */
     showCombo(count) {
         const t = this.hud.comboText;
         const msg = (count > 15) ? 'MASCHINE!' : (count > 10) ? 'ZERSTÖRER!' : (count > 5) ? 'SCHROTT-COMBO!' : 'GLÜCK GEHABT!';
@@ -2377,6 +2615,9 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // GAME OVER
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Freezes gameplay, finalizes scoring, checks highscores, and reveals the Game Over overlay.
+     */
     gameOver() {
         if (this.isGameOver) return;
         this.isGameOver = true;
@@ -2461,6 +2702,11 @@ export default class GameScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────
     // UPDATE
     // ─────────────────────────────────────────────────────
+    /**
+     * @description Phaser core tick loop. Updates movement, physics logic, and cleans up out-of-bound entities.
+     * @param {number} time - Current elapsed game time.
+     * @param {number} delta - Delta time since last frame.
+     */
     update(time, delta) {
         if (this.isGameOver || this.isDevMenuOpen) return;
 
@@ -2529,6 +2775,9 @@ export default class GameScene extends Phaser.Scene {
     // ==========================================
     // DEV MENU (F6)
     // ==========================================
+    /**
+     * @description Opens or closes the developer debug interface overlay.
+     */
     toggleDevMenu() {
         if (this.isGameOver) return;
         

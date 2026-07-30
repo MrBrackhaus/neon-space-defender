@@ -1,15 +1,38 @@
+/**
+ * @file AbilitySystem.js
+ * @description Manages ship-specific ultimate abilities triggered by user input.
+ * Handles cooldown logic, input detection, and the effects of abilities based on the selected ship class.
+ * @module AbilitySystem
+ */
+
 import Phaser from 'phaser';
 
 export default class AbilitySystem {
+    /**
+     * @class AbilitySystem
+     * @description System responsible for executing player ultimate abilities.
+     * @param {Phaser.Scene} scene - The main game scene.
+     */
     constructor(scene) {
+        /** @type {Phaser.Scene} Reference to the active scene */
         this.scene = scene;
-        this.cooldown = 15000; // 15 seconds in milliseconds
-        this.lastUsedTime = -15000; // Allow immediate use
         
-        // Listen to SPACEBAR
+        /** @type {number} Ultimate ability cooldown in milliseconds */
+        this.cooldown = 15000; // 15 seconds
+        
+        /** @type {number} Timestamp of the last used ultimate, initialized to allow immediate use */
+        this.lastUsedTime = -15000; 
+        
+        /** @type {Phaser.Input.Keyboard.Key} Keyboard binding for the ability (SPACE) */
         this.spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     }
 
+    /**
+     * @description Updates the system, checking for player input to trigger abilities.
+     * @param {number} time - Current scene time.
+     * @param {number} delta - Delta time since last frame.
+     * @returns {void}
+     */
     update(time, delta) {
         let trigger = Phaser.Input.Keyboard.JustDown(this.spaceKey);
         
@@ -24,17 +47,26 @@ export default class AbilitySystem {
         }
     }
 
+    // ─────────────────── ABILITY LOGIC ───────────────────
+
+    /**
+     * @description Attempts to trigger the ultimate ability if off cooldown.
+     * Determines which ability to use based on the player's ship class.
+     * @param {number} time - Current scene time.
+     * @returns {void}
+     */
     triggerUltimate(time) {
         if (time - this.lastUsedTime < this.cooldown) {
             return; // On cooldown
         }
 
-        // Assuming the scene's player has a shipClass property
+        // Assuming the scene's player has a shipClass property defined
         const shipClass = this.scene.player ? this.scene.player.shipClass : null;
         if (!shipClass) return;
 
         this.lastUsedTime = time;
 
+        // Route to the specific ship's ultimate ability
         if (shipClass === 'bomber') {
             this.triggerBomberUltimate();
         } else if (shipClass === 'dreadnought') {
@@ -44,14 +76,20 @@ export default class AbilitySystem {
         }
     }
 
+    /**
+     * @description Executes the Bomber class ultimate: Drops a wide spread of high-damage bombs forward.
+     * @returns {void}
+     */
     triggerBomberUltimate() {
         // Drop 10 bombs in a wide arc forward
         for (let i = 0; i < 10; i++) {
-            const angle = Phaser.Math.Between(-45, 45); // Spread angle
+            const angle = Phaser.Math.Between(-45, 45); // Random spread angle
             
             // Create a simple visual for the bomb using a graphics circle
             const bombVisual = this.scene.add.circle(this.scene.player.x, this.scene.player.y, 8, 0xff0000);
             this.scene.physics.add.existing(bombVisual);
+            
+            // Bombs do significantly more damage than normal shots and pierce enemies
             bombVisual.damage = 150 + (this.scene.pd.damage * 2);
             bombVisual.pierce = true;
             this.scene.bullets.add(bombVisual);
@@ -66,7 +104,7 @@ export default class AbilitySystem {
                 Math.sin(angleRad) * speed
             );
             
-            // Clean up bombs after 3 seconds
+            // Clean up bombs after 3 seconds to prevent memory leaks or stray hits
             this.scene.time.delayedCall(3000, () => {
                 if (bombVisual && bombVisual.active) {
                     bombVisual.destroy();
@@ -75,11 +113,16 @@ export default class AbilitySystem {
         }
     }
 
+    /**
+     * @description Executes the Dreadnought class ultimate: Grants temporary invincibility.
+     * @returns {void}
+     */
     triggerDreadnoughtUltimate() {
-        // Make player invincible for 4s
+        // Make player invincible for 4 seconds
         this.scene.playerInvincible = true;
-        this.scene.player.setTint(0xffd700); // Tint gold
+        this.scene.player.setTint(0xffd700); // Tint gold as visual feedback
 
+        // Remove invincibility after duration
         this.scene.time.delayedCall(4000, () => {
             this.scene.playerInvincible = false;
             if (this.scene.player && this.scene.player.active) {
@@ -88,18 +131,22 @@ export default class AbilitySystem {
         });
     }
 
+    /**
+     * @description Executes the Phantom class ultimate: Applies stealth (opacity drop) and doubles movement speed.
+     * @returns {void}
+     */
     triggerPhantomUltimate() {
-        // Apply stealth (opacity 0.3) and double speed for 3s
+        // Apply stealth visual (opacity 0.3)
         this.scene.player.setAlpha(0.3);
         
-        // Custom flag or direct speed multiplication depending on how your movement is handled.
-        // We'll set a flag that GameScene can check, or temporarily modify player.speed if it exists.
+        // Temporarily modify player speed and set a flag for GameScene logic
         this.scene.playerPhantomSpeedBoost = true;
         if (this.scene.player.speed) {
             this.scene.player.originalSpeed = this.scene.player.speed;
             this.scene.player.speed *= 2;
         }
 
+        // Restore normal state after 3 seconds
         this.scene.time.delayedCall(3000, () => {
             if (this.scene.player && this.scene.player.active) {
                 this.scene.player.setAlpha(1);

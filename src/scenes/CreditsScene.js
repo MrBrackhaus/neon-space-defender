@@ -1,25 +1,62 @@
+/**
+ * @file CreditsScene.js
+ * @description The ending / credits roll scene for Neon Space Defender.
+ * Displays a humorous, smoothly scrolling list of credits acknowledging both 
+ * the real creators and fictional in-universe roles.
+ * @module CreditsScene
+ */
+
 import Phaser from 'phaser';
 
+/**
+ * @class CreditsScene
+ * @extends Phaser.Scene
+ * @description Renders a vertically scrolling credits sequence that automatically
+ * returns to the main menu when finished, or can be skipped by the player.
+ */
 export default class CreditsScene extends Phaser.Scene {
+    /**
+     * @constructor
+     * @description Initializes the CreditsScene with its scene key.
+     */
     constructor() {
         super({ key: 'CreditsScene' });
     }
 
+    /**
+     * @method create
+     * @description Sets up the background, text styles, generates the long list of credits,
+     * and initializes the linear scrolling tween animation.
+     * @returns {void}
+     */
     create() {
         const { width: cw, height: ch } = this.scale;
 
-        // Background
+        // ─────────────────── BACKGROUND ───────────────────
+        
+        // Slightly purple tinted background for a synthetic aesthetic
         this.add.image(cw/2, ch/2, 'bg')
             .setDisplaySize(cw * 1.05, ch * 1.05)
             .setAlpha(0.3)
             .setTint(0xff00ff);
 
-        // Container for scrolling credits
+        // Main container that will be animated to scroll upwards
+        // Starts off-screen at the bottom (ch + 50)
         const creditsContainer = this.add.container(cw / 2, ch + 50);
 
-        const titleStyle = { fontFamily: 'Orbitron', fontSize: '22px', color: '#00ffff', fontStyle: 'bold', align: 'center', shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 10, fill: true } };
-        const nameStyle = { fontFamily: 'Share Tech Mono', fontSize: '32px', color: '#ffffff', align: 'center', shadow: { offsetX: 0, offsetY: 0, color: '#ffffff', blur: 10, fill: true } };
+        // ─────────────────── TYPOGRAPHY ───────────────────
+        
+        const titleStyle = { 
+            fontFamily: 'Orbitron', fontSize: '22px', color: '#00ffff', fontStyle: 'bold', 
+            align: 'center', shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 10, fill: true } 
+        };
+        const nameStyle = { 
+            fontFamily: 'Share Tech Mono', fontSize: '32px', color: '#ffffff', 
+            align: 'center', shadow: { offsetX: 0, offsetY: 0, color: '#ffffff', blur: 10, fill: true } 
+        };
 
+        // ─────────────────── ROLES DATA ───────────────────
+        
         const roles = [
             { title: "LEAD DEVELOPER & VISIONARY", name: "Michael Kurz" },
             { title: "SUPREME COMMANDER OF THE VOID", name: "König Jergeric" },
@@ -80,13 +117,15 @@ export default class CreditsScene extends Phaser.Scene {
 
         let currentY = 0;
         
-        // Add huge header
+        // Add huge game header at the very top of the credits roll
         const mainTitle = this.add.text(0, currentY, 'NEON SPACE DEFENDER', {
-            fontFamily: 'Orbitron', fontSize: '54px', color: '#ff00ff', fontStyle: 'bold', shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 20, fill: true }
+            fontFamily: 'Orbitron', fontSize: '54px', color: '#ff00ff', fontStyle: 'bold', 
+            shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 20, fill: true }
         }).setOrigin(0.5);
         creditsContainer.add(mainTitle);
         currentY += 150;
 
+        // Iterate through all roles and dynamically position them in the container
         roles.forEach(role => {
             const tText = this.add.text(0, currentY, role.title, titleStyle).setOrigin(0.5);
             const nText = this.add.text(0, currentY + 35, role.name, nameStyle).setOrigin(0.5);
@@ -94,22 +133,28 @@ export default class CreditsScene extends Phaser.Scene {
             currentY += 120;
         });
 
-        // Thanks for playing
+        // Thanks for playing message at the very end
         const thanks = this.add.text(0, currentY + 100, 'THANK YOU FOR PLAYING!', {
-            fontFamily: 'Orbitron', fontSize: '40px', color: '#ffaa00', fontStyle: 'bold', shadow: { offsetX: 0, offsetY: 0, color: '#ffaa00', blur: 20, fill: true }
+            fontFamily: 'Orbitron', fontSize: '40px', color: '#ffaa00', fontStyle: 'bold', 
+            shadow: { offsetX: 0, offsetY: 0, color: '#ffaa00', blur: 20, fill: true }
         }).setOrigin(0.5);
         creditsContainer.add(thanks);
 
-        // Scroll Animation (Duration dynamically scales with length)
+        // ─────────────────── SCROLL ANIMATION ───────────────────
+
+        // Tween to continuously move the container upward.
+        // Duration scales dynamically with the height (length) of the credits.
         this.tweens.add({
             targets: creditsContainer,
-            y: -currentY - 200,
+            y: -currentY - 200, // Move completely off the top of the screen
             duration: currentY * 20,
             ease: 'Linear',
             onComplete: () => {
                 this._goBack();
             }
         });
+
+        // ─────────────────── SKIP BUTTON ───────────────────
 
         const btnStyle = {
             fontFamily: 'Orbitron',
@@ -120,6 +165,7 @@ export default class CreditsScene extends Phaser.Scene {
             shadow: { offsetX: 0, offsetY: 0, color: '#fff', blur: 10, fill: true }
         };
 
+        // UI button allowing the player to exit early if they don't want to watch
         const backBtn = this.add.text(40, 40, '◀ SKIP CREDITS', btnStyle)
             .setOrigin(0, 0)
             .setInteractive({ useHandCursor: true })
@@ -127,9 +173,17 @@ export default class CreditsScene extends Phaser.Scene {
             .on('pointerout', () => backBtn.clearTint())
             .on('pointerdown', () => this._goBack());
 
+        // Initial camera fade in for smooth transition
         this.cameras.main.fadeIn(500, 0, 0, 0);
     }
 
+    /**
+     * @method _goBack
+     * @description Transition back to the main menu. Guarded by `isTransitioning` 
+     * to prevent multiple clicks or tween events from triggering it twice.
+     * @private
+     * @returns {void}
+     */
     _goBack() {
         if (this.isTransitioning) return;
         this.isTransitioning = true;

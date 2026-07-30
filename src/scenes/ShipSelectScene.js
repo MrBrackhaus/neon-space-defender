@@ -1,11 +1,24 @@
+/**
+ * @file ShipSelectScene.js
+ * @description The ship selection and weapon loadout screen for the Neon Space Defender game.
+ * Allows players to spend scrap to unlock new ships, preview ship stats, select active weapons
+ * unlocked via the Tech Tree, and finally launch into the main GameScene.
+ * @module ShipSelectScene
+ */
+
 import Phaser from 'phaser';
 
+/**
+ * @constant {Array<Object>} WEAPONS
+ * @description Configuration array defining all available primary weapons.
+ * Includes unlock requirements (techKey), visual styles, and descriptions (in German).
+ */
 const WEAPONS = [
     {
         id: 'pulse',
         name: 'PULSE CANNON',
         icon: '✦',
-        techKey: null,
+        techKey: null, // Always unlocked
         color: 0x00ffff,
         desc: 'Ausgewogen.\nAlterniert Kanonen.\nDMG: 100% | SHOTS: 1',
         tag: 'STANDARD',
@@ -30,6 +43,12 @@ const WEAPONS = [
     },
 ];
 
+/**
+ * @constant {Array<Object>} SHIPS
+ * @description Configuration array defining all playable ships in the game.
+ * Includes base stats (hp, dmg, spd) which act as multipliers in the GameScene,
+ * cost to unlock, and feature descriptions.
+ */
 const SHIPS = [
     { id: 'standard', img: 'ship_standard', name: 'STANDARD', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Ausgewogen. Solider Allrounder für jede Situation.' },
     { id: 'interceptor', img: 'ship_interceptor', name: 'INTERCEPTOR', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Ein extrem schnelles Angriffs-Schiff.' },
@@ -39,17 +58,36 @@ const SHIPS = [
     { id: 'bomber', img: 'ship_bomber', name: 'BOMBER', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Startet mit 3 verheerenden Nova-Bomben. Perfekt für Flächenschaden.' }
 ];
 
+/**
+ * @class ShipSelectScene
+ * @extends Phaser.Scene
+ * @description Provides the UI for players to manage their ship and weapon selection before starting a run.
+ */
 export default class ShipSelectScene extends Phaser.Scene {
-    constructor() { super('ShipSelectScene'); }
+    /**
+     * @constructor
+     * @description Initializes the ShipSelectScene with its unique scene key.
+     */
+    constructor() { 
+        super('ShipSelectScene'); 
+    }
 
+    /**
+     * @method create
+     * @description Builds the entire UI for the Hangar scene, reading unlocked state
+     * from localStorage and rendering the background, ship list, info card, and weapons tabs.
+     * @returns {void}
+     */
     create() {
         const { width: cw, height: ch } = this.scale;
-        this.cw = cw; this.ch = ch;
+        this.cw = cw; 
+        this.ch = ch;
         
-        // --- 1. Background & Atmosphere ---
+        // ─────────────────── BACKGROUND & ATMOSPHERE ───────────────────
+        
         this.add.image(cw / 2, ch / 2, 'bg').setAlpha(0.3).setDepth(0);
         
-        // Drifting neon particles
+        // Drifting neon particles to give a hangar atmosphere
         const particles = this.add.particles(0, 0, 'p_glow', {
             x: { min: 0, max: cw },
             y: { min: ch, max: ch + 50 },
@@ -63,6 +101,8 @@ export default class ShipSelectScene extends Phaser.Scene {
         });
         particles.setDepth(0);
 
+        // ─────────────────── STATE MANAGEMENT ───────────────────
+
         this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10);
         this.unlockedShips = JSON.parse(localStorage.getItem('neon_unlocked_ships') || '["standard"]');
 
@@ -71,7 +111,8 @@ export default class ShipSelectScene extends Phaser.Scene {
         
         this.previewShipId = this.selectedShip;
 
-        // --- TITLE ---
+        // ─────────────────── UI HEADER ───────────────────
+        
         this.add.text(cw / 2, 40, 'Holo-Hangar & Waffenkammer', {
             fontFamily: 'Orbitron', fontSize: '28px', fontStyle: 'bold',
             color: '#00ffff', stroke: '#0033ff', strokeThickness: 4, shadow: { blur: 15, color: '#00ffff', fill: true }
@@ -81,7 +122,8 @@ export default class ShipSelectScene extends Phaser.Scene {
             fontFamily: 'Orbitron', fontSize: '16px', color: '#ffaa00', fontStyle: 'bold', shadow: { blur: 10, color: '#ffaa00', fill: true }
         }).setOrigin(0.5);
 
-        // --- LAYOUT BUILDERS ---
+        // ─────────────────── LAYOUT BUILDERS ───────────────────
+        
         this.leftX = cw * 0.25;
         this.rightX = cw * 0.65;
         
@@ -90,7 +132,8 @@ export default class ShipSelectScene extends Phaser.Scene {
         this.buildWeaponTabs();
         this.updateInfoCard();
         
-        // --- LAUNCH BUTTON ---
+        // ─────────────────── LAUNCH BUTTON ───────────────────
+        
         const launchBtn = this.add.container(cw / 2, ch - 50);
         const lBg = this.add.rectangle(0, 0, 240, 60, 0x00ffcc)
             .setInteractive({ useHandCursor: true })
@@ -115,6 +158,7 @@ export default class ShipSelectScene extends Phaser.Scene {
         lBg.on('pointerdown', () => {
             this.cameras.main.fadeOut(400, 0, 0, 0);
             this.cameras.main.once('camerafadeoutcomplete', () => {
+                // Pass selected loadout to the GameScene
                 this.scene.start('GameScene', {
                     shipClass: this.selectedShip,
                     weaponClass: this.selectedWeapon
@@ -122,7 +166,8 @@ export default class ShipSelectScene extends Phaser.Scene {
             });
         });
 
-        // --- BACK BUTTON ---
+        // ─────────────────── BACK BUTTON ───────────────────
+        
         const btnBack = this.add.text(80, ch - 50, '◀ MENU', {
             fontFamily: 'Orbitron', fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -132,6 +177,12 @@ export default class ShipSelectScene extends Phaser.Scene {
         btnBack.on('pointerout', () => btnBack.setColor('#ffffff'));
     }
 
+    /**
+     * @method buildShipList
+     * @description Generates the scrollable/clickable list of ships on the left side of the screen.
+     * Indicates unlock status, active status, and handles unlocking ships via Scrap.
+     * @returns {void}
+     */
     buildShipList() {
         const startY = this.ch * 0.25;
         const spacing = 75;
@@ -148,19 +199,24 @@ export default class ShipSelectScene extends Phaser.Scene {
             const isSelected = this.selectedShip === s.id;
             
             const item = this.add.container(this.leftX, y);
+            
+            // Background box for the list item
             const bg = this.add.rectangle(0, 0, 260, 60, isSelected ? 0x112244 : 0x0a0a1a, 0.8)
                 .setStrokeStyle(isSelected ? 2 : 1, isSelected ? s.color : 0x334455)
                 .setInteractive({ useHandCursor: true });
                 
+            // Ship preview icon
             const icon = this.add.image(-90, 0, s.img).setScale(s.scale * 0.6);
             if (!isUnlocked) icon.setTint(0x444444);
             
+            // Ship Name
             const nameTxt = this.add.text(-40, 0, s.name, {
                 fontFamily: 'Orbitron', fontSize: '16px', color: isUnlocked ? '#ffffff' : '#666666', fontStyle: 'bold'
             }).setOrigin(0, 0.5);
 
             item.add([bg, icon, nameTxt]);
             
+            // Status Tags
             if (isSelected) {
                 const activeTag = this.add.text(100, 0, 'AKTIV', { fontFamily: 'Orbitron', fontSize: '10px', color: '#00ff88' }).setOrigin(0.5, 0.5);
                 item.add(activeTag);
@@ -169,10 +225,11 @@ export default class ShipSelectScene extends Phaser.Scene {
                 item.add(lockTag);
             }
             
+            // Interaction logic
             bg.on('pointerover', () => {
                 if (this.previewShipId !== s.id) {
                     this.previewShipId = s.id;
-                    this.updateInfoCard();
+                    this.updateInfoCard(); // Update the right-side panel
                 }
                 bg.setFillStyle(0x223355, 0.9);
             });
@@ -181,16 +238,19 @@ export default class ShipSelectScene extends Phaser.Scene {
             });
             bg.on('pointerdown', () => {
                 if (isUnlocked) {
+                    // Equip ship
                     localStorage.setItem('neon_selected_ship', s.id);
                     this.scene.restart();
                 } else if (this.scrap >= s.cost) {
+                    // Buy and unlock ship
                     this.scrap -= s.cost;
                     this.unlockedShips.push(s.id);
                     localStorage.setItem('neon_scrap', this.scrap);
                     localStorage.setItem('neon_unlocked_ships', JSON.stringify(this.unlockedShips));
                     localStorage.setItem('neon_selected_ship', s.id);
-                    this.scene.restart();
+                    this.scene.restart(); // Refresh the UI completely
                 } else {
+                    // Not enough scrap feedback
                     this.cameras.main.shake(200, 0.01);
                 }
             });
@@ -199,10 +259,16 @@ export default class ShipSelectScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @method buildInfoCard
+     * @description Creates the initial structure for the detailed ship info card on the right.
+     * Contains the large ship sprite, name, description, stat bars container, and action button.
+     * @returns {void}
+     */
     buildInfoCard() {
         this.cardContainer = this.add.container(this.rightX, this.ch * 0.45);
         
-        // Card BG
+        // Main Card BG
         const bg = this.add.rectangle(0, 0, 400, 480, 0x050510, 0.95)
             .setStrokeStyle(2, 0x00ffff);
         this.cardContainer.add(bg);
@@ -216,27 +282,28 @@ export default class ShipSelectScene extends Phaser.Scene {
         this.cardSprite = this.add.image(0, -110, 'ship_standard').setScale(0.5);
         this.cardContainer.add(this.cardSprite);
 
-        // Name
+        // Ship Name Display
         this.cardName = this.add.text(0, 20, 'SHIP NAME', {
             fontFamily: 'Orbitron', fontSize: '28px', color: '#ffffff', fontStyle: 'bold'
         }).setOrigin(0.5);
         this.cardContainer.add(this.cardName);
 
-        // Stats Container
+        // Stats Container (dynamic bars injected here)
         this.statsContainer = this.add.container(-150, 60);
         this.cardContainer.add(this.statsContainer);
         
-        // Description
+        // Ship Feature Description
         this.cardDesc = this.add.text(0, 160, 'Description goes here.', {
             fontFamily: 'Orbitron', fontSize: '13px', color: '#aaaaaa', wordWrap: { width: 340 }, align: 'center', lineHeight: 1.5
         }).setOrigin(0.5);
         this.cardContainer.add(this.cardDesc);
         
-        // Action Button
+        // Context Action Button (Equip / Buy)
         this.cardBtnBg = this.add.rectangle(0, 210, 200, 40, 0x334455).setInteractive({ useHandCursor: true });
         this.cardBtnText = this.add.text(0, 210, 'AKTION', { fontFamily: 'Orbitron', fontSize: '14px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
         this.cardContainer.add([this.cardBtnBg, this.cardBtnText]);
         
+        // Similar logic as list clicks, but via the big button
         this.cardBtnBg.on('pointerdown', () => {
             const s = SHIPS.find(x => x.id === this.previewShipId);
             const isUnlocked = this.unlockedShips.includes(s.id);
@@ -256,6 +323,12 @@ export default class ShipSelectScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @method updateInfoCard
+     * @description Refreshes the right-side info card with data for the currently hovered ship (`previewShipId`).
+     * Animates stat bars and updates colors.
+     * @returns {void}
+     */
     updateInfoCard() {
         const s = SHIPS.find(x => x.id === this.previewShipId);
         if (!s) return;
@@ -263,7 +336,7 @@ export default class ShipSelectScene extends Phaser.Scene {
         const isUnlocked = this.unlockedShips.includes(s.id);
         const isSelected = this.selectedShip === s.id;
 
-        // Slide Animation
+        // Slide Animation to make UI feel responsive
         this.tweens.add({
             targets: this.cardContainer,
             x: this.rightX + 20,
@@ -273,24 +346,25 @@ export default class ShipSelectScene extends Phaser.Scene {
             onYoyo: () => {
                 this.cardBg.setStrokeStyle(2, s.color);
                 
-                // Eventually we check if 'portrait_' + s.id exists, for now use fallback
+                // Set the ship preview image
                 this.cardSprite.setTexture(s.img);
                 this.cardSprite.setScale(s.scale * 3);
                 if (!isUnlocked) this.cardSprite.setTint(0x333333);
                 else this.cardSprite.clearTint();
 
+                // Update text and colors
                 this.cardName.setText(s.name);
                 this.cardName.setColor(Phaser.Display.Color.IntegerToColor(s.color).rgba);
                 
                 this.cardDesc.setText(s.feature);
                 
-                // Draw Stats
+                // Draw Stats bars dynamically
                 this.statsContainer.removeAll(true);
                 this.drawStatBar(this.statsContainer, 0, 0, 'HULL', s.hp, 2.5, s.color);
                 this.drawStatBar(this.statsContainer, 0, 25, 'DMG', s.dmg, 2.0, s.color);
                 this.drawStatBar(this.statsContainer, 0, 50, 'SPD', s.spd, 2.0, s.color);
                 
-                // Update Button
+                // Update Context Button state
                 if (isSelected) {
                     this.cardBtnBg.setFillStyle(0x00ff88);
                     this.cardBtnText.setText('AKTIV');
@@ -300,6 +374,7 @@ export default class ShipSelectScene extends Phaser.Scene {
                     this.cardBtnText.setText('SCHIFF WÄHLEN');
                     this.cardBtnText.setColor('#ffffff');
                 } else {
+                    // Check if player has enough scrap
                     this.cardBtnBg.setFillStyle(this.scrap >= s.cost ? 0xffaa00 : 0x442200);
                     this.cardBtnText.setText(`KAUFEN: ${s.cost} SCRAP`);
                     this.cardBtnText.setColor('#ffffff');
@@ -308,17 +383,33 @@ export default class ShipSelectScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @method drawStatBar
+     * @description Helper to draw animated progress bars representing ship statistics.
+     * @param {Phaser.GameObjects.Container} container - Target container for the bar.
+     * @param {number} x - Local X coordinate.
+     * @param {number} y - Local Y coordinate.
+     * @param {string} label - The stat abbreviation (e.g., 'DMG').
+     * @param {number} value - The actual stat multiplier value.
+     * @param {number} maxVal - The theoretical maximum value used to normalize the bar width.
+     * @param {number} color - Hex color for the filled portion of the bar.
+     * @returns {void}
+     */
     drawStatBar(container, x, y, label, value, maxVal, color) {
+        // Label Text
         container.add(this.add.text(x, y, label, { fontFamily: 'Orbitron', fontSize: '12px', color: '#aaaaaa' }).setOrigin(0, 0.5));
         const barW = 200;
         const barH = 10;
+        
+        // Background track for the bar
         container.add(this.add.rectangle(x + 50, y, barW, barH, 0x222222).setOrigin(0, 0.5));
         
+        // Fill width proportional to maxVal
         const fillW = Math.min(barW, barW * (value / maxVal));
         const fillBar = this.add.rectangle(x + 50, y, 0, barH, color).setOrigin(0, 0.5);
         container.add(fillBar);
         
-        // Animate the bar filling up
+        // Animate the bar filling up smoothly
         this.tweens.add({
             targets: fillBar,
             width: fillW,
@@ -328,6 +419,12 @@ export default class ShipSelectScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @method buildWeaponTabs
+     * @description Generates the weapon selection tabs at the bottom right.
+     * Checks localStorage for Tech Tree unlock keys (e.g., 'neon_tech_scatter').
+     * @returns {void}
+     */
     buildWeaponTabs() {
         const startX = this.rightX - 180;
         const startY = this.ch * 0.82;
@@ -337,19 +434,23 @@ export default class ShipSelectScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         WEAPONS.forEach((w, i) => {
+            // Unlocked if it has no tech key requirement OR if the specific tech tree node is active
             const isUnlocked = !w.techKey || parseInt(localStorage.getItem(w.techKey) || '0') > 0;
             const isSelected = this.selectedWeapon === w.id;
             
             const tab = this.add.container(startX + i * 180, startY);
             
+            // Tab Background
             const bg = this.add.rectangle(0, 0, 160, 60, isSelected ? 0x220022 : 0x0a0a1a, 0.9)
                 .setStrokeStyle(isSelected ? 2 : 1, isSelected ? w.color : 0x334455)
                 .setInteractive({ useHandCursor: true });
             tab.add(bg);
             
+            // Tab Content (Icon & Name)
             tab.add(this.add.text(-60, 0, w.icon, { fontSize: '24px' }).setOrigin(0, 0.5));
             tab.add(this.add.text(-20, -10, w.name, { fontFamily: 'Orbitron', fontSize: '12px', color: isUnlocked ? '#ffffff' : '#555555', fontStyle: 'bold' }).setOrigin(0, 0.5));
             
+            // Status text logic
             let status = 'GESPERRT (Tech Tree)';
             let sCol = '#ff4444';
             if (isSelected) { status = 'AKTIV'; sCol = '#00ff88'; }
@@ -357,21 +458,38 @@ export default class ShipSelectScene extends Phaser.Scene {
             
             tab.add(this.add.text(-20, 10, status, { fontFamily: 'Orbitron', fontSize: '9px', color: sCol }).setOrigin(0, 0.5));
             
+            // Allow selection only if unlocked
             bg.on('pointerdown', () => {
                 if (isUnlocked) {
                     localStorage.setItem('neon_selected_weapon', w.id);
-                    this.scene.restart();
+                    this.scene.restart(); // Refresh UI completely
                 } else {
-                    this.cameras.main.shake(200, 0.015);
+                    this.cameras.main.shake(200, 0.015); // visual denial
                 }
             });
         });
     }
 
+    /**
+     * @method showHint
+     * @description Utility to spawn floating text hints that fade upwards (e.g. error messages).
+     * @param {number} x - X coordinate.
+     * @param {number} y - Y coordinate.
+     * @param {string} msg - The message to display.
+     * @returns {void}
+     */
     showHint(x, y, msg) {
         const t = this.add.text(x, y, msg, {
             fontFamily: 'Orbitron', fontSize: '11px', color: '#ff6600', fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(20);
-        this.tweens.add({ targets: t, y: y - 30, alpha: 0, duration: 1500, onComplete: () => t.destroy() });
+        
+        // Float up and fade out
+        this.tweens.add({ 
+            targets: t, 
+            y: y - 30, 
+            alpha: 0, 
+            duration: 1500, 
+            onComplete: () => t.destroy() 
+        });
     }
 }

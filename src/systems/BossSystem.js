@@ -1,15 +1,30 @@
+/**
+ * @file BossSystem.js
+ * @description Handles interactive boss encounters, dialogue choices, and complex multi-part boss mechanics (hit zones).
+ * @module BossSystem
+ */
+
 export default class BossSystem {
+    /**
+     * @class BossSystem
+     * @description Manages boss intro sequences, UI overlays, and modular boss components.
+     * @param {Phaser.Scene} scene - The main game scene.
+     */
     constructor(scene) {
+        /** @type {Phaser.Scene} Reference to the active scene */
         this.scene = scene;
     }
 
+    // ─────────────────── BOSS INTRO & DIALOGUE ───────────────────
+
     /**
-     * Pauses the game, shows a Borderlands-style boss intro, and presents dialogue choices.
+     * @description Pauses the game, shows a Borderlands-style boss intro, and presents dialogue choices.
      * @param {string} bossType - The name or type of the boss.
      * @param {function} onChoiceComplete - Callback receiving the combat modifier object once a choice is made.
+     * @returns {void}
      */
     showInteractiveBossIntro(bossType, onChoiceComplete) {
-        // 1. Pause physics
+        // 1. Pause physics to freeze action during intro
         this.scene.physics.world.pause();
 
         const { width, height } = this.scene.cameras.main;
@@ -18,12 +33,12 @@ export default class BossSystem {
         const introContainer = this.scene.add.container(0, 0);
         introContainer.setDepth(1000);
 
-        // Dark overlay to focus on the boss
+        // Dark overlay to focus on the boss UI
         const overlay = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.7);
         overlay.setOrigin(0, 0);
         introContainer.add(overlay);
 
-        // Boss Name / Title (Borderlands style)
+        // Boss Name / Title (Borderlands style splash text)
         const bossName = this.scene.add.text(width / 2, height * 0.3, bossType.toUpperCase(), {
             fontFamily: 'Impact, sans-serif',
             fontSize: '72px',
@@ -32,7 +47,7 @@ export default class BossSystem {
             strokeThickness: 8,
             shadow: { offsetX: 4, offsetY: 4, color: '#000000', blur: 0, stroke: false, fill: true }
         }).setOrigin(0.5);
-        bossName.setScale(0);
+        bossName.setScale(0); // Start hidden for tweening
         introContainer.add(bossName);
 
         // Subtitle / Tagline
@@ -43,10 +58,10 @@ export default class BossSystem {
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5);
-        subtitle.setAlpha(0);
+        subtitle.setAlpha(0); // Start hidden
         introContainer.add(subtitle);
 
-        // Tween for Borderlands style splash
+        // Tween for Borderlands style splash animation
         this.scene.tweens.add({
             targets: bossName,
             scaleX: 1,
@@ -67,10 +82,16 @@ export default class BossSystem {
     }
 
     /**
-     * Internal method to display the dialogue choices.
+     * @description Internal method to display the dialogue choices and handle user selection.
+     * @param {Phaser.GameObjects.Container} container - The UI container to append choices to.
+     * @param {number} width - Screen width.
+     * @param {number} height - Screen height.
+     * @param {function} onChoiceComplete - Callback to execute after selection.
+     * @returns {void}
+     * @private
      */
     showChoices(container, width, height, onChoiceComplete) {
-        // 2. Add interactive choices
+        // 2. Add interactive choices for the player
         const choice1 = this.scene.add.text(width / 2, height * 0.6, "[1] 'Dein Schiff sieht aus wie ein Toaster'", {
             fontFamily: 'Arial',
             fontSize: '24px',
@@ -90,7 +111,7 @@ export default class BossSystem {
         container.add(choice1);
         container.add(choice2);
 
-        // Hover effects
+        // Hover effects for UI feedback
         choice1.on('pointerover', () => choice1.setStyle({ color: '#ff5555', backgroundColor: '#555555' }));
         choice1.on('pointerout', () => choice1.setStyle({ color: '#ffffff', backgroundColor: '#333333' }));
         
@@ -100,7 +121,7 @@ export default class BossSystem {
         const resolveChoice = (modifier) => {
             // Destroy the UI
             container.destroy();
-            // Resume the game
+            // Resume the game mechanics
             this.scene.physics.world.resume();
             
             // 3. Pass modifier to callback
@@ -119,9 +140,12 @@ export default class BossSystem {
         });
     }
 
+    // ─────────────────── BOSS MECHANICS ───────────────────
+
     /**
-     * 4. Setup distinct hit zones (e.g. engines) for the boss.
+     * @description Sets up distinct hit zones (e.g., engines) for a multi-part boss.
      * @param {Phaser.GameObjects.Sprite} bossSprite - The main boss sprite.
+     * @returns {void}
      */
     setupHitZones(bossSprite) {
         bossSprite.hitZones = [];
@@ -158,7 +182,7 @@ export default class BossSystem {
 
         bossSprite.hitZones.push(leftEngine, rightEngine);
 
-        // Create an update function to sync hit zone positions with the boss
+        // Create an update function to sync hit zone positions with the boss body
         bossSprite.updateHitZones = () => {
             if (!bossSprite.active) {
                 leftEngine.destroy();
@@ -182,10 +206,11 @@ export default class BossSystem {
     }
 
     /**
-     * Handles damage applied specifically to a hit zone.
-     * @param {Phaser.GameObjects.Rectangle} hitZone - The specific hit zone (engine).
+     * @description Handles damage applied specifically to a boss hit zone.
+     * @param {Phaser.GameObjects.Rectangle} hitZone - The specific hit zone (e.g., engine).
      * @param {number} amount - Damage amount.
      * @param {Phaser.GameObjects.Sprite} bossSprite - The main boss sprite.
+     * @returns {void}
      */
     damageHitZone(hitZone, amount, bossSprite) {
         if (hitZone.isDestroyed) return;
@@ -204,20 +229,22 @@ export default class BossSystem {
             if (bossSprite && bossSprite.active) {
                 bossSprite.setTint(0xffaaaa); // Change tint as visual feedback
                 
-                // Example state change: slow down the boss
+                // Example state change: slow down the boss when an engine is destroyed
                 if (bossSprite.body) {
                     bossSprite.body.maxVelocity.x *= 0.7; 
                     bossSprite.body.maxVelocity.y *= 0.7;
                 }
                 
-                // You could emit a custom event to notify the GameScene
+                // Emit a custom event to notify the GameScene
                 this.scene.events.emit('bossPartDestroyed', hitZone.partName, bossSprite);
             }
         }
     }
 
     /**
-     * Visual effect for when an engine is destroyed.
+     * @description Triggers a visual effect when a hit zone is destroyed.
+     * @param {Phaser.GameObjects.Rectangle} hitZone - The hit zone object.
+     * @returns {void}
      */
     triggerPartExplosion(hitZone) {
         // Fallback to simple circle explosion if particle texture ('flare' or 'spark') isn't available

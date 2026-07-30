@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Roguelike — Void Anomaly</title>
+    <meta name="description" content="Neon Roguelike: Void Anomaly – Ein explosives Space-Roguelike. Rettet das Universum als König Jergeric!">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background: #02020e;
+        font-family: 'Orbitron', monospace;
+        overflow: hidden;
+        color: white;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      #game-container {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
+      }
+
+      /* Subtle scanline overlay on everything */
+      #game-container::after {
+        content: '';
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: repeating-linear-gradient(
+          0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 3px
+        );
+        pointer-events: none; z-index: 9998;
+      }
+
+      /* ════════════════════════════════════
+         MAIN MENU
+      ════════════════════════════════════ */
+      #menu-layer {
+        display: none;
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: 20;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        /* Let the glass panel handle background and blur */
+      }
+
+      .menu-glass-panel {
+        position: relative;
+        padding: 3.5rem 5rem;
+        background: rgba(5, 10, 20, 0.7);
+        border-radius: 16px;
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        box-shadow: 0 0 40px rgba(0, 255, 255, 0.05), inset 0 0 20px rgba(0, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform: perspective(1200px) rotateX(4deg);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .menu-glass-panel:hover {
+        transform: perspective(1200px) rotateX(0deg);
+      }
+
+      /* Corner brackets for the panel */
+      .bracket-corner {
+        position: absolute; width: 30px; height: 30px;
+        border-color: #00ffff; border-style: solid;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+      }
+      .menu-glass-panel:hover .bracket-corner {
+        opacity: 1;
+        width: 40px; height: 40px;
+      }
+      .tl { top: -2px; left: -2px;  border-width: 2px 0 0 2px; }
+      .tr { top: -2px; right: -2px; border-width: 2px 2px 0 0; }
+      .bl { bottom: -2px; left: -2px;  border-width: 0 0 2px 2px; }
+      .br { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
+
+      .menu-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: 0.08em;
+        text-align: center;
+        line-height: 1.1;
+        text-shadow:
+          0 0 8px #fff,
+          0 0 30px #00ffff,
+          0 0 60px #00ffff,
+          3px 3px 0 #ff00ff;
+        animation: titlePulse 4s ease-in-out infinite alternate;
+        margin-bottom: 0.2rem;
+      }
+      @keyframes titlePulse {
+        from { text-shadow: 0 0 8px #fff, 0 0 25px #00ffff, 0 0 50px #00ffff, 3px 3px 0 #ff00ff; }
+        to   { text-shadow: 0 0 12px #fff, 0 0 40px #00ffff, 0 0 80px #00ffff, 3px 3px 0 #ff00ff; }
+      }
+
+      .menu-sub {
+        font-size: 0.8rem;
+        letter-spacing: 0.4em;
+        color: #ff00ff;
+        text-shadow: 0 0 10px #ff00ff;
+        text-transform: uppercase;
+      }
+
+      /* Horizontal separator */
+      .menu-sep {
+        width: 80%; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.8), transparent);
+        margin: 2rem auto;
+        opacity: 0.8;
+      }
+
+      .menu-list {
+        display: flex; flex-direction: column; gap: 0.5rem;
+        width: 100%; min-width: 320px;
+      }
+
+      .menu-item {
+        display: block; padding: 0.9rem 2rem;
+        border: 1px solid transparent;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.82rem; font-weight: 700;
+        letter-spacing: 0.2em; text-transform: uppercase; text-align: center;
+        cursor: pointer; transition: all 0.2s ease;
+        background: rgba(255,255,255,0.03); border-radius: 6px;
+        position: relative; overflow: hidden;
+      }
+
+      /* Unified Neon Button Classes */
+      .neon-red { color: #ff3333; border-color: rgba(255,51,51,0.2); }
+      .neon-red:hover { background: rgba(255,51,51,0.15); border-color: #ff3333; color: #fff; box-shadow: 0 0 15px rgba(255,51,51,0.4); text-shadow: 0 0 8px #ff3333; letter-spacing: 0.25em; }
+
+      .neon-orange { color: #ff8800; border-color: rgba(255,136,0,0.2); }
+      .neon-orange:hover { background: rgba(255,136,0,0.15); border-color: #ff8800; color: #fff; box-shadow: 0 0 15px rgba(255,136,0,0.4); text-shadow: 0 0 8px #ff8800; letter-spacing: 0.25em; }
+
+      .neon-yellow { color: #ffee00; border-color: rgba(255,238,0,0.2); }
+      .neon-yellow:hover { background: rgba(255,238,0,0.15); border-color: #ffee00; color: #fff; box-shadow: 0 0 15px rgba(255,238,0,0.4); text-shadow: 0 0 8px #ffee00; letter-spacing: 0.25em; }
+
+      .neon-green { color: #00ff44; border-color: rgba(0,255,68,0.2); }
+      .neon-green:hover { background: rgba(0,255,68,0.15); border-color: #00ff44; color: #fff; box-shadow: 0 0 15px rgba(0,255,68,0.4); text-shadow: 0 0 8px #00ff44; letter-spacing: 0.25em; }
+
+      .neon-cyan { color: #00ffff; border-color: rgba(0,255,255,0.2); }
+      .neon-cyan:hover { background: rgba(0,255,255,0.15); border-color: #00ffff; color: #fff; box-shadow: 0 0 15px rgba(0,255,255,0.4); text-shadow: 0 0 8px #00ffff; letter-spacing: 0.25em; }
+
+      .neon-blue { color: #3388ff; border-color: rgba(51,136,255,0.2); }
+      .neon-blue:hover { background: rgba(51,136,255,0.15); border-color: #3388ff; color: #fff; box-shadow: 0 0 15px rgba(51,136,255,0.4); text-shadow: 0 0 8px #3388ff; letter-spacing: 0.25em; }
+
+      .neon-purple { color: #aa00ff; border-color: rgba(170,0,255,0.2); }
+      .neon-purple:hover { background: rgba(170,0,255,0.15); border-color: #aa00ff; color: #fff; box-shadow: 0 0 15px rgba(170,0,255,0.4); text-shadow: 0 0 8px #aa00ff; letter-spacing: 0.25em; }
+
+      .neon-magenta { color: #ff00ff; border-color: rgba(255,0,255,0.2); }
+      .neon-magenta:hover { background: rgba(255,0,255,0.15); border-color: #ff00ff; color: #fff; box-shadow: 0 0 15px rgba(255,0,255,0.4); text-shadow: 0 0 8px #ff00ff; letter-spacing: 0.25em; }
+
+      #btn-newgame {
+        font-size: 0.95rem;
+        padding: 1.1rem 2rem;
+        background: rgba(0, 255, 255, 0.08);
+      }
+
+      .menu-controls {
+        margin-top: 2rem;
+        font-size: 0.65rem; color: #333; letter-spacing: 0.2em;
+        text-align: center; line-height: 2;
+      }
+      .menu-controls span { color: #555; }
+
+      #menu-highscore {
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+        font-size: 0.7rem; color: #333; letter-spacing: 0.3em;
+        text-align: center;
+      }
+      .version-tag {
+        position: fixed; bottom: 10px; right: 28px;
+        font-size: 9px; color: #222; letter-spacing: 0.25em;
+      }
+
+      /* ════════════════════════════════════
+         UPGRADE PANEL
+      ════════════════════════════════════ */
+      #upgrade-panel {
+        display: none;
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: 50;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(6px);
+      }
+
+      #upg-level {
+        font-size: 0.85rem; font-weight: 900;
+        color: #00ff66; letter-spacing: 0.6em;
+        text-shadow: 0 0 12px #00ff66;
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+      }
+      #upgrade-panel h2 {
+        font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900;
+        color: #fff;
+        text-shadow: 0 0 20px #ff00ff, 3px 3px 0 #00ffff;
+        margin-bottom: 2.5rem; letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      #upgrade-cards {
+        display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center;
+        max-width: 900px;
+      }
+
+      .upg-card {
+        background: rgba(2, 2, 18, 0.92);
+        border: 2px solid; border-radius: 10px;
+        padding: 1.8rem 1.4rem; width: 210px;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        text-align: left; font-family: 'Orbitron', monospace; color: white;
+        position: relative; overflow: hidden;
+      }
+      .upg-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: var(--upg-color, #00ffff);
+        box-shadow: 0 0 12px var(--upg-color, #00ffff);
+      }
+      .upg-card::after {
+        content: ''; position: absolute;
+        bottom: 0; right: 0; left: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, var(--upg-color, #00ffff) 50%, transparent);
+        opacity: 0.3;
+      }
+      .upg-card:hover {
+        transform: translateY(-8px) scale(1.04);
+        box-shadow: 0 0 35px var(--upg-color, #00ffff);
+        background: rgba(5, 5, 25, 0.97);
+      }
+      .upg-name {
+        font-size: 0.78rem; font-weight: 900;
+        letter-spacing: 0.12em; margin-bottom: 0.9rem;
+        text-transform: uppercase;
+      }
+      .upg-desc {
+        font-size: 0.72rem; color: #999;
+        line-height: 1.6; font-family: 'Share Tech Mono', monospace;
+        letter-spacing: 0;
+      }
+      .upg-hint {
+        margin-top: 1.2rem;
+        font-size: 0.6rem; color: #444; letter-spacing: 0.2em; text-transform: uppercase;
+      }
+
+      /* ════════════════════════════════════
+         GAME OVER
+      ════════════════════════════════════ */
+      #gameover-overlay {
+        display: none;
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: 60;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(8px);
+      }
+
+      .go-title {
+        font-size: clamp(3rem, 9vw, 6rem); font-weight: 900;
+        color: #ff2244;
+        text-shadow: 0 0 25px #ff2244, 5px 5px 0 #000;
+        margin-bottom: 0.5rem; letter-spacing: 0.05em;
+        text-transform: uppercase;
+        animation: goGlitch 0.5s steps(2) infinite;
+      }
+      @keyframes goGlitch {
+        0%   { text-shadow: 0 0 25px #ff2244, 5px 5px 0 #000; transform: translate(0); }
+        25%  { text-shadow: -3px 0 #00ffff, 5px 5px 0 #000; transform: translate(2px, -1px); }
+        75%  { text-shadow: 3px 0 #ff00ff, 5px 5px 0 #000; transform: translate(-2px, 1px); }
+        100% { text-shadow: 0 0 25px #ff2244, 5px 5px 0 #000; transform: translate(0); }
+      }
+
+      .go-subtitle {
+        font-size: 0.7rem; color: #555; letter-spacing: 0.5em;
+        margin-bottom: 2.5rem; text-transform: uppercase;
+      }
+
+      .go-stats {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid #1a1a2e;
+        border-radius: 8px;
+        padding: 1.5rem 3rem;
+        margin-bottom: 2rem;
+        min-width: 320px;
+      }
+      .go-stat {
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 0.75rem; color: #666; letter-spacing: 0.2em;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid #111122;
+      }
+      .go-stat:last-child { border-bottom: none; }
+      .go-stat span { color: #fff; font-size: 1.1rem; font-weight: 900; }
+      .go-stat.new-hs span { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
+
+      .go-buttons { display: flex; gap: 1rem; }
+      .go-btn {
+        padding: 0.9rem 2.5rem;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem; font-weight: 900;
+        letter-spacing: 0.25em; text-transform: uppercase;
+        cursor: pointer; transition: all 0.15s ease;
+        border-radius: 5px; border: 2px solid;
+      }
+      #go-restart {
+        background: linear-gradient(135deg, #cc00cc, #ff00ff);
+        border-color: #fff; color: #fff;
+        box-shadow: 0 0 20px rgba(255,0,255,0.5);
+      }
+      #go-restart:hover {
+        background: #fff; color: #ff00ff;
+        box-shadow: 0 0 35px rgba(255,0,255,0.8);
+      }
+      #go-menu {
+        background: transparent; border-color: #333; color: #555;
+      }
+      #go-menu:hover { border-color: #00ffff; color: #00ffff; box-shadow: 0 0 10px rgba(0,255,255,0.3); }
+
+      #go-newhs {
+        font-size: 0.7rem; color: #ffff00; letter-spacing: 0.3em;
+        text-shadow: 0 0 12px #ffff00;
+        margin-bottom: 1rem; display: none;
+        text-transform: uppercase;
+        animation: titlePulse 1s ease-in-out infinite alternate;
+      }
+      #go-name-input {
+          display: none;
+          margin-bottom: 1rem;
+          background: rgba(0, 0, 0, 0.5);
+          border: 1px solid #00ffff;
+          color: #00ffff;
+          font-family: 'Orbitron', monospace;
+          font-size: 1.2rem;
+          text-align: center;
+          padding: 0.5rem;
+          width: 250px;
+          text-transform: uppercase;
+          outline: none;
+          box-shadow: 0 0 10px rgba(0,255,255,0.2);
+        }
+        #go-name-input:focus {
+          border-color: #ff00ff;
+          color: #ff00ff;
+          box-shadow: 0 0 15px rgba(255,0,255,0.5);
+        }
+    </style>
+  </head>
+  <body>
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        const errDiv = document.createElement('div');
+        errDiv.style.position = 'fixed';
+        errDiv.style.top = '10%';
+        errDiv.style.left = '10%';
+        errDiv.style.width = '80%';
+        errDiv.style.height = '80%';
+        errDiv.style.backgroundColor = 'rgba(10,0,0,0.95)';
+        errDiv.style.color = '#ff5555';
+        errDiv.style.padding = '20px';
+        errDiv.style.zIndex = '999999';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.style.fontSize = '14px';
+        errDiv.style.whiteSpace = 'pre-wrap';
+        errDiv.style.overflow = 'auto';
+        errDiv.style.border = '2px solid #ff0000';
+        errDiv.style.userSelect = 'text';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = 'SCHLIESSEN';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.top = '10px';
+        closeBtn.style.right = '10px';
+        closeBtn.style.padding = '5px 10px';
+        closeBtn.style.background = '#330000';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.border = '1px solid #ff0000';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.onclick = () => errDiv.remove();
+        
+        errDiv.innerText = "CRASH:\n" + msg + "\nLine: " + line + "\n\n" + (error ? error.stack : "");
+        errDiv.appendChild(closeBtn);
+        
+        document.body.appendChild(errDiv);
+      };
+    </script>
+    <div id="game-container"></div>
+
+    <!-- ════════════════ MAIN MENU ════════════════ -->
+    <div id="menu-layer">
+      <div class="menu-glass-panel">
+        <div class="bracket-corner tl"></div>
+        <div class="bracket-corner tr"></div>
+        <div class="bracket-corner bl"></div>
+        <div class="bracket-corner br"></div>
+
+        <h1 class="menu-title">NEON SPACE<br>DEFENDER</h1>
+        <p class="menu-sub">ALPHA BUILD 0.3</p>
+
+        <div class="menu-sep"></div>
+
+        <nav class="menu-list">
+          <button id="btn-newgame" class="menu-item neon-green">▶ NEW GAME</button>
+          <button id="btn-techtree" class="menu-item neon-yellow">✦ TECH TREE ✦</button>
+          <button id="btn-shop" class="menu-item neon-magenta">✦ SCRAP SHOP (UPGRADES) ✦</button>
+          <button id="btn-achievements" class="menu-item neon-cyan">✦ ACHIEVEMENTS ✦</button>
+          <button id="btn-highscores" class="menu-item neon-blue" style="display: none;">✦ HIGHSCORES ✦</button>
+          <button id="btn-story" class="menu-item neon-purple">STORY-INTRO ANSEHEN</button>
+          <button id="btn-settings" class="menu-item neon-blue">SETTINGS</button>
+          <button id="btn-credits" class="menu-item neon-red">CREDITS</button>
+        </nav>
+      </div>
+
+      <div class="menu-controls" style="margin-top: 2rem;">
+        WASD / PFEILTASTEN · Bewegen<br>
+        <span style="color: #aaa;">Auto-Schuss · XP sammeln · Level up</span><br>
+        LEERTASTE · Nova-Bombe / Fähigkeit
+      </div>
+
+      <div id="menu-highscore"></div>
+    </div>
+
+    <!-- ════════════════ UPGRADE PANEL ════════════════ -->
+    <div id="upgrade-panel">
+      <div id="upg-level">Level 2 erreicht!</div>
+      <h2>Upgrade auswählen</h2>
+      <div id="upgrade-cards"></div>
+      <p style="margin-top:1.5rem; font-size:0.65rem; color:#333; letter-spacing:0.2em;">KLICKE AUF EINE KARTE ZUM AUSWÄHLEN</p>
+    </div>
+
+    <!-- ════════════════ GAME OVER ════════════════ -->
+    <div id="gameover-overlay">
+      <div class="go-title" style="font-size: clamp(2rem, 5vw, 4rem);">KATATONISCHES SYSTEMVERSAGEN</div>
+      <div class="go-subtitle">(Schon wieder)</div>
+
+      <div id="go-newhs">✦ NEUER HIGHSCORE ✦</div>
+      <input type="text" id="go-name-input" placeholder="DEIN NAME, PILOT" maxlength="12" />
+
+      <div class="go-stats">
+        <div class="go-stat"><span style="font-size:0.7rem; color:#555;">SCORE</span><span id="go-score">0</span></div>
+        <div class="go-stat"><span style="font-size:0.7rem; color:#555;">WELLE</span><span id="go-wave">1</span></div>
+        <div class="go-stat"><span style="font-size:0.7rem; color:#555;">LEVEL</span><span id="go-level">1</span></div>
+        <div class="go-stat"><span style="font-size:0.7rem; color:#555;">HIGHSCORE</span><span id="go-highscore">0</span></div>
+      </div>
+
+      <div class="go-buttons">
+        <button id="go-restart" class="go-btn">Nochmal sterben</button>
+        <button id="go-menu"    class="go-btn">Weinend aufgeben</button>
+      </div>
+    </div>
+
+    <!-- ════════════════ TECH TREE PANEL ════════════════ -->
+    <div id="techtree-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow-y: auto; z-index: 70; background: rgba(0, 5, 15, 0.95); backdrop-filter: blur(10px); flex-direction: column; align-items: center; padding: 2rem 1rem 3rem; font-family: 'Orbitron', monospace; color: white;">
+      <h2 style="font-size: 2.5rem; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; margin-bottom: 0.3rem;">✦ TECH TREE ✦</h2>
+      <p style="font-size: 0.75rem; color: #556; margin-bottom: 0.5rem; letter-spacing: 0.15em;">PERMANENTE FREISCHALTUNGEN — EINMAL GEKAUFT, IMMER DABEI</p>
+      <div id="tt-scrap-display" style="font-size: 1.2rem; color: #ffaa00; margin-bottom: 2rem;">SCRAP: 0</div>
+
+      <!-- ROW 1: Basis-Module -->
+      <p style="font-size: 0.7rem; color: #00ffcc88; letter-spacing: 0.25em; margin-bottom: 0.8rem;">— BASIS-MODULE —</p>
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; max-width: 1400px; margin-bottom: 2rem;">
+        <!-- Scatter Weapon -->
+        <div class="tt-card" data-id="scatter" data-base-cost="150" style="background: rgba(0,20,40,0.8); border: 2px solid #ff8800; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔥</div>
+          <h3 style="color: #ff8800; margin-bottom: 0.5rem; font-size: 0.85rem;">SCATTER SHOT</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Waffe freischalten: 3 Schüsse im Fächer, schnelleres Feuer.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">150</span> SCRAP</div>
+        </div>
+        <!-- Railgun Weapon -->
+        <div class="tt-card" data-id="railgun" data-base-cost="250" style="background: rgba(0,20,40,0.8); border: 2px solid #ff00ff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
+          <h3 style="color: #ff00ff; margin-bottom: 0.5rem; font-size: 0.85rem;">RAIL GUN</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Waffe freischalten: Pierce, +80% DMG, langsames Feuer.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">250</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="dash" data-base-cost="50" style="background: rgba(0,20,40,0.8); border: 2px solid #00ffcc; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💨</div>
+          <h3 style="color: #00ffcc; margin-bottom: 0.5rem; font-size: 0.85rem;">DASH ENGINE</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Schaltet den Ausweich-Dash frei (Shift / B).</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">50</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="shield" data-base-cost="100" style="background: rgba(0,20,40,0.8); border: 2px solid #4499ff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🛡️</div>
+          <h3 style="color: #4499ff; margin-bottom: 0.5rem; font-size: 0.85rem;">SCHILD GENERATOR</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Schild-Upgrades in den Level-Up-Pool ein.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">100</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="tesla" data-base-cost="150" style="background: rgba(0,20,40,0.8); border: 2px solid #00ffff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
+          <h3 style="color: #00ffff; margin-bottom: 0.5rem; font-size: 0.85rem;">TESLA SPULE</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Kettenblitz-Waffe in den Level-Up-Pool ein.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">150</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="singularity" data-base-cost="200" style="background: rgba(0,20,40,0.8); border: 2px solid #aa00ff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🌑</div>
+          <h3 style="color: #aa00ff; margin-bottom: 0.5rem; font-size: 0.85rem;">SINGULARITÄT</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Schwarzes-Loch-Waffe in den Level-Up-Pool ein.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">200</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="cryo" data-base-cost="175" style="background: rgba(0,20,40,0.8); border: 2px solid #00ccff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">❄️</div>
+          <h3 style="color: #00ccff; margin-bottom: 0.5rem; font-size: 0.85rem;">KRYO-REAKTOR</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Kryo-Strahl-Waffe in den Level-Up-Pool ein.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">175</span> SCRAP</div>
+        </div>
+      </div>
+
+      <!-- ROW 2: Erweiterte Module -->
+      <p style="font-size: 0.7rem; color: #ff00ff88; letter-spacing: 0.25em; margin-bottom: 0.8rem;">— ERWEITERTE MODULE —</p>
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; max-width: 1400px; margin-bottom: 2rem;">
+        <div class="tt-card" data-id="drones" data-base-cost="250" style="background: rgba(0,20,40,0.8); border: 2px solid #ff9900; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🤖</div>
+          <h3 style="color: #ff9900; margin-bottom: 0.5rem; font-size: 0.85rem;">DROHNEN-FABRIK</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Kampfdrohnen-Upgrade in den Level-Up-Pool ein.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">250</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="orbitals" data-base-cost="300" style="background: rgba(0,20,40,0.8); border: 2px solid #ff0055; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🌀</div>
+          <h3 style="color: #ff0055; margin-bottom: 0.5rem; font-size: 0.85rem;">PLASMA ORBITALS</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Startet jede Runde mit 1 Plasma-Orbital.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">300</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="revive" data-base-cost="400" style="background: rgba(0,20,40,0.8); border: 2px solid #00ff66; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💚</div>
+          <h3 style="color: #00ff66; margin-bottom: 0.5rem; font-size: 0.85rem;">NOTFALL-REANIMATOR</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Statt zu sterben: einmalige Wiederbelebung mit 30 HP.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">400</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="pierce_start" data-base-cost="350" style="background: rgba(0,20,40,0.8); border: 2px solid #ff00aa; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
+          <h3 style="color: #ff00aa; margin-bottom: 0.5rem; font-size: 0.85rem;">DURCHDRINGER-MODUL</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Startet jede Runde mit aktivem Durchdringen.</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">350</span> SCRAP</div>
+        </div>
+        <div class="tt-card" data-id="fusion" data-base-cost="500" style="background: rgba(0,20,40,0.8); border: 2px solid #ff0055; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 10px #ff005555;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">☢️</div>
+          <h3 style="color: #ff0055; margin-bottom: 0.5rem; font-size: 0.85rem;">FUSION CORE</h3>
+          <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Schaltet SUPER-EVOLUTIONEN beim Level-Up frei!</p>
+          <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
+          <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">500</span> SCRAP</div>
+        </div>
+      </div>
+
+      <button id="btn-tt-close" style="margin-top: 1rem; padding: 1rem 3rem; font-family: 'Orbitron', monospace; font-size: 1.2rem; font-weight: bold; background: transparent; color: #fff; border: 2px solid #fff; border-radius: 5px; cursor: pointer; transition: all 0.2s;">CLOSE</button>
+    </div>
+
+    <script>
+      // Tech Tree Logic
+      document.addEventListener('DOMContentLoaded', () => {
+        const ttOverlay = document.getElementById('techtree-overlay');
+        const ttClose = document.getElementById('btn-tt-close');
+        const ttScrapDisplay = document.getElementById('tt-scrap-display');
+        const ttCards = document.querySelectorAll('.tt-card');
+        
+        function updateTechTreeUI() {
+          let scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10);
+          ttScrapDisplay.textContent = 'SCRAP: ' + scrap;
+          
+          ttCards.forEach(card => {
+            const id = card.getAttribute('data-id');
+            const baseCost = parseInt(card.getAttribute('data-base-cost'), 10);
+            const level = parseInt(localStorage.getItem('neon_tech_' + id) || '0', 10);
+            
+            const cost = baseCost; // No scaling cost since max level is 1
+            
+            card.querySelector('.lvl-val').textContent = level;
+            if (level >= 1) {
+              card.querySelector('.cost-val').textContent = 'MAX';
+              card.style.opacity = '1';
+              card.style.boxShadow = '0 0 15px ' + card.style.borderColor;
+            } else {
+              card.querySelector('.cost-val').textContent = cost;
+              if (scrap >= cost) {
+                card.style.opacity = '1';
+                card.style.boxShadow = '0 0 15px ' + card.style.borderColor;
+              } else {
+                card.style.opacity = '0.5';
+                card.style.boxShadow = 'none';
+              }
+            }
+          });
+        }
+
+        ttCards.forEach(card => {
+          card.addEventListener('click', () => {
+            const id = card.getAttribute('data-id');
+            const baseCost = parseInt(card.getAttribute('data-base-cost'), 10);
+            let level = parseInt(localStorage.getItem('neon_tech_' + id) || '0', 10);
+            let scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10);
+            
+            if (level >= 1) return; // Max level reached
+            const cost = baseCost;
+            
+            if (scrap >= cost) {
+              localStorage.setItem('neon_scrap', scrap - cost);
+              localStorage.setItem('neon_tech_' + id, level + 1);
+              updateTechTreeUI();
+            }
+          });
+          
+          card.addEventListener('mouseenter', () => {
+            card.style.transform = 'scale(1.05)';
+          });
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'scale(1)';
+          });
+        });
+        
+        ttClose.addEventListener('click', () => {
+          ttOverlay.style.display = 'none';
+        });
+        
+        ttClose.addEventListener('mouseenter', () => {
+            ttClose.style.background = '#fff';
+            ttClose.style.color = '#000';
+        });
+        ttClose.addEventListener('mouseleave', () => {
+            ttClose.style.background = 'transparent';
+            ttClose.style.color = '#fff';
+        });
+
+        // Add a global function to open it from MenuScene
+        window.openTechTree = () => {
+          updateTechTreeUI();
+          ttOverlay.style.display = 'flex';
+        };
+      });
+    </script>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

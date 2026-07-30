@@ -401,7 +401,7 @@
           flex-direction: column;
           overflow-y: auto;
           scroll-snap-type: y mandatory;
-          max-height: 140px; /* enough to show 1 full button and a bit of the next */
+          max-height: 60vh; /* changed for large image buttons */ /* enough to show 1 full button and a bit of the next */
           padding-bottom: 20px; /* space for scrolling past the last item */
           -ms-overflow-style: none;
           scrollbar-width: none;
@@ -443,7 +443,7 @@
       /* Image Buttons CSS */
       .menu-item-img {
         display: block;
-        width: 341px;
+        width: 329px; /* new image width */
         height: 128px;
         background-size: contain;
         background-position: center;
@@ -459,7 +459,7 @@
       @media (max-width: 768px) {
         .menu-item-img {
           width: 80vw;
-          height: calc(80vw * (128/341)); /* keep aspect ratio */
+          height: calc(80vw * (128/329)); /* updated aspect ratio for new image */
           scroll-snap-align: start;
           flex-shrink: 0;
         }

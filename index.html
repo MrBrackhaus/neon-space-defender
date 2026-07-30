@@ -444,7 +444,10 @@
       <div class="go-subtitle">(Schon wieder)</div>
 
       <div id="go-newhs">✦ NEUER HIGHSCORE ✦</div>
-      <input type="text" id="go-name-input" placeholder="DEIN NAME, PILOT" maxlength="12" />
+      <input type="text" id="go-name-input" placeholder="DEIN NAME, PILOT" maxlength="12"
+        onfocus="if(window._phaserGame) window._phaserGame.input.keyboard.disableGlobalCapture();"
+        onblur="if(window._phaserGame) window._phaserGame.input.keyboard.enableGlobalCapture();"
+      />
 
       <div class="go-stats">
         <div class="go-stat"><span style="font-size:0.7rem; color:#555;">SCORE</span><span id="go-score">0</span></div>

@@ -42,19 +42,42 @@ export default class MenuScene extends Phaser.Scene {
         const cw = this.scale.width, ch = this.scale.height;
 
         // ─────────────────── BACKGROUND & VISUALS ───────────────────
-
-        // Subtle background with slow pan effect
-        const bg = this.add.image(cw/2, ch/2, 'title_bg').setAlpha(0.9);
-        const scale = Math.max(cw / bg.width, ch / bg.height) * 1.05; // 1.05 to allow panning without showing edges
-        bg.setScale(scale);
-            
+        
+        // 1. Deep Space Background
+        const bg = this.add.image(cw/2, ch/2, 'title_bg').setAlpha(0.85);
+        const scaleBg = Math.max(cw / bg.width, ch / bg.height) * 1.05;
+        bg.setScale(scaleBg);
+        
+        // Slow pan effect for the background
         this.tweens.add({
             targets: bg, 
-            x: cw/2 + 20, 
-            duration: 22000,
-            yoyo: true, 
-            repeat: -1, 
-            ease: 'Sine.easeInOut'
+            x: bg.x - 25, y: bg.y + 15,
+            duration: 15000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+
+        // 2. Deco Planet (Foreground element on the left)
+        const planet = this.add.image(cw * 0.2, ch * 0.7, 'deco_planet')
+            .setBlendMode(Phaser.BlendModes.SCREEN) // Removes the black background
+            .setAlpha(0.7)
+            .setScale(0.8);
+            
+        this.tweens.add({
+            targets: planet,
+            y: planet.y - 20,
+            duration: 8000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+
+        // 3. Title Logo (Graffiti Text on the right)
+        const logo = this.add.image(cw * 0.65, ch * 0.4, 'title_logo')
+            .setBlendMode(Phaser.BlendModes.ADD) // Additive blending makes the neon text pop against the background
+            .setScale(0.75);
+            
+        // Subtle floating and pulsing for the logo
+        this.tweens.add({
+            targets: logo,
+            y: logo.y - 15,
+            scale: 0.77,
+            duration: 4000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
 
         // Floating dust particles (very calm, sci-fi atmosphere)

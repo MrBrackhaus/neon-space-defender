@@ -115,9 +115,17 @@ export default class MenuScene extends Phaser.Scene {
         // ─────────────────── UI LOGIC ───────────────────
 
         // Load and display highscore in menu from local storage
-        const hs = localStorage.getItem('neon_highscore') || '0';
-        // Note: hs_wave is loaded but currently not displayed directly on the main menu overlay
-        const hs_wave = localStorage.getItem('neon_hs_wave') || '0';
+        let bestName = 'NONE';
+        let bestScore = 0;
+        let bestWave = 0;
+        try {
+            const hsData = JSON.parse(localStorage.getItem('neon_highscores'));
+            if (hsData && hsData.length > 0) {
+                bestName = hsData[0].name;
+                bestScore = hsData[0].score;
+                bestWave = hsData[0].wave;
+            }
+        } catch (e) { }
 
         // Show HTML menu layer
         const menuLayer = document.getElementById('menu-layer');
@@ -125,7 +133,11 @@ export default class MenuScene extends Phaser.Scene {
 
         // Update highscore display in HTML if element exists
         const goHs = document.getElementById('menu-highscore');
-        if (goHs) goHs.textContent = `BEST: ${parseInt(hs).toLocaleString()}`;
+        if (goHs) {
+            goHs.textContent = bestScore > 0 
+                ? `BEST: ${bestName} - ${parseInt(bestScore).toLocaleString()} (WAVE ${bestWave})` 
+                : 'BEST: 0';
+        }
 
         // Wire up buttons with DOM listeners
         this._wireBtns(menuLayer);

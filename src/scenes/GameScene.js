@@ -2683,8 +2683,19 @@ export default class GameScene extends Phaser.Scene {
 
             const saveHighscore = () => {
                 if (qualifies && nameInput && nameInput.value.trim() !== '') {
+                    let finalName = nameInput.value.trim().toUpperCase();
+                    
+                    // Profanity Filter
+                    const badWords = ['HITLER', 'FICKER', 'FUCK', 'SHIT', 'CUNT', 'NIGGA', 'NIGGER', 'BITCH', 'ASSHOLE', 'ARSCHLOCH', 'HURE', 'NUTTE', 'PENIS', 'VAGINA', 'DICK', 'COCK', 'PIMMEL', 'FOTZE', 'NAZI', 'SPAST', 'WANKER', 'SLUT', 'WHORE'];
+                    for (const bw of badWords) {
+                        if (finalName.includes(bw)) {
+                            finalName = 'CENSORED';
+                            break;
+                        }
+                    }
+
                     highscores.push({
-                        name: nameInput.value.trim().toUpperCase(),
+                        name: finalName,
                         score: this.score,
                         wave: this.waveNum,
                         ship: this.shipClass.toUpperCase()

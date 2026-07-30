@@ -450,8 +450,8 @@
 
       <div id="go-newhs">✦ NEUER HIGHSCORE ✦</div>
       <input type="text" id="go-name-input" placeholder="DEIN NAME, PILOT" maxlength="12"
-        onfocus="if(window._phaserGame) window._phaserGame.input.keyboard.disableGlobalCapture();"
-        onblur="if(window._phaserGame) window._phaserGame.input.keyboard.enableGlobalCapture();"
+        onfocus="if(window._phaserGame) window._phaserGame.input.keyboard.enabled = false;"
+        onblur="if(window._phaserGame) window._phaserGame.input.keyboard.enabled = true;"
       />
 
       <div class="go-stats">

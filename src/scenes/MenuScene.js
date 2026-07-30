@@ -80,6 +80,19 @@ export default class MenuScene extends Phaser.Scene {
             duration: 4000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
 
+        // 4. GIANT Mascot (Center/Left)
+        const giantMascot = this.add.sprite(cw * 0.35, ch * 0.5, 'mascot_sheet')
+            .setScale(4) // Make it huge
+            .setAlpha(0.8)
+            .play('mascot_idle');
+
+        // Make the giant mascot float
+        this.tweens.add({
+            targets: giantMascot,
+            y: giantMascot.y - 30,
+            duration: 3500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+
         // Floating dust particles (very calm, sci-fi atmosphere)
         const gfx = this.make.graphics({ add: false });
         gfx.fillStyle(0x00ffff, 1); 

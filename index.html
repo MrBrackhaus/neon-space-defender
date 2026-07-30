@@ -374,9 +374,23 @@
         .menu-sub {
           text-align: center !important;
         }
+        .menu-list {
+          flex-direction: row;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          padding-bottom: 10px;
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+        .menu-list::-webkit-scrollbar {
+          display: none; /* Chrome, Safari and Opera */
+        }
         .menu-list a {
           font-size: 1rem;
-          padding: 0.5rem;
+          padding: 0.75rem;
+          flex: 0 0 80%;
+          scroll-snap-align: center;
+          margin: 0 5px; /* some spacing between cards */
         }
         .menu-controls {
           position: fixed;

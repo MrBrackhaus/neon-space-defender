@@ -2399,7 +2399,6 @@ export default class GameScene extends Phaser.Scene {
      */
     updateOrbitals() {
         const count = this.pd.orbitals;
-        const blades = this.orbitalsGroup.getChildren();
         
         while (this.orbitalsGroup.getChildren().length < count) {
             const b = this.orbitalsGroup.create(this.player.x, this.player.y, 'orbital_blade').setDepth(9);
@@ -2407,6 +2406,7 @@ export default class GameScene extends Phaser.Scene {
             b.body.setCircle(128); 
         }
         
+        const blades = this.orbitalsGroup.getChildren();
         blades.forEach((b, i) => {
             b.angleOffset = (Math.PI * 2 / blades.length) * i;
         });

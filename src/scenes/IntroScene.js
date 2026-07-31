@@ -17,37 +17,37 @@ import Phaser from 'phaser';
 const SLIDES = [
     {
         img: 'bg', tint: 0x330066, caption: null, dialogue: null, duration: 3000, effect: 'zoom_in',
-        titleCard: { line1: 'NEON SPACE DEFENDER', line2: 'EPISODE 1: PIZZA, PANIK & PIRATENKÖNIGE' }
+        titleCard: { line1: 'NEON SPACE DEFENDER', line2: 'EPISODE 1: BÜROKRATIE DES WAHNSINNS' }
     },
     {
         img: 'intro_hero', tint: null, effect: 'pan_right',
-        caption: 'Zentrale des Schmuggel-Imperiums - Thronsaal von Jergeric',
-        dialogue: '"Hör gut zu, Pizza-Boy. Ich bin Space Piraten-König Jergeric. Du schuldest mir eine Menge Credits für diesen verbeulten Schrott-Roller, mit dem du Pizzen ausfährst."'
+        caption: 'Käpt\'n Jergerics Thronsaal (Vorsicht: Rutschig)',
+        dialogue: '"Fhtagn! Äh, ich meine: Ahoi! Ich bin Käpt\'n Jergeric, der Flauschige. Das fürchterlichste, niedlichste kosmische Grauen der Sieben Dimensionen."'
     },
     {
         img: 'intro_fleet', tint: null, effect: 'zoom_in',
-        caption: 'Sektor 7-G - Vor exakt 14 Minuten',
-        dialogue: '"Meine stolze Piraten-Flotte wurde gerade bei einem \'Geschäftstreffen\' mit einem intergalaktischen Haushaltsgeräte-Konzern von deren durchgeknallter KI vernichtet."'
+        caption: 'Die Leere - Gestern um Halb Acht',
+        dialogue: '"Leider habe ich das Siegel der Bürokratischen Leere gebrochen. Ich wollte nur einen USB-Stick beim ersten Mal richtig herum einstecken. Ein kosmisches Paradoxon!"'
     },
     {
         img: 'intro_fleet', tint: 0xff4444, effect: 'pan_left', caption: null,
-        dialogue: '"Jemand hat beim Update der Toaster auf \'Ignorieren\' statt auf \'Patchen\' geklickt. Jetzt fliegen mörderische Haushaltsgeräte und bösartige Neon-Geometrie durch meinen Sektor!"'
+        dialogue: '"Jetzt strömen neon-leuchtende, hochorganisierte Toaster herein. Sie wollen das Universum nicht zerstören. Schlimmer: Sie wollen es katalogisieren und aufräumen!"'
     },
     {
         img: 'intro_hero', tint: null, effect: 'static', caption: null,
-        dialogue: '"Da meine besten Piloten Asche sind, heuere ich dich an. Dein Auftrag: Rette mein Imperium und räum den Müll auf! Und wenn du versagst, behalte ich deine Kaution."'
+        dialogue: '"Die Prophezeiung auf diesem Bierdeckel besagt, dass nur jemand mit Laktose-Intoleranz sie stoppen kann. Du bist der Auserwählte! Meine Tentakel sind ohnehin zu kurz für den Joystick."'
     },
     {
         img: 'intro_ship', tint: null, effect: 'zoom_out', caption: null,
-        dialogue: '"Richtige Kampfjets habe ich keine mehr. Du musst nehmen, was auf meinem Schrottplatz rumliegt: Spielautomaten, alte Casino-Schilder oder deinen Pizza-Roller."'
+        dialogue: '"Normale Raumschiffe haben wir nicht. Du bekommst Relikte der Alten Götter: Eine fliegende Arcade-Maschine, ein mutiertes Leucht-Geflügel oder einen alten Pizza-Roller."'
     },
     {
         img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
-        dialogue: '"Tipp: Schieß auf alles, was leuchtet. Sammle \'Scrap\' ein. Damit kannst du Upgrades bei meinem mürrischen Schrott-Goblin Wrench kaufen."'
+        dialogue: '"Zerstöre alles, was nach Hausarbeit aussieht! Der Schrott-Troll Wrench verkauft dir Upgrades. Er wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
     },
     {
-        img: 'intro_hero', tint: 0x00ffcc, effect: 'zoom_in', caption: null,
-        dialogue: '"Und frag besser nicht, wieso meine Buchhalterin, eine kybernetische Straßenkatze namens Nyx, im Vakuum des Weltalls atmen kann. Nun los, Pizza-Boy!"'
+        img: 'intro_hero', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,
+        dialogue: '"Und kraule Nyx, unsere vierdimensionale Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, rette die Unordnung!"'
     }
 ];
 

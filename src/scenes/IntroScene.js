@@ -17,29 +17,29 @@ import Phaser from 'phaser';
 const SLIDES = [
     {
         img: 'bg', tint: 0x330066, caption: null, dialogue: null, duration: 3000, effect: 'zoom_in',
-        titleCard: { line1: 'NEON SPACE DEFENDER', line2: 'EPISODE 1: BÜROKRATIE DES WAHNSINNS' }
+        titleCard: { line1: 'NEON SPACE DEFENDER', line2: 'EPISODE 1: TELESHOPPING & TIEFENREINIGUNG' }
     },
     {
         img: 'intro_hero', tint: null, effect: 'pan_right',
-        caption: 'Käpt\'n Jergerics Thronsaal (Vorsicht: Rutschig)',
-        dialogue: '"Fhtagn! Äh, ich meine: Ahoi! Ich bin Käpt\'n Jergeric, der Flauschige. Das fürchterlichste, niedlichste kosmische Grauen der Sieben Dimensionen."'
+        caption: 'Käpt\'n Jergerics Thronsaal (Nachts um 4 Uhr)',
+        dialogue: '"Ahoi! Ich bin Käpt\'n Jergeric. Das furchterregendste (und niedlichste) kosmische Grauen. Letzte Nacht konnte ich nicht schlafen und habe interdimensionales Teleshopping geguckt."'
     },
     {
         img: 'intro_fleet', tint: null, effect: 'zoom_in',
-        caption: 'Die Leere - Gestern um Halb Acht',
-        dialogue: '"Leider habe ich das Siegel der Bürokratischen Leere gebrochen. Ich wollte nur einen USB-Stick beim ersten Mal richtig herum einstecken. Ein kosmisches Paradoxon!"'
+        caption: 'Sektor 7-G - Heute Morgen',
+        dialogue: '"Ich bin auf der Fernbedienung eingeschlafen und habe versehentlich das \'Ultimative Kosmische Tiefenreinigungs-Abo\' gebucht. Kein Widerrufsrecht!"'
     },
     {
         img: 'intro_fleet', tint: 0xff4444, effect: 'pan_left', caption: null,
-        dialogue: '"Jetzt strömen neon-leuchtende, hochorganisierte Toaster herein. Sie wollen das Universum nicht zerstören. Schlimmer: Sie wollen es katalogisieren und aufräumen!"'
+        dialogue: '"Jetzt wimmelt es hier von fanatischen Toastern und fliegenden Staubsaugern. Sie wollen das Universum feucht durchwischen und sehen organisches Leben als \'hartnäckige Flecken\'!"'
     },
     {
         img: 'intro_hero', tint: null, effect: 'static', caption: null,
-        dialogue: '"Die Prophezeiung auf diesem Bierdeckel besagt, dass nur jemand mit Laktose-Intoleranz sie stoppen kann. Du bist der Auserwählte! Meine Tentakel sind ohnehin zu kurz für den Joystick."'
+        dialogue: '"Du bist unsere einzige Hoffnung! Nicht wegen einer Prophezeiung... sondern weil du und dein Pizza-Roller so von altem Fett verkrustet seid, dass ihre Reinigungs-Laser abrutschen!"'
     },
     {
         img: 'intro_ship', tint: null, effect: 'zoom_out', caption: null,
-        dialogue: '"Normale Raumschiffe haben wir nicht. Du bekommst Relikte der Alten Götter: Eine fliegende Arcade-Maschine, ein mutiertes Leucht-Geflügel oder einen alten Pizza-Roller."'
+        dialogue: '"Schnapp dir ein Relikt der Alten Götter vom Schrottplatz! Eine fliegende Arcade-Maschine, ein mutiertes Leucht-Geflügel oder bleib bei deinem fettigen Roller."'
     },
     {
         img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
@@ -47,7 +47,7 @@ const SLIDES = [
     },
     {
         img: 'intro_hero', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,
-        dialogue: '"Und kraule Nyx, unsere vierdimensionale Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, rette die Unordnung!"'
+        dialogue: '"Und kraule Nyx, unsere vierdimensionale Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, wehr dich gegen den Frühjahrsputz!"'
     }
 ];
 

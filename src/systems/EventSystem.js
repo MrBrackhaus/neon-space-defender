@@ -82,19 +82,19 @@ export default class EventSystem {
             },
             jergeric: {
                 take_damage: [
-                    "Mach die Toaster platt, oder ich lösche dein MySpace-Profil!",
+                    "Kratz nicht den Lack ab! Ich muss den Pizza-Roller vielleicht noch zurückgeben!",
                     "Pass auf den Lack auf, Pizza-Boy! Der Schrott war teuer!"
                 ],
                 level_up: [
-                    "Weiter so! Die Bürokratische Leere hat keinen Feierabend!",
-                    "Arr! Das war fast so furchteinflößend wie meine Kuscheltier-Sammlung!"
+                    "Weiter so! Zeig diesen Putz-Robotern, wie schmutzig wir wirklich sind!",
+                    "Arr! Dein Fett-Schild wehrt ihre Hygiene-Laser ab! Genial!"
                 ],
                 unlock_ship: [
-                    "Ein weiser Kauf, Pizza-Boy! Das Gold fließt direkt in meine Schatztruhe!",
+                    "Ein weiser Kauf, Pizza-Boy! Dieses Modell hat noch mehr eingetrockneten Käse auf der Hülle!",
                     "Ich hätte nicht gedacht, dass du diesen Schrotthaufen wirklich nimmst!"
                 ],
                 idle: [
-                    "Schieß weiter! Ich bezahle dich nicht fürs Rumsitzen! Wobei, ich bezahle dich sowieso nicht."
+                    "Schieß weiter! Wir müssen das Universum vor dem Frühjahrsputz retten!"
                 ]
             }
         };
@@ -127,12 +127,12 @@ export default class EventSystem {
         let bossImageKey = 'enemy_boss';
 
         if (bossType === 'hivemind') {
-            bossName = "DER ALGORITHMUS";
-            bossSubtitle = "Hobbies: Festplatten formatieren";
+            bossName = "EARL, HERR DER KRÜMELSCHUBLADE";
+            bossSubtitle = "Hobbies: Statische Aufladung";
             bossImageKey = 'boss_hivemind';
         } else if (bossType === 'dreadnought') {
-            bossName = "TOASTER-KÖNIG VEX";
-            bossSubtitle = "Hobbies: Krümel verbrennen";
+            bossName = "SCHMUTZ-RADIATOR 3000";
+            bossSubtitle = "Hobbies: Fettflecken analysieren";
             bossImageKey = 'boss_dreadnought';
         }
 

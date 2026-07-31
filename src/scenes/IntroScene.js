@@ -21,37 +21,33 @@ const SLIDES = [
     },
     {
         img: 'intro_hero', tint: null, effect: 'pan_right',
-        caption: 'Zentrale der Föderation — Die Kaffeemaschine ist kaputt',
-        dialogue: '"Hör gut zu, Space Pirat König Jergeric. Wir wissen, wer du bist. Dein Pizza-Lieferanten-Undercover-Job war miserabel. Aber wir brauchen dich!"'
+        caption: 'Zentrale des Schmuggel-Imperiums - Thronsaal von Jergeric',
+        dialogue: '"Hör gut zu, Pizza-Boy. Ich bin Space Piraten-König Jergeric. Du schuldest mir eine Menge Credits für diesen verbeulten Schrott-Roller, mit dem du Pizzen ausfährst."'
     },
     {
         img: 'intro_fleet', tint: null, effect: 'zoom_in',
-        caption: 'Sektor 7-G — Vor exakt 14 Minuten',
-        dialogue: '"Unsere Flotte wurde von bösartigen KI-Toastern und wütender Neon-Geometrie zerlegt. Jemand hat beim Update auf \'Ignorieren\' statt auf \'Patchen\' geklickt. Passiert den Besten."'
+        caption: 'Sektor 7-G - Vor exakt 14 Minuten',
+        dialogue: '"Meine stolze Piraten-Flotte wurde gerade bei einem \'Geschäftstreffen\' mit einem intergalaktischen Haushaltsgeräte-Konzern von deren durchgeknallter KI vernichtet."'
     },
     {
         img: 'intro_fleet', tint: 0xff4444, effect: 'pan_left', caption: null,
-        dialogue: '"Warum sie uns angreifen? Tja, vermutlich hat sich ihr Algorithmus an unserem miesen intergalaktischen Musikgeschmack verschluckt. Ist aber auch egal, die Dinger müssen weg."'
+        dialogue: '"Jemand hat beim Update der Toaster auf \'Ignorieren\' statt auf \'Patchen\' geklickt. Jetzt fliegen mörderische Haushaltsgeräte und bösartige Neon-Geometrie durch meinen Sektor!"'
     },
     {
         img: 'intro_hero', tint: null, effect: 'static', caption: null,
-        dialogue: '"Dein heldenhafter Auftrag: Rette das Universum. Deine Piraten-Ehre verlangt es! Und wenn du versagst, sind wir eh alle tot, also kein Druck. Echt nicht."'
+        dialogue: '"Da meine besten Piloten Asche sind, heuere ich dich an. Dein Auftrag: Rette mein Imperium und räum den Müll auf! Und wenn du versagst, behalte ich deine Kaution."'
     },
     {
         img: 'intro_ship', tint: null, effect: 'zoom_out', caption: null,
-        dialogue: '"Dein glorreiches Piratenschiff wurde gepfändet. Deshalb kriegst du diesen alten Pizza-Lieferflitzer, an den wir wahllos Laserkanonen geklebt haben. Die Gurte klemmen ein bisschen."'
+        dialogue: '"Richtige Kampfjets habe ich keine mehr. Du musst nehmen, was auf meinem Schrottplatz rumliegt: Spielautomaten, alte Casino-Schilder oder deinen Pizza-Roller."'
     },
     {
         img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
-        dialogue: '"Tipp: Schieß auf alles, was sich bewegt. Sammle \'Scrap\' ein. Damit kannst du Upgrades beim mürrischen Schrott-Goblin Wrench kaufen."'
+        dialogue: '"Tipp: Schieß auf alles, was leuchtet. Sammle \'Scrap\' ein. Damit kannst du Upgrades bei meinem mürrischen Schrott-Goblin Wrench kaufen."'
     },
     {
         img: 'intro_hero', tint: 0x00ffcc, effect: 'zoom_in', caption: null,
-        dialogue: '"Frag besser nicht, wieso eine kybernetische Straßenkatze namens Nyx im Vakuum des Weltalls atmen und mit Perks handeln kann. Der freie Markt regelt das irgendwie."'
-    },
-    {
-        img: 'intro_ship', tint: null, effect: 'zoom_in', caption: null,
-        dialogue: '"Mach die Augen zu, drück ab und zeig ihnen, warum du der Piratenkönig bist! Viel Glück, Eure Majestät. Wir zählen auf dich!"'
+        dialogue: '"Und frag besser nicht, wieso meine Buchhalterin, eine kybernetische Straßenkatze namens Nyx, im Vakuum des Weltalls atmen kann. Nun los, Pizza-Boy!"'
     }
 ];
 

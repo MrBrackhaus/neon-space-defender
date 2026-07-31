@@ -50,12 +50,12 @@ const WEAPONS = [
  * cost to unlock, and feature descriptions.
  */
 const SHIPS = [
-    { id: 'standard', img: 'ship_standard', name: 'SYNTHWAVE-GLEITER', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Ausgewogen. Klassisches Arcade-Raumschiff aus dicken Neon-Röhren.' },
-    { id: 'interceptor', img: 'ship_interceptor', name: 'PHOTONEN-NADEL', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Extrem schnell, aber zerbrechlich. Ein pfeilschneller Neon-Speer.' },
-    { id: 'dreadnought', img: 'ship_dreadnought', name: 'CYBER-QUIETSCHEENTE', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Aegis-Schild. Sehr langsam, aber absolut badewannenfest.' },
-    { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim (feuert auf 2 Ziele gleichzeitig). Extrem majestätische Glaskanone.' },
-    { id: 'paladin', img: 'ship_paladin', name: 'OKTOHORNCAT', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Vampir-Kätzchen: Heilt sich alle 15 Kills. Kann Holy Nova zünden.' },
-    { id: 'bomber', img: 'ship_bomber', name: 'NEON-MONOLITH', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Verschießt Tetris-Sprengstoff (Carpet Bombing). Massiver Block aus purem Neon.' }
+    { id: 'standard', img: 'ship_standard', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Ausgewogen. Dein treuer, aber völlig veralteter Liefer-Roller.' },
+    { id: 'interceptor', img: 'ship_interceptor', name: 'NEON-FLAMINGO', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Ein pfeilschnelles Leuchtschild aus dem Casino-Viertel. Sehr fragil.' },
+    { id: 'dreadnought', img: 'ship_dreadnought', name: 'ARCADE-KAPSEL', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Aegis-Schild. Ein massiver Spielautomat mit Panzertape. Sehr zäh.' },
+    { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim (feuert auf 2 Ziele). Eine Kühlerfigur umgebaut zur extremen Glaskanone.' },
+    { id: 'paladin', img: 'ship_paladin', name: 'OKTOHORNCAT', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Flauschig: Heilt sich alle 15 Kills. Kann Holy Nova zünden.' },
+    { id: 'bomber', img: 'ship_bomber', name: 'VHS-BOMBER', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Verschießt Magnetband-Sprengstoff (Carpet Bombing). Massiver Flächenschaden.' }
 ];
 
 /**

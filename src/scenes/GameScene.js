@@ -120,6 +120,10 @@ export default class GameScene extends Phaser.Scene {
         let hpMod = 1, dmgMod = 1, spdMod = 1, critMod = false, shieldMod = 0, novaMod = 0;
         let bonusShots = 0, autoTargetCount = 1, isExplosive = false, baseRegen = 0, extraDropChance = 0;
         
+        if (parseInt(localStorage.getItem('neon_tech_double_fire')||'0') > 0) {
+            bonusShots += 1;
+        }
+
         if (this.shipClass === 'standard') {
             extraDropChance = 0.20; // Lucky Looter
         } else if (this.shipClass === 'interceptor') {
@@ -168,7 +172,7 @@ export default class GameScene extends Phaser.Scene {
             nova: pNova + novaMod, pierce: weaponPierce, crit: critMod, weaponLifespan: weaponLifespan,
             magnetRange: 130 + pMag + meta.magnetBonus, regen: baseRegen, aoe: false,
             greedMult: meta.greedMult,
-            orbitals: techOrbitals ? 1 : 0,
+            orbitals: 0,
             hasLightning: false,
             hasBlackHole: false,
             hasCryo: false,
@@ -877,10 +881,6 @@ export default class GameScene extends Phaser.Scene {
                 if (shots === 1) {
                     this.fireSide = (this.fireSide === 1) ? -1 : 1;
                     this.fireBullet(this.player.x + (ox * 16 * this.fireSide), this.player.y + (oy * 16 * this.fireSide), ang);
-                } else if (shots === 2) {
-                    // True double barrel: parallel shots from wings
-                    this.fireBullet(this.player.x - ox * 16, this.player.y - oy * 16, ang);
-                    this.fireBullet(this.player.x + ox * 16, this.player.y + oy * 16, ang);
                 } else {
                     for (let i = 0; i < shots; i++) {
                         const a = ang + (i - (shots - 1) / 2) * spread;

@@ -2119,10 +2119,28 @@ export default class GameScene extends Phaser.Scene {
 
         choices.forEach(upg => {
             const currentLevel = this.pd.upgLevels[upg.id] || 0;
+            const nextLevel = currentLevel + 1;
+            
+            let dynamicDesc = upg.desc;
+            switch (upg.id) {
+                case 'multi_shot': dynamicDesc = '+1 Schuss-Projektil pro Salve'; break;
+                case 'speed': dynamicDesc = '+20% Geschwindigkeit (Gesamt: +' + (nextLevel * 20) + '%)'; break;
+                case 'damage': dynamicDesc = '+40% Schaden (Gesamt: +' + (nextLevel * 40) + '%)'; break;
+                case 'fire_rate': dynamicDesc = '-20% Feuer-Verzögerung (Schneller feuern)'; break;
+                case 'magnet': dynamicDesc = '+80px XP-Radius (Gesamt: +' + (nextLevel * 80) + 'px)'; break;
+                case 'regen': dynamicDesc = '+3 HP/s Regeneration (Gesamt: ' + (nextLevel * 3) + ' HP/s)'; break;
+                case 'chain_lightning': dynamicDesc = 'Blitze springen auf ' + (3 + nextLevel) + ' Gegner (Schaden +' + (nextLevel * 20) + '%)'; break;
+                case 'black_hole': dynamicDesc = 'Dauer: ' + (3 + nextLevel) + 's, Saug-Radius: +' + (nextLevel * 30) + 'px (Schaden +' + (nextLevel * 20) + '%)'; break;
+                case 'drones': dynamicDesc = 'Drohnen feuern ' + nextLevel + ' Schuss pro Salve in einer Kreisformation'; break;
+                case 'cryo_ray': dynamicDesc = 'Frost-Dauer: ' + (2 + nextLevel * 0.5) + 's (Verstärkter Verlangsamungs-Effekt)'; break;
+                case 'orbital': dynamicDesc = '+1 Plasma-Klinge (Du erhältst Klinge Nr. ' + nextLevel + ')'; break;
+                case 'shield': dynamicDesc = 'Schild-Aufladezeit sinkt auf ' + (nextLevel === 1 ? '8s' : nextLevel === 2 ? '6s' : '4.5s'); break;
+            }
+
             const card = document.createElement('button');
             card.className = 'upg-card';
             card.style.cssText = `border-color:${upg.color}; --upg-color:${upg.color};`;
-            card.innerHTML = `<div class="upg-name" style="color:${upg.color}">${upg.name} <span style="font-size:12px; color:#fff;">(Lvl ${currentLevel + 1})</span></div><div class="upg-desc">${upg.desc}</div>`;
+            card.innerHTML = `<div class="upg-name" style="color:${upg.color}">${upg.name} <span style="font-size:12px; color:#fff;">(Lvl ${nextLevel})</span></div><div class="upg-desc">${dynamicDesc}</div>`;
             card.addEventListener('click', () => {
                 this.applyUpgrade(upg.id);
                 panel.style.display = 'none';

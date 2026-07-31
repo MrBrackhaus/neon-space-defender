@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import EventSystem from '../systems/EventSystem';
 
 /**
  * @file TechTreeScene.js
@@ -24,6 +25,10 @@ export default class TechTreeScene extends Phaser.Scene {
         super('TechTreeScene');
     }
 
+    init(data) {
+        this.boughtTech = data?.boughtTech || false;
+    }
+
     // ─────────────────── LIFECYCLE METHODS ───────────────────
 
     /**
@@ -33,6 +38,12 @@ export default class TechTreeScene extends Phaser.Scene {
      */
     create() {
         const { width, height } = this.scale;
+        
+        this.eventSys = new EventSystem(this);
+        
+        if (this.boughtTech) {
+            this.eventSys.triggerCompanionComment('unlock_tech');
+        }
         
         // --- BACKGROUND ---
         // Render a dark base background
@@ -355,7 +366,7 @@ export default class TechTreeScene extends Phaser.Scene {
                         duration: 300,
                         onComplete: () => { 
                             flash.destroy(); 
-                            this.scene.restart(); // Restart to re-evaluate lines and node states fully
+                            this.scene.restart({ boughtTech: true }); // Restart to re-evaluate lines and node states fully
                         }
                     });
                 } else {

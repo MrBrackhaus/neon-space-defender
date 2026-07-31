@@ -43,7 +43,7 @@ const SLIDES = [
     },
     {
         img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
-        dialogue: '"Zerstöre alles, was nach Hausarbeit aussieht! Der Schrott-Troll Wrench verkauft dir Upgrades. Er wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
+        dialogue: '"Zerstöre alles, was nach Hausarbeit aussieht! Das zynische Einhorn Sparkles verkauft dir Upgrades. Es wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
     },
     {
         img: 'intro_hero', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,

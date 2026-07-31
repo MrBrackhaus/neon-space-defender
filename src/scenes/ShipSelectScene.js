@@ -7,6 +7,7 @@
  */
 
 import Phaser from 'phaser';
+import EventSystem from '../systems/EventSystem';
 
 /**
  * @constant {Array<Object>} WEAPONS
@@ -72,6 +73,10 @@ export default class ShipSelectScene extends Phaser.Scene {
         super('ShipSelectScene'); 
     }
 
+    init(data) {
+        this.boughtShip = data?.boughtShip || false;
+    }
+
     /**
      * @method create
      * @description Builds the entire UI for the Hangar scene, reading unlocked state
@@ -82,6 +87,12 @@ export default class ShipSelectScene extends Phaser.Scene {
         const { width: cw, height: ch } = this.scale;
         this.cw = cw; 
         this.ch = ch;
+        
+        this.eventSys = new EventSystem(this);
+
+        if (this.boughtShip) {
+            this.eventSys.triggerCompanionComment('unlock_ship');
+        }
         
         // ─────────────────── BACKGROUND & ATMOSPHERE ───────────────────
         
@@ -248,7 +259,7 @@ export default class ShipSelectScene extends Phaser.Scene {
                     localStorage.setItem('neon_scrap', this.scrap);
                     localStorage.setItem('neon_unlocked_ships', JSON.stringify(this.unlockedShips));
                     localStorage.setItem('neon_selected_ship', s.id);
-                    this.scene.restart(); // Refresh the UI completely
+                    this.scene.restart({ boughtShip: true }); // Refresh the UI completely
                 } else {
                     // Not enough scrap feedback
                     this.cameras.main.shake(200, 0.01);
@@ -316,7 +327,7 @@ export default class ShipSelectScene extends Phaser.Scene {
                 localStorage.setItem('neon_scrap', this.scrap);
                 localStorage.setItem('neon_unlocked_ships', JSON.stringify(this.unlockedShips));
                 localStorage.setItem('neon_selected_ship', s.id);
-                this.scene.restart();
+                this.scene.restart({ boughtShip: true });
             } else {
                 this.cameras.main.shake(200, 0.01);
             }

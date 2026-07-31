@@ -1149,7 +1149,7 @@ export default class GameScene extends Phaser.Scene {
                 e.combatModifier = modifier;
                 this.bossSys.setupHitZones(e);
             });
-            this.eventSys.triggerWrenchComment('boss_spawn');
+            this.eventSys.triggerCompanionComment('boss_spawn');
         }
         return e;
     }
@@ -1718,7 +1718,7 @@ export default class GameScene extends Phaser.Scene {
             if (this.achieveSys.unlock('boss_1')) {
                 this.showBanner('ACHIEVEMENT: Piratenkönig auf Abwegen!', '#00ffff');
             }
-            this.eventSys.triggerWrenchComment('boss_kill');
+            this.eventSys.triggerCompanionComment('boss_kill');
             this.hud.bossBg.setVisible(false);
             this.hud.bossBar.setVisible(false);
             this.hud.bossName.setVisible(false);
@@ -1873,7 +1873,7 @@ export default class GameScene extends Phaser.Scene {
         if (this.isGameOver || this.playerInvincible || this.player.isInvulnerable || this.player.hasAegis) return;
 
         this.triggerHitStop(1.5);
-        this.eventSys.triggerWrenchComment('take_damage');
+        this.eventSys.triggerCompanionComment('take_damage');
 
         if (this.pd.shield > 0) {
             this.pd.shield--;
@@ -1940,7 +1940,7 @@ export default class GameScene extends Phaser.Scene {
      */
     healPlayer(amount) {
         this.pd.hp = Math.min(this.pd.maxHp, this.pd.hp + amount);
-        this.eventSys.triggerWrenchComment('heal');
+        this.eventSys.triggerCompanionComment('heal');
     }
 
     // ─────────────────────────────────────────────────────
@@ -2147,7 +2147,7 @@ export default class GameScene extends Phaser.Scene {
                 // Resume EVERYTHING
                 this.physics.world.resume();
                 this.tweens.resumeAll();
-                this.eventSys.triggerWrenchComment('level_up');
+                this.eventSys.triggerCompanionComment('level_up');
                 this.shootTimer.paused = false;
                 if (this.regenTimer) this.regenTimer.paused = false;
                 // Brief invincibility after selecting (avoid immediate death)
@@ -2629,7 +2629,7 @@ export default class GameScene extends Phaser.Scene {
         t.setText(count + 'x ' + msg).setAlpha(1);
         this.tweens.killTweensOf(t);
         this.tweens.add({ targets: t, alpha: 0, duration: 1100, delay: 700 });
-        if (count % 5 === 0) this.eventSys.triggerWrenchComment('combo_milestone');
+        if (count % 5 === 0) this.eventSys.triggerCompanionComment('combo_milestone');
     }
 
     // ─────────────────────────────────────────────────────
@@ -2751,7 +2751,7 @@ export default class GameScene extends Phaser.Scene {
         this.hazardSys.update(time, delta);
         
         if (Math.random() < 0.0005) {
-            this.eventSys.triggerWrenchComment('idle');
+            this.eventSys.triggerCompanionComment('idle');
         }
 
         const timeSeconds = time / 1000;
@@ -2866,12 +2866,12 @@ export default class GameScene extends Phaser.Scene {
 
         createBtn(0, -30, '+ 10.000 SCRAP', () => {
             this.scrap += 10000;
-            this.eventSys.triggerWrenchComment('dev_cheat');
+            this.eventSys.triggerCompanionComment('dev_cheat');
         });
 
         createBtn(0, 30, '+ 100 CUBES', () => {
             this.cubes += 100;
-            this.eventSys.triggerWrenchComment('dev_cheat');
+            this.eventSys.triggerCompanionComment('dev_cheat');
         });
 
         createBtn(0, 90, 'LEVEL UP x5', () => {

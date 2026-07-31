@@ -50,12 +50,12 @@ const WEAPONS = [
  * cost to unlock, and feature descriptions.
  */
 const SHIPS = [
-    { id: 'standard', img: 'ship_standard', name: 'STANDARD', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Ausgewogen. Solider Allrounder für jede Situation.' },
-    { id: 'interceptor', img: 'ship_interceptor', name: 'INTERCEPTOR', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Ein extrem schnelles Angriffs-Schiff.' },
-    { id: 'dreadnought', img: 'ship_dreadnought', name: 'DREADNOUGHT', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit einem starken Energieschild. Sehr langsam, aber robust.' },
-    { id: 'phantom', img: 'ship_phantom', name: 'PHANTOM', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Extremer Schaden und verbesserter Dash. Eine reine Glaskanone.' },
-    { id: 'paladin', img: 'ship_paladin', name: 'PALADIN', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Heiliger Startschild absorbiert mehrere Treffer. Perfekt für Defensive.' },
-    { id: 'bomber', img: 'ship_bomber', name: 'BOMBER', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Startet mit 3 verheerenden Nova-Bomben. Perfekt für Flächenschaden.' }
+    { id: 'standard', img: 'ship_standard', name: 'RGB-GAMING-SESSEL', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Ausgewogen. Ein voll ausgestatteter Gamer-Sitz für jede Situation.' },
+    { id: 'interceptor', img: 'ship_interceptor', name: 'TURBO-ROLLSCHUH', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Extrem schnell, aber der Schnürsenkel ist offen.' },
+    { id: 'dreadnought', img: 'ship_dreadnought', name: 'CYBER-QUIETSCHEENTE', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Aegis-Schild. Sehr langsam, aber absolut badewannenfest.' },
+    { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim (feuert auf 2 Ziele gleichzeitig). Extrem majestätische Glaskanone.' },
+    { id: 'paladin', img: 'ship_paladin', name: 'OKTOHORNCAT', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Vampir-Kätzchen: Heilt sich alle 15 Kills. Kann Holy Nova zünden.' },
+    { id: 'bomber', img: 'ship_bomber', name: 'FLIEGENDER TOASTER', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Verschießt Sprengstoff (Carpet Bombing). Perfekt für knusprigen Flächenschaden.' }
 ];
 
 /**

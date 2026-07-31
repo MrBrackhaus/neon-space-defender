@@ -2688,6 +2688,12 @@ export default class GameScene extends Phaser.Scene {
             if (nameInput) {
                 nameInput.style.display = qualifies ? 'block' : 'none';
                 nameInput.value = '';
+                
+                // Disable keyboard capture in this scene so typing doesn't trigger game actions
+                this.input.keyboard.enabled = false;
+                
+                nameInput.addEventListener('focus', () => { this.input.keyboard.enabled = false; });
+                nameInput.addEventListener('blur', () => { this.input.keyboard.enabled = true; });
             }
 
             ov.style.display = 'flex';
@@ -2720,11 +2726,13 @@ export default class GameScene extends Phaser.Scene {
             document.getElementById('go-restart').onclick = () => {
                 saveHighscore();
                 ov.style.display = 'none';
+                this.input.keyboard.enabled = true;
                 this.scene.restart();
             };
             document.getElementById('go-menu').onclick = () => {
                 saveHighscore();
                 ov.style.display = 'none';
+                this.input.keyboard.enabled = true;
                 this.scene.start('MenuScene');
             };
         });

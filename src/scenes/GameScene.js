@@ -261,7 +261,7 @@ export default class GameScene extends Phaser.Scene {
         this.eBullets = this.physics.add.group({
             classType: Phaser.Physics.Arcade.Image,
             maxSize: 200, runChildUpdate: false,
-            createCallback: (b) => { b.setTexture('ebullet_tex'); }
+            createCallback: (b) => { b.setTexture('enemy_projectile'); }
         });
         this.crystals = this.physics.add.group();
         this.scraps = this.physics.add.group();

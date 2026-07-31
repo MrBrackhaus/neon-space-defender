@@ -120,10 +120,6 @@ export default class GameScene extends Phaser.Scene {
         let hpMod = 1, dmgMod = 1, spdMod = 1, critMod = false, shieldMod = 0, novaMod = 0;
         let bonusShots = 0, autoTargetCount = 1, isExplosive = false, baseRegen = 0, extraDropChance = 0;
         
-        if (parseInt(localStorage.getItem('neon_tech_double_fire')||'0') > 0) {
-            bonusShots += 1;
-        }
-
         if (this.shipClass === 'standard') {
             extraDropChance = 0.20; // Lucky Looter
         } else if (this.shipClass === 'interceptor') {

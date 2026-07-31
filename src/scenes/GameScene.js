@@ -22,7 +22,7 @@ import { getMetaStats } from '../systems/MetaUpgrades.js';
 
 // Global list of in-run upgrades accessible during level up.
 const UPGRADES = [
-    { id: 'multi_shot', name: 'MULTI-SHOT',   desc: '+1 Schuss gleichzeitig (max 6)',     color: '#00ffff' },
+    { id: 'multi_shot', name: 'DOUBLE BARREL',   desc: '+1 Schuss gleichzeitig (max 6)',     color: '#00ffff' },
     { id: 'speed',      name: 'HYPERDRIVE',       desc: '+20% Bewegungsgeschwindigkeit',       color: '#ffff00' },
     { id: 'damage',     name: 'HEAVY ROUNDS',     desc: '+40% Schaden pro Treffer',           color: '#ff6600' },
     { id: 'fire_rate',  name: 'RAPID FIRE',       desc: '-20% Feuer-Verzögerung',             color: '#ff3300' },

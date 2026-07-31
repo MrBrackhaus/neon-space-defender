@@ -42,8 +42,12 @@ const SLIDES = [
         dialogue: '"Und dein alter Pizza-Roller ist derart mit Schmutz und altem Käse verkrustet, dass ihre Antimaterie-Strahlen an diesem gigantischen Fett-Schild abprallen!"'
     },
     {
+        img: 'intro_ship', tint: null, effect: 'zoom_in', caption: null,
+        dialogue: '"Sparkles das Einhorn plündert die Trümmer meiner zerstörten Flotte und klebt sie mit Panzertape an leuchtenden Weltraum-Müll..."'
+    },
+    {
         img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
-        dialogue: '"Das zynische Einhorn Sparkles verkauft dir Upgrades für den Schrott, den du findest. Es wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
+        dialogue: '"Daraus baut es absurde, aber tödliche neue Schiffe für dich! Fliegende Flamingos, Arcade-Automaten... alles, was das Void hassen wird!"'
     },
     {
         img: 'intro_hero', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,

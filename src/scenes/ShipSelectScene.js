@@ -51,12 +51,12 @@ const WEAPONS = [
  * cost to unlock, and feature descriptions.
  */
 const SHIPS = [
-    { id: 'standard', img: 'ship_standard', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Ausgewogen. Das Universum erzwingt 30-Minuten-Garantien.' },
-    { id: 'interceptor', img: 'ship_interceptor', name: 'NEON-FLAMINGO', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Wiederbelebtes Leucht-Geflügel aus Zamonien. Extrem fragil.' },
-    { id: 'dreadnought', img: 'ship_dreadnought', name: 'ARCADE-KAPSEL', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Schild. Relikt der Götter, erfordert eine Vierteldollar-Münze.' },
-    { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim. So spitz, dass es die Raumzeit in kleine Scheiben schneidet.' },
-    { id: 'paladin', img: 'ship_paladin', name: 'OKTOHORNCAT', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Heilt sich. Entfernter Cousin von Cthulhu mütterlicherseits. Sehr flauschig.' },
-    { id: 'bomber', img: 'ship_bomber', name: 'VHS-BOMBER', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Bomben-Spezialist. Die Langeweile der B-Movies hat massive Sprengkraft.' }
+    { id: 'standard', img: 'ship_standard', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Dein treuer Begleiter, verkrustet mit einem gigantischen Fett-Schild. (Ausgewogen)' },
+    { id: 'interceptor', img: 'ship_interceptor', name: 'NEON-FLAMINGO', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Motel-Reklame mit geplündertem Void-Antrieb. Extrem fragil.' },
+    { id: 'dreadnought', img: 'ship_dreadnought', name: 'ARCADE-KAPSEL', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Schild. Ein uralter Spielautomat mit Plasma-Reaktor. Einwurf: 1 Vierteldollar.' },
+    { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim. Plastik-Karussell-Tierchen mit Antimaterie-Hörnern. Sparkles ist sehr stolz.' },
+    { id: 'paladin', img: 'ship_paladin', name: 'OKTOHORNCAT', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Heilt sich. Plüschiges Maskottchen, von innen mit Titanplatten verstärkt. Sehr flauschig.' },
+    { id: 'bomber', img: 'ship_bomber', name: 'VHS-BOMBER', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Bomben-Spezialist. Eine kolossale VHS-Kassette, randvoll mit instabilem Sprengstoff.' }
 ];
 
 /**

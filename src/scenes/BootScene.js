@@ -75,16 +75,16 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('enemy_shooter_sheet', 'enemy_shooter_sheet.png?v=6', { frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_elite_sheet',   'enemy_elite_sheet.png?v=6',   { frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_boss_sheet',    'enemy_boss_sheet.png?v=6',    { frameWidth: FW, frameHeight: FH });
-        this.load.spritesheet('enemy_phantom_sheet', 'enemy_phantom_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_swarmer_sheet', 'enemy_swarmer_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_stealth_sheet', 'enemy_stealth_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_laser_sheet',   'enemy_laser_sheet.png?v=6',   { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_carrier_sheet', 'enemy_carrier_sheet.png?v=6', { frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_hivemind_sheet','enemy_hivemind_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_mothership_sheet','enemy_mothership_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_destroyer_sheet','enemy_destroyer_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
-        this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png?v=6',{ frameWidth: 512, frameHeight: 512 });
+        this.load.spritesheet('enemy_phantom_sheet', 'enemy_phantom_sheet.png?v=6', { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_swarmer_sheet', 'enemy_swarmer_sheet.png?v=6', { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_stealth_sheet', 'enemy_stealth_sheet.png?v=6', { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_laser_sheet',   'enemy_laser_sheet.png?v=6',   { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_carrier_sheet', 'enemy_carrier_sheet.png?v=6', { frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_hivemind_sheet','enemy_hivemind_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_mothership_sheet','enemy_mothership_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_destroyer_sheet','enemy_destroyer_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
+        this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
 
         // Cinematic intro images
         this.load.image('intro_hero',  'intro_hero_anime.jpg?v=6');

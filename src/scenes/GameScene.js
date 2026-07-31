@@ -22,7 +22,7 @@ import { getMetaStats } from '../systems/MetaUpgrades.js';
 
 // Global list of in-run upgrades accessible during level up.
 const UPGRADES = [
-    { id: 'multi_shot', name: 'DOUBLE BARREL',   desc: '+1 Schuss gleichzeitig (max 6)',     color: '#00ffff' },
+    { id: 'multi_shot', name: 'MULTI-SHOT',   desc: '+1 Schuss gleichzeitig (max 6)',     color: '#00ffff' },
     { id: 'speed',      name: 'HYPERDRIVE',       desc: '+20% Bewegungsgeschwindigkeit',       color: '#ffff00' },
     { id: 'damage',     name: 'HEAVY ROUNDS',     desc: '+40% Schaden pro Treffer',           color: '#ff6600' },
     { id: 'fire_rate',  name: 'RAPID FIRE',       desc: '-20% Feuer-Verzögerung',             color: '#ff3300' },
@@ -267,6 +267,9 @@ export default class GameScene extends Phaser.Scene {
         this.scraps = this.physics.add.group();
         this.cubesGroup = this.physics.add.group();
         this.orbitalsGroup = this.physics.add.group();
+        if (this.pd.orbitals > 0) {
+            this.time.delayedCall(10, () => this.updateOrbitals());
+        }
         this.weaponUpgradesGroup = this.physics.add.group();
 
         let shipScale = 0.088;
@@ -1486,7 +1489,7 @@ export default class GameScene extends Phaser.Scene {
         b.damage = 5 + (this.waveNum * 1.5) + (this.pd.maxHp * 0.04);
         b.body.reset(x, y);
         b.setVelocity(Math.cos(angle)*speed, Math.sin(angle)*speed);
-        b.rotation = angle + Math.PI/2;
+        b.rotation = angle;
     }
 
     // ─────────────────────────────────────────────────────
@@ -2408,7 +2411,7 @@ export default class GameScene extends Phaser.Scene {
         const count = this.pd.orbitals;
         const blades = this.orbitalsGroup.getChildren();
         
-        if (blades.length < count) {
+        while (this.orbitalsGroup.getChildren().length < count) {
             const b = this.orbitalsGroup.create(this.player.x, this.player.y, 'orbital_blade').setDepth(9);
             b.setScale(0.06);
             b.body.setCircle(128); 

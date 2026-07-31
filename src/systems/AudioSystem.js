@@ -406,4 +406,52 @@ export default class AudioSystem {
             this.musicTimeout = null;
         }
     }
+
+    /**
+     * @description Plays a high-pitched, short beep for UI hover events.
+     */
+    playHover() {
+        if (!this.ctx || this.volSfx <= 0) return;
+        const time = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, time);
+        osc.frequency.exponentialRampToValueAtTime(1200, time + 0.05);
+
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(this.volSfx * 0.1, time + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.masterGainSfx);
+
+        osc.start(time);
+        osc.stop(time + 0.1);
+    }
+
+    /**
+     * @description Plays a satisfying deeper click sound for UI selection events.
+     */
+    playClick() {
+        if (!this.ctx || this.volSfx <= 0) return;
+        const time = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(400, time);
+        osc.frequency.exponentialRampToValueAtTime(100, time + 0.1);
+
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(this.volSfx * 0.2, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.masterGainSfx);
+
+        osc.start(time);
+        osc.stop(time + 0.15);
+    }
 }

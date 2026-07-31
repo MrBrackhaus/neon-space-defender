@@ -22,14 +22,20 @@
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
       }
 
+      @keyframes scanlines {
+        0% { background-position: 0 0; }
+        100% { background-position: 0 3px; }
+      }
+
       /* Subtle scanline overlay on everything */
-      #game-container::after {
-        content: '';
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      #scanline-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background: repeating-linear-gradient(
-          0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 3px
+          0deg, transparent, transparent 2px, rgba(0,255,255,0.06) 3px
         );
-        pointer-events: none; z-index: 9998;
+        pointer-events: none; z-index: 9999;
+        animation: scanlines 1s linear infinite;
+        box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9); /* Vignette */
       }
 
       /* ════════════════════════════════════
@@ -42,37 +48,27 @@
         flex-direction: column;
         justify-content: center;
         align-items: flex-start;
-        padding-left: 10vw;
-        /* Let the glass panel handle background and blur */
+        padding-left: 18vw;
+        pointer-events: none; /* Let pointer events pass through for Parallax */
       }
 
       .menu-glass-panel {
         position: relative;
-        padding: 3.5rem 5rem;
-        background: rgba(10, 5, 2, 0.7);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 85, 0, 0.4);
-        box-shadow: 0 0 40px rgba(255, 85, 0, 0.1), inset 0 0 20px rgba(255, 85, 0, 0.1);
         display: flex;
         flex-direction: column;
         align-items: center;
-        transform: perspective(1200px) rotateX(4deg);
-        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      }
-      .menu-glass-panel:hover {
-        transform: perspective(1200px) rotateX(0deg);
       }
 
       /* Corner brackets for the panel */
       .bracket-corner {
-        position: absolute; width: 30px; height: 30px;
+        position: absolute; width: 280px; height: 30px;
         border-color: #00ff44; border-style: solid;
         opacity: 0.6;
         transition: all 0.3s ease;
       }
       .menu-glass-panel:hover .bracket-corner {
         opacity: 1;
-        width: 40px; height: 40px;
+        width: 280px; height: 40px;
       }
       .tl { top: -2px; left: -2px;  border-width: 2px 0 0 2px; }
       .tr { top: -2px; right: -2px; border-width: 2px 2px 0 0; }
@@ -116,9 +112,19 @@
         opacity: 0.8;
       }
 
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(20px); filter: brightness(0); }
+        to { opacity: 1; transform: translateY(0); filter: brightness(1) drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+      }
       .menu-list {
-        display: flex; flex-direction: column; gap: 0.5rem;
-        width: 100%; min-width: 320px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 5px;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        justify-items: center;
+        align-items: center;
       }
 
       .menu-item {
@@ -221,13 +227,13 @@
 
       #upgrade-cards {
         display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center;
-        max-width: 900px;
+        max-width: 280px;
       }
 
       .upg-card {
         background: rgba(2, 2, 18, 0.92);
         border: 2px solid; border-radius: 10px;
-        padding: 1.8rem 1.4rem; width: 210px;
+        padding: 1.8rem 1.4rem; width: 280px;
         cursor: pointer;
         transition: transform 0.18s ease, box-shadow 0.18s ease;
         text-align: left; font-family: 'Orbitron', monospace; color: white;
@@ -304,7 +310,7 @@
         border-radius: 8px;
         padding: 1.5rem 3rem;
         margin-bottom: 2rem;
-        min-width: 320px;
+        min-width: 280px;
       }
       .go-stat {
         display: flex; justify-content: space-between; align-items: center;
@@ -356,7 +362,7 @@
           font-size: 1.2rem;
           text-align: center;
           padding: 0.5rem;
-          width: 250px;
+          width: 280px;
           text-transform: uppercase;
           outline: none;
           box-shadow: 0 0 10px rgba(0,255,255,0.2);
@@ -398,21 +404,14 @@
           display: none;
         }
         .menu-list {
-          flex-direction: column;
-          overflow-y: auto;
-          scroll-snap-type: y mandatory;
-          max-height: 60vh; /* changed for large image buttons */ /* enough to show 1 full button and a bit of the next */
-          padding-bottom: 20px; /* space for scrolling past the last item */
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .menu-list::-webkit-scrollbar {
-          display: none;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 15px 5px;
+          max-width: 95vw;
         }
         .menu-list .menu-item {
           font-size: 1rem;
           padding: 0.75rem;
-          scroll-snap-align: start;
+          scroll-snap-align: center;
           flex-shrink: 0;
           width: 75%;
           margin-left: auto;
@@ -443,27 +442,37 @@
       /* Image Buttons CSS */
       .menu-item-img {
         display: block;
-        width: 329px; /* new image width */
-        height: 128px;
+        width: 300px;
+        height: 95px;
         background-size: contain;
         background-position: center;
         background-repeat: no-repeat;
         border: none;
         background-color: transparent;
         cursor: pointer;
-        margin: 0 auto 10px auto;
-        color: transparent; /* Hide text for screen readers */
-        overflow: hidden;
+        margin: 0;
+        color: transparent;
+        overflow: visible; /* glow should not be clipped */
+        opacity: 0;
+        animation: fadeSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        pointer-events: auto; /* Buttons must be clickable */
       }
+      .menu-item-img:nth-child(1) { animation-delay: 0.10s; }
+      .menu-item-img:nth-child(2) { animation-delay: 0.15s; }
+      .menu-item-img:nth-child(3) { animation-delay: 0.20s; }
+      .menu-item-img:nth-child(4) { animation-delay: 0.25s; }
+      .menu-item-img:nth-child(5) { animation-delay: 0.30s; }
+      .menu-item-img:nth-child(6) { animation-delay: 0.35s; }
+      .menu-item-img:nth-child(7) { animation-delay: 0.40s; }
+      .menu-item-img:nth-child(8) { animation-delay: 0.45s; }
       
       @media (max-width: 768px) {
         .menu-item-img {
-          width: 80vw;
-          height: calc(80vw * (128/329)); /* updated aspect ratio for new image */
-          scroll-snap-align: start;
-          flex-shrink: 0;
+          width: 42vw;
+          height: calc(42vw * (100/318));
         }
       }
+      #btn-newgame { background-image: url('ui/btn_newgame.png'); }
       @media (hover: hover) and (pointer: fine) { #btn-newgame:hover { background-image: url('ui/btn_newgame_hover.png'); } }
       
       #btn-techtree { background-image: url('ui/btn_techtree.png'); }
@@ -549,9 +558,6 @@
           <span style="position:absolute; bottom: -10px; right: -60px; font-family:'Permanent Marker', cursive; color:#00ff00; font-size:1.8rem; transform: rotate(-15deg); text-shadow: 0 0 10px #00ff00; white-space: nowrap;">"Wrench war hier!"</span>
         </div>
         -->
-        <p class="menu-sub" style="text-align: left; margin-bottom: 2rem;">ALPHA BUILD 0.3</p>
-
-        <div class="menu-sep"></div>
 
         <nav class="menu-list">
           <button id="btn-newgame" class="menu-item-img">NEW GAME</button>
@@ -563,7 +569,6 @@
           <button id="btn-settings" class="menu-item-img">SETTINGS</button>
           <button id="btn-credits" class="menu-item-img">CREDITS</button>
         </nav>
-        <div class="scroll-indicator">▼ WEITERE OPTIONEN ▼</div>
       </div>
 
       <div class="menu-controls" style="margin-top: 2rem;">
@@ -615,9 +620,9 @@
 
       <!-- ROW 1: Basis-Module -->
       <p style="font-size: 0.7rem; color: #00ffcc88; letter-spacing: 0.25em; margin-bottom: 0.8rem;">— BASIS-MODULE —</p>
-      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; max-width: 1400px; margin-bottom: 2rem;">
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; max-width: 280px; margin-bottom: 2rem;">
         <!-- Scatter Weapon -->
-        <div class="tt-card" data-id="scatter" data-base-cost="150" style="background: rgba(0,20,40,0.8); border: 2px solid #ff8800; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="scatter" data-base-cost="150" style="background: rgba(0,20,40,0.8); border: 2px solid #ff8800; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔥</div>
           <h3 style="color: #ff8800; margin-bottom: 0.5rem; font-size: 0.85rem;">SCATTER SHOT</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Waffe freischalten: 3 Schüsse im Fächer, schnelleres Feuer.</p>
@@ -625,42 +630,42 @@
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">150</span> SCRAP</div>
         </div>
         <!-- Railgun Weapon -->
-        <div class="tt-card" data-id="railgun" data-base-cost="250" style="background: rgba(0,20,40,0.8); border: 2px solid #ff00ff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="railgun" data-base-cost="250" style="background: rgba(0,20,40,0.8); border: 2px solid #ff00ff; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
           <h3 style="color: #ff00ff; margin-bottom: 0.5rem; font-size: 0.85rem;">RAIL GUN</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Waffe freischalten: Pierce, +80% DMG, langsames Feuer.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">250</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="dash" data-base-cost="50" style="background: rgba(0,20,40,0.8); border: 2px solid #00ffcc; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="dash" data-base-cost="50" style="background: rgba(0,20,40,0.8); border: 2px solid #00ffcc; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💨</div>
           <h3 style="color: #00ffcc; margin-bottom: 0.5rem; font-size: 0.85rem;">DASH ENGINE</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Schaltet den Ausweich-Dash frei (Shift / B).</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">50</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="shield" data-base-cost="100" style="background: rgba(0,20,40,0.8); border: 2px solid #4499ff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="shield" data-base-cost="100" style="background: rgba(0,20,40,0.8); border: 2px solid #4499ff; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🛡️</div>
           <h3 style="color: #4499ff; margin-bottom: 0.5rem; font-size: 0.85rem;">SCHILD GENERATOR</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Schild-Upgrades in den Level-Up-Pool ein.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">100</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="tesla" data-base-cost="150" style="background: rgba(0,20,40,0.8); border: 2px solid #00ffff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="tesla" data-base-cost="150" style="background: rgba(0,20,40,0.8); border: 2px solid #00ffff; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
           <h3 style="color: #00ffff; margin-bottom: 0.5rem; font-size: 0.85rem;">TESLA SPULE</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Kettenblitz-Waffe in den Level-Up-Pool ein.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">150</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="singularity" data-base-cost="200" style="background: rgba(0,20,40,0.8); border: 2px solid #aa00ff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="singularity" data-base-cost="200" style="background: rgba(0,20,40,0.8); border: 2px solid #aa00ff; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🌑</div>
           <h3 style="color: #aa00ff; margin-bottom: 0.5rem; font-size: 0.85rem;">SINGULARITÄT</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Schwarzes-Loch-Waffe in den Level-Up-Pool ein.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">200</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="cryo" data-base-cost="175" style="background: rgba(0,20,40,0.8); border: 2px solid #00ccff; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="cryo" data-base-cost="175" style="background: rgba(0,20,40,0.8); border: 2px solid #00ccff; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">❄️</div>
           <h3 style="color: #00ccff; margin-bottom: 0.5rem; font-size: 0.85rem;">KRYO-REAKTOR</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Kryo-Strahl-Waffe in den Level-Up-Pool ein.</p>
@@ -671,36 +676,36 @@
 
       <!-- ROW 2: Erweiterte Module -->
       <p style="font-size: 0.7rem; color: #ff00ff88; letter-spacing: 0.25em; margin-bottom: 0.8rem;">— ERWEITERTE MODULE —</p>
-      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; max-width: 1400px; margin-bottom: 2rem;">
-        <div class="tt-card" data-id="drones" data-base-cost="250" style="background: rgba(0,20,40,0.8); border: 2px solid #ff9900; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; max-width: 280px; margin-bottom: 2rem;">
+        <div class="tt-card" data-id="drones" data-base-cost="250" style="background: rgba(0,20,40,0.8); border: 2px solid #ff9900; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🤖</div>
           <h3 style="color: #ff9900; margin-bottom: 0.5rem; font-size: 0.85rem;">DROHNEN-FABRIK</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Fügt Kampfdrohnen-Upgrade in den Level-Up-Pool ein.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">250</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="orbitals" data-base-cost="300" style="background: rgba(0,20,40,0.8); border: 2px solid #ff0055; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="orbitals" data-base-cost="300" style="background: rgba(0,20,40,0.8); border: 2px solid #ff0055; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🌀</div>
           <h3 style="color: #ff0055; margin-bottom: 0.5rem; font-size: 0.85rem;">PLASMA ORBITALS</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Startet jede Runde mit 1 Plasma-Orbital.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">300</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="revive" data-base-cost="400" style="background: rgba(0,20,40,0.8); border: 2px solid #00ff66; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="revive" data-base-cost="400" style="background: rgba(0,20,40,0.8); border: 2px solid #00ff66; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💚</div>
           <h3 style="color: #00ff66; margin-bottom: 0.5rem; font-size: 0.85rem;">NOTFALL-REANIMATOR</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Statt zu sterben: einmalige Wiederbelebung mit 30 HP.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">400</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="pierce_start" data-base-cost="350" style="background: rgba(0,20,40,0.8); border: 2px solid #ff00aa; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s;">
+        <div class="tt-card" data-id="pierce_start" data-base-cost="350" style="background: rgba(0,20,40,0.8); border: 2px solid #ff00aa; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
           <h3 style="color: #ff00aa; margin-bottom: 0.5rem; font-size: 0.85rem;">DURCHDRINGER-MODUL</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Startet jede Runde mit aktivem Durchdringen.</p>
           <div class="tt-level" style="font-size: 1rem; color: #fff; margin-bottom: 0.4rem;"><span class="lvl-val">0</span>/1</div>
           <div class="tt-cost" style="font-size: 0.9rem; color: #ffaa00;">⚙ <span class="cost-val">350</span> SCRAP</div>
         </div>
-        <div class="tt-card" data-id="fusion" data-base-cost="500" style="background: rgba(0,20,40,0.8); border: 2px solid #ff0055; border-radius: 8px; padding: 1.2rem; width: 200px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 10px #ff005555;">
+        <div class="tt-card" data-id="fusion" data-base-cost="500" style="background: rgba(0,20,40,0.8); border: 2px solid #ff0055; border-radius: 8px; padding: 1.2rem; width: 280px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 10px #ff005555;">
           <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">☢️</div>
           <h3 style="color: #ff0055; margin-bottom: 0.5rem; font-size: 0.85rem;">FUSION CORE</h3>
           <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem;">Schaltet SUPER-EVOLUTIONEN beim Level-Up frei!</p>
@@ -796,5 +801,7 @@
     </script>
 
     <script type="module" src="/src/main.js"></script>
+  <div id="scanline-overlay"></div>
   </body>
 </html>
+

@@ -114,6 +114,7 @@ export default class MenuScene extends Phaser.Scene {
             .setDepth(5);
         
         // Gentle hover effect for both mascots
+// Gentle hover effect for both mascots
         this.tweens.add({
             targets: [mascotRight, mascotLeft],
             y: '-=20',
@@ -152,6 +153,15 @@ export default class MenuScene extends Phaser.Scene {
 
         // Wire up buttons with DOM listeners
         this._wireBtns(menuLayer);
+        // Unlock WebAudio on first click anywhere
+        const unlockAudio = () => {
+            if (this.game.audioSys && this.game.audioSys.ctx.state === 'suspended') {
+                this.game.audioSys.ctx.resume();
+            }
+            document.removeEventListener('click', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+
 
         // Fade in the camera nicely when scene starts
         this.cameras.main.fadeIn(600, 0, 0, 0);
@@ -166,114 +176,53 @@ export default class MenuScene extends Phaser.Scene {
      * @returns {void}
      */
     _wireBtns(menuLayer) {
-        // New Game → transitions directly to ShipSelectScene
-        const btnNew = document.getElementById('btn-newgame');
-        if (btnNew) {
-            // Clone the button to safely remove any previously attached event listeners
-            const fresh = btnNew.cloneNode(true);
-            btnNew.parentNode.replaceChild(fresh, btnNew);
-            fresh.addEventListener('click', () => {
-                menuLayer.style.display = 'none';
-                this.cameras.main.fadeOut(500, 0, 0, 0);
-                this.cameras.main.once('camerafadeoutcomplete', () => {
-                    this.scene.start('ShipSelectScene');
-                });
-            });
-        }
+        const buttons = [
+            { id: 'btn-newgame', scene: 'ShipSelectScene' },
+            { id: 'btn-shop', scene: 'ShopScene' },
+            { id: 'btn-achievements', scene: 'AchievementScene' },
+            { id: 'btn-highscores', scene: 'HighscoreScene' },
+            { id: 'btn-story', scene: 'IntroScene', fade: 600 },
+            { id: 'btn-settings', scene: 'SettingsScene' },
+            { id: 'btn-credits', scene: 'CreditsScene' }
+        ];
 
-        // Tech Tree → Opens HTML Tech Tree UI defined globally
+        // 1. Generic Scene Transition Buttons
+        buttons.forEach(b => {
+            const btn = document.getElementById(b.id);
+            if (btn) {
+                const fresh = btn.cloneNode(true);
+                btn.parentNode.replaceChild(fresh, btn);
+                
+                fresh.addEventListener('mouseenter', () => {
+                    if (this.game.audioSys) this.game.audioSys.playHover();
+                });
+                
+                fresh.addEventListener('click', () => {
+                    if (this.game.audioSys) this.game.audioSys.playClick();
+                    menuLayer.style.display = 'none';
+                    this.cameras.main.fadeOut(b.fade || 500, 0, 0, 0);
+                    this.cameras.main.once('camerafadeoutcomplete', () => {
+                        this.scene.start(b.scene);
+                    });
+                });
+            }
+        });
+
+        // 2. Custom Logic Button (Tech Tree)
         const btnTechTree = document.getElementById('btn-techtree');
         if (btnTechTree) {
             const freshTT = btnTechTree.cloneNode(true);
             btnTechTree.parentNode.replaceChild(freshTT, btnTechTree);
+            
+            freshTT.addEventListener('mouseenter', () => {
+                if (this.game.audioSys) this.game.audioSys.playHover();
+            });
+            
             freshTT.addEventListener('click', () => {
+                if (this.game.audioSys) this.game.audioSys.playClick();
                 if (window.openTechTree) {
                     window.openTechTree();
                 }
-            });
-        }
-
-        // Shop → transitions to ShopScene
-        const btnShop = document.getElementById('btn-shop');
-        if (btnShop) {
-            const freshShop = btnShop.cloneNode(true);
-            btnShop.parentNode.replaceChild(freshShop, btnShop);
-            freshShop.addEventListener('click', () => {
-                menuLayer.style.display = 'none';
-                this.cameras.main.fadeOut(500, 0, 0, 0);
-                this.cameras.main.once('camerafadeoutcomplete', () => {
-                    this.scene.start('ShopScene');
-                });
-            });
-        }
-
-        // Achievements → transitions to AchievementScene
-        const btnAchievements = document.getElementById('btn-achievements');
-        if (btnAchievements) {
-            const fresh = btnAchievements.cloneNode(true);
-            btnAchievements.parentNode.replaceChild(fresh, btnAchievements);
-            fresh.addEventListener('click', () => {
-                menuLayer.style.display = 'none';
-                this.cameras.main.fadeOut(500, 0, 0, 0);
-                this.cameras.main.once('camerafadeoutcomplete', () => {
-                    this.scene.start('AchievementScene');
-                });
-            });
-        }
-
-        // Highscores → transitions to HighscoreScene
-        const btnHighscores = document.getElementById('btn-highscores');
-        if (btnHighscores) {
-            const fresh = btnHighscores.cloneNode(true);
-            btnHighscores.parentNode.replaceChild(fresh, btnHighscores);
-            fresh.addEventListener('click', () => {
-                menuLayer.style.display = 'none';
-                this.cameras.main.fadeOut(500, 0, 0, 0);
-                this.cameras.main.once('camerafadeoutcomplete', () => {
-                    this.scene.start('HighscoreScene');
-                });
-            });
-        }
-
-        // Story → transitions to IntroScene
-        const btnStory = document.getElementById('btn-story');
-        if (btnStory) {
-            const fresh = btnStory.cloneNode(true);
-            btnStory.parentNode.replaceChild(fresh, btnStory);
-            fresh.addEventListener('click', () => {
-                menuLayer.style.display = 'none';
-                this.cameras.main.fadeOut(600, 0, 0, 0);
-                this.cameras.main.once('camerafadeoutcomplete', () => {
-                    this.scene.start('IntroScene');
-                });
-            });
-        }
-
-        // Settings -> transitions to SettingsScene
-        const btnSettings = document.getElementById('btn-settings');
-        if (btnSettings) {
-            const fresh = btnSettings.cloneNode(true);
-            btnSettings.parentNode.replaceChild(fresh, btnSettings);
-            fresh.addEventListener('click', () => {
-                menuLayer.style.display = 'none';
-                this.cameras.main.fadeOut(500, 0, 0, 0);
-                this.cameras.main.once('camerafadeoutcomplete', () => {
-                    this.scene.start('SettingsScene');
-                });
-            });
-        }
-
-        // Credits -> transitions to CreditsScene
-        const btnCredits = document.getElementById('btn-credits');
-        if (btnCredits) {
-            const fresh = btnCredits.cloneNode(true);
-            btnCredits.parentNode.replaceChild(fresh, btnCredits);
-            fresh.addEventListener('click', () => {
-                menuLayer.style.display = 'none';
-                this.cameras.main.fadeOut(500, 0, 0, 0);
-                this.cameras.main.once('camerafadeoutcomplete', () => {
-                    this.scene.start('CreditsScene');
-                });
             });
         }
     }

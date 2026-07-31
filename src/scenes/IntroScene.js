@@ -17,37 +17,37 @@ import Phaser from 'phaser';
 const SLIDES = [
     {
         img: 'bg', tint: 0x330066, caption: null, dialogue: null, duration: 3000, effect: 'zoom_in',
-        titleCard: { line1: 'NEON SPACE DEFENDER', line2: 'EPISODE 1: TELESHOPPING & TIEFENREINIGUNG' }
+        titleCard: { line1: 'NEON SPACE DEFENDER', line2: 'EPISODE 1: RISS IN DER LEERE' }
     },
     {
         img: 'intro_hero', tint: null, effect: 'pan_right',
-        caption: 'Käpt\'n Jergerics Thronsaal (Nachts um 4 Uhr)',
-        dialogue: '"Ahoi! Ich bin Käpt\'n Jergeric. Das furchterregendste (und niedlichste) kosmische Grauen. Letzte Nacht konnte ich nicht schlafen und habe interdimensionales Teleshopping geguckt."'
+        caption: 'Käpt\'n Jergerics Thronsaal (Letzte Woche)',
+        dialogue: '"Ahoi! Ich bin Käpt\'n Jergeric. Das fürchterlichste, niedlichste kosmische Grauen der Sieben Dimensionen. Meine Galaktische Armada war unbesiegbar!"'
     },
     {
         img: 'intro_fleet', tint: null, effect: 'zoom_in',
-        caption: 'Sektor 7-G - Heute Morgen',
-        dialogue: '"Ich bin auf der Fernbedienung eingeschlafen und habe versehentlich die \'Kosmische Teleshopping-Überraschungs-Box\' gebucht. Kein Widerrufsrecht!"'
+        caption: 'Der Void-Spalt - Gestern',
+        dialogue: '"Bis sich aus dem Nichts ein gigantischer Riss in der Realität öffnete. Ein Void-Spalt, der meine gesamte Flotte in Sekundenbruchteilen einfach verschluckte!"'
     },
     {
         img: 'intro_fleet', tint: 0xff4444, effect: 'pan_left', caption: null,
-        dialogue: '"Jetzt wimmelt es von Quanten-Tupperware, radikalen Toastern und radioaktiven Flamingos. Sie halten das Universum für unaufgeräumt und uns für Gerümpel!"'
+        dialogue: '"Nun strömen die Schergen des Voids in unser Universum. Albtraumhafte Schattenwesen und korrumpierte Maschinen, die alles vernichten wollen!"'
     },
     {
         img: 'intro_hero', tint: null, effect: 'static', caption: null,
-        dialogue: '"Du bist unsere einzige Hoffnung! Nicht wegen einer Prophezeiung... sondern weil du und dein Pizza-Roller so von altem Fett verkrustet seid, dass ihre Reinigungs-Laser abrutschen!"'
+        dialogue: '"Du bist unsere einzige Hoffnung! Nicht wegen einer Prophezeiung, sondern weil du laktoseintolerant bist! Das macht deinen Geist immun gegen die Telepathie des Voids!"'
     },
     {
         img: 'intro_ship', tint: null, effect: 'zoom_out', caption: null,
-        dialogue: '"Schnapp dir ein Relikt der Alten Götter vom Schrottplatz! Eine fliegende Arcade-Maschine, ein mutiertes Leucht-Geflügel oder bleib bei deinem fettigen Roller."'
+        dialogue: '"Und dein alter Pizza-Roller ist derart mit Schmutz und altem Käse verkrustet, dass ihre Antimaterie-Strahlen an diesem gigantischen Fett-Schild abprallen!"'
     },
     {
         img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
-        dialogue: '"Zerstöre alles, was aussieht wie eine kaputte Fehlbestellung! Das Einhorn Sparkles verkauft dir Upgrades. Es wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
+        dialogue: '"Das zynische Einhorn Sparkles verkauft dir Upgrades für den Schrott, den du findest. Es wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
     },
     {
         img: 'intro_hero', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,
-        dialogue: '"Und kraule Nyx, unsere Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, räum den Weltraum auf!"'
+        dialogue: '"Und kraule Nyx, unsere vierdimensionale Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, halte das Void auf!"'
     }
 ];
 

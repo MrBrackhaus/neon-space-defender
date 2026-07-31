@@ -82,19 +82,19 @@ export default class EventSystem {
             },
             jergeric: {
                 take_damage: [
-                    "Kratz nicht den Lack ab! Ich muss den Pizza-Roller vielleicht noch zurückgeben!",
-                    "Pass auf den Lack auf, Pizza-Boy! Der Schrott war teuer!"
+                    "Kratz nicht den Lack ab! Das ist das einzige funktionierende Schiff, das mir geblieben ist!",
+                    "Pass auf den Pizza-Roller auf! Die Void-Kreaturen fressen sonst den ganzen Käse!"
                 ],
                 level_up: [
-                    "Weiter so! Zeig diesen Teleshopping-Fehlproduktionen, wer hier der Boss ist!",
-                    "Arr! Dein Fett-Schild wehrt all ihre bizarren Laser ab! Genial!"
+                    "Weiter so! Zeig diesen Void-Schergen, wie unglaublich laktoseintolerant wir sind!",
+                    "Arr! Dein Fett-Schild wehrt all ihre Antimaterie-Angriffe ab! Genial!"
                 ],
                 unlock_ship: [
-                    "Ein weiser Kauf, Pizza-Boy! Dieses Modell hat noch mehr eingetrockneten Käse auf der Hülle!",
+                    "Ein weiser Kauf, Pizza-Boy! Damit fliegen wir direkt ins Auge des Voids!",
                     "Ich hätte nicht gedacht, dass du diesen Schrotthaufen wirklich nimmst!"
                 ],
                 idle: [
-                    "Schieß weiter! Wir müssen das Universum vor diesen absurden Lieferungen retten!"
+                    "Schieß weiter! Wir müssen das Universum vor der ultimativen Leere retten!"
                 ]
             }
         };
@@ -127,12 +127,12 @@ export default class EventSystem {
         let bossImageKey = 'enemy_boss';
 
         if (bossType === 'hivemind') {
-            bossName = "EARL, HERR DER KRÜMELSCHUBLADE";
-            bossSubtitle = "Hobbies: Statische Aufladung";
+            bossName = "DER HIVEMIND";
+            bossSubtitle = "Hobbies: Dimensionen fressen";
             bossImageKey = 'boss_hivemind';
         } else if (bossType === 'dreadnought') {
-            bossName = "SCHMUTZ-RADIATOR 3000";
-            bossSubtitle = "Hobbies: Fettflecken analysieren";
+            bossName = "DREADNOUGHT VEX";
+            bossSubtitle = "Hobbies: Realitäten korrumpieren";
             bossImageKey = 'boss_dreadnought';
         }
 

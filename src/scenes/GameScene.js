@@ -848,7 +848,7 @@ export default class GameScene extends Phaser.Scene {
         const baseShots = this.pd.shots;
         let finalShots = baseShots;
         if (this.weaponClass === 'scatter' && this.pd.weaponLevel > 1) finalShots += (this.pd.weaponLevel - 1) * 2;
-        else if (this.weaponClass === 'pulse' && this.pd.weaponLevel > 1) finalShots += (this.pd.weaponLevel - 1);
+        else if (this.pd.weaponLevel > 1) finalShots += (this.pd.weaponLevel - 1);
         
         const spread = finalShots > 1 ? 0.16 : 0;
 
@@ -857,38 +857,32 @@ export default class GameScene extends Phaser.Scene {
             targetAngles.push(targetAngle2);
         }
 
-        if (this.weaponClass === 'railgun') {
-            targetAngles.forEach(ang => {
-                this.fireBullet(this.player.x, this.player.y - 8, ang);
-            });
-        } else {
-            let shotsForTarget = [finalShots];
-            if (this.shipClass === 'phantom' && targetAngles.length > 1) {
-                shotsForTarget[0] = Math.ceil(finalShots / 2);
-                shotsForTarget[1] = finalShots - shotsForTarget[0];
-            } else if (targetAngles.length > 1) {
-                shotsForTarget[1] = finalShots;
-            }
-
-            targetAngles.forEach((ang, index) => {
-                const shots = shotsForTarget[index];
-                if (shots <= 0) return;
-
-                const pAngle = ang + Math.PI / 2;
-                const ox = Math.cos(pAngle);
-                const oy = Math.sin(pAngle);
-                
-                if (shots === 1) {
-                    this.fireSide = (this.fireSide === 1) ? -1 : 1;
-                    this.fireBullet(this.player.x + (ox * 16 * this.fireSide), this.player.y + (oy * 16 * this.fireSide), ang);
-                } else {
-                    for (let i = 0; i < shots; i++) {
-                        const a = ang + (i - (shots - 1) / 2) * spread;
-                        this.fireBullet(this.player.x, this.player.y, a);
-                    }
-                }
-            });
+        let shotsForTarget = [finalShots];
+        if (this.shipClass === 'phantom' && targetAngles.length > 1) {
+            shotsForTarget[0] = Math.ceil(finalShots / 2);
+            shotsForTarget[1] = finalShots - shotsForTarget[0];
+        } else if (targetAngles.length > 1) {
+            shotsForTarget[1] = finalShots;
         }
+
+        targetAngles.forEach((ang, index) => {
+            const shots = shotsForTarget[index];
+            if (shots <= 0) return;
+
+            const pAngle = ang + Math.PI / 2;
+            const ox = Math.cos(pAngle);
+            const oy = Math.sin(pAngle);
+            
+            if (shots === 1) {
+                this.fireSide = (this.fireSide === 1) ? -1 : 1;
+                this.fireBullet(this.player.x + (ox * 16 * this.fireSide), this.player.y + (oy * 16 * this.fireSide), ang);
+            } else {
+                for (let i = 0; i < shots; i++) {
+                    const a = ang + (i - (shots - 1) / 2) * spread;
+                    this.fireBullet(this.player.x, this.player.y, a);
+                }
+            }
+        });
 
         // Fire Special Weapons
         const lightningLvl = this.pd.upgLevels['chain_lightning'] || 0;

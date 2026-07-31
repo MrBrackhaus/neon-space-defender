@@ -56,7 +56,7 @@ const SHIPS = [
     { id: 'dreadnought', img: 'ship_dreadnought', name: 'ARCADE-KAPSEL', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Schild. Ein uralter Spielautomat mit Plasma-Reaktor. Einwurf: 1 Vierteldollar.' },
     { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim. Plastik-Karussell-Tierchen mit Antimaterie-Hörnern. Sparkles ist sehr stolz.' },
     { id: 'paladin', img: 'ship_paladin', name: 'OKTOHORNCAT', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Heilt sich. Plüschiges Maskottchen, von innen mit Titanplatten verstärkt. Sehr flauschig.' },
-    { id: 'bomber', img: 'ship_bomber', name: 'VHS-BOMBER', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Bomben-Spezialist. Eine kolossale VHS-Kassette, randvoll mit instabilem Sprengstoff.' }
+    { id: 'bomber', img: 'ship_bomber', name: 'NEON-GALEONE', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Bomben-Spezialist. Ein gigantischer Haufen aus glühendem Neon-Schrott, zusammengehalten von Panzertape.' }
 ];
 
 /**

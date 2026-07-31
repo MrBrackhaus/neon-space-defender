@@ -27,11 +27,11 @@ const SLIDES = [
     {
         img: 'intro_fleet', tint: null, effect: 'zoom_in',
         caption: 'Sektor 7-G - Heute Morgen',
-        dialogue: '"Ich bin auf der Fernbedienung eingeschlafen und habe versehentlich das \'Ultimative Kosmische Tiefenreinigungs-Abo\' gebucht. Kein Widerrufsrecht!"'
+        dialogue: '"Ich bin auf der Fernbedienung eingeschlafen und habe versehentlich die \'Kosmische Teleshopping-Überraschungs-Box\' gebucht. Kein Widerrufsrecht!"'
     },
     {
         img: 'intro_fleet', tint: 0xff4444, effect: 'pan_left', caption: null,
-        dialogue: '"Jetzt wimmelt es hier von fanatischen Toastern und fliegenden Staubsaugern. Sie wollen das Universum feucht durchwischen und sehen organisches Leben als \'hartnäckige Flecken\'!"'
+        dialogue: '"Jetzt wimmelt es von Quanten-Tupperware, radikalen Toastern und radioaktiven Flamingos. Sie halten das Universum für unaufgeräumt und uns für Gerümpel!"'
     },
     {
         img: 'intro_hero', tint: null, effect: 'static', caption: null,
@@ -43,11 +43,11 @@ const SLIDES = [
     },
     {
         img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
-        dialogue: '"Zerstöre alles, was nach Hausarbeit aussieht! Das zynische Einhorn Sparkles verkauft dir Upgrades. Es wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
+        dialogue: '"Zerstöre alles, was aussieht wie eine kaputte Fehlbestellung! Das Einhorn Sparkles verkauft dir Upgrades. Es wollte eigentlich Steuerberater werden, aber das Leben ist hart."'
     },
     {
         img: 'intro_hero', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,
-        dialogue: '"Und kraule Nyx, unsere vierdimensionale Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, wehr dich gegen den Frühjahrsputz!"'
+        dialogue: '"Und kraule Nyx, unsere Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, räum den Weltraum auf!"'
     }
 ];
 

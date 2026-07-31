@@ -86,15 +86,15 @@ export default class EventSystem {
                     "Pass auf den Lack auf, Pizza-Boy! Der Schrott war teuer!"
                 ],
                 level_up: [
-                    "Weiter so! Zeig diesen Putz-Robotern, wie schmutzig wir wirklich sind!",
-                    "Arr! Dein Fett-Schild wehrt ihre Hygiene-Laser ab! Genial!"
+                    "Weiter so! Zeig diesen Teleshopping-Fehlproduktionen, wer hier der Boss ist!",
+                    "Arr! Dein Fett-Schild wehrt all ihre bizarren Laser ab! Genial!"
                 ],
                 unlock_ship: [
                     "Ein weiser Kauf, Pizza-Boy! Dieses Modell hat noch mehr eingetrockneten Käse auf der Hülle!",
                     "Ich hätte nicht gedacht, dass du diesen Schrotthaufen wirklich nimmst!"
                 ],
                 idle: [
-                    "Schieß weiter! Wir müssen das Universum vor dem Frühjahrsputz retten!"
+                    "Schieß weiter! Wir müssen das Universum vor diesen absurden Lieferungen retten!"
                 ]
             }
         };

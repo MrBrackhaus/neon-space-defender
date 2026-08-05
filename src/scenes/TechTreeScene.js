@@ -29,6 +29,17 @@ export default class TechTreeScene extends Phaser.Scene {
 
                 // --- BACKGROUND ---
         this.cam.setBackgroundColor(0x010105);
+        
+        // --- AAA POST-PROCESSING FX ---
+        if (this.cam.postFX) {
+            // Darken edges to focus on the tree
+            this.cam.postFX.addVignette(0.5, 0.5, 0.7, 0.3);
+            
+            // Subtle chromatic aberration / CRT scanlines vibe
+            const crt = this.cam.postFX.addColorMatrix();
+            crt.brightness(0.95);
+            crt.contrast(1.1);
+        }
 
         // Cyberpunk Parallax Grid (Moves with camera but slower)
         this.gridGraphics = this.add.graphics();
@@ -372,7 +383,7 @@ export default class TechTreeScene extends Phaser.Scene {
         const iconKey = (skill.sheet || 'tech_defense') + '_' + (skill.frame || 0);
         const iconSprite = this.add.sprite(0, 0, iconKey);
         iconSprite.setOrigin(0.5, 0.5);
-        iconSprite.setScale(0.45);
+        iconSprite.setScale(0.35);
 
         if (!isUnlocked) {
             iconSprite.setTint(0x444455);
@@ -417,10 +428,9 @@ export default class TechTreeScene extends Phaser.Scene {
         for (let i = 0; i < 6; i++) {
             const angle_deg = 60 * i - 30;
             const angle_rad = Math.PI / 180 * angle_deg;
-            // Shift points so min is 0,0 instead of -size,-size
-            // This prevents Phaser from doing weird origin offset math
-            points.push(size + size * Math.cos(angle_rad));
-            points.push(size + size * Math.sin(angle_rad));
+            // Perfect mathematical centering at 0,0
+            points.push(size * Math.cos(angle_rad));
+            points.push(size * Math.sin(angle_rad));
         }
         return points;
     }

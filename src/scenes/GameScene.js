@@ -26,7 +26,7 @@ const UPGRADES = [
     { id: 'speed',      name: 'HYPERDRIVE',       desc: '+20% Bewegungsgeschwindigkeit',       color: '#ffff00' },
     { id: 'damage',     name: 'HEAVY ROUNDS',     desc: '+40% Schaden pro Treffer',           color: '#ff6600' },
     { id: 'fire_rate',  name: 'RAPID FIRE',       desc: '-20% Feuer-Verzögerung',             color: '#ff3300' },
-    { id: 'nova',       name: 'NOVA BOMBE',       desc: '+1 Nova-Bombe (LEERTASTE zünden)',   color: '#ff00ff' },
+    { id: 'nova',       name: 'NOVA BOMBE',       desc: '+1 Nova-Bombe (Taste Q zünden)',     color: '#ff00ff' },
     { id: 'magnet',     name: 'XP-MAGNET',        desc: '+80px XP-Anziehungsradius',          color: '#aa00ff' },
     { id: 'regen',      name: 'NANO-REPARATUR',   desc: '+3 HP pro Sekunde Regeneration',     color: '#00ff66' },
     { id: 'area',       name: 'SCHOCKWELLE',      desc: 'AoE-Explosion beim Töten',           color: '#ffffff' },

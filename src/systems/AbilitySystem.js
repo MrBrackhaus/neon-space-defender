@@ -23,7 +23,7 @@ export default class AbilitySystem {
         /** @type {number} Timestamp of the last used ultimate, initialized to allow immediate use */
         this.lastUsedTime = -15000; 
         
-        /** @type {Phaser.Input.Keyboard.Key} Keyboard binding for the ability (SPACE) */
+        /** @type {Phaser.Input.Keyboard.Key} Keyboard binding for the ability (E) */
         this.abilityKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     }
 

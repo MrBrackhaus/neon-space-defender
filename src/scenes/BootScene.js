@@ -68,7 +68,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('ship_bomber', 'ship_bomber.png?v=6');
 
         // Sprite sheets for enemies (4 frames each, transparent background)
-        const FW = 516, FH = 512;
+        const FW = 512, FH = 512;
         this.load.spritesheet('enemy_basic_sheet',   'enemy_basic_sheet.png?v=6',   { frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_fast_sheet',    'enemy_fast_sheet.png?v=6',    { frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_tank_sheet',    'enemy_tank_sheet.png?v=6',    { frameWidth: FW, frameHeight: FH });

@@ -53,6 +53,9 @@ const ENEMY_DEFS = {
     destroyer: { hp: 8000, speed: 20, score: 3000, xp: 1500, color: 0xffaa00, shoots: true },
     charger:   { hp: 120, speed: 20, score: 55, xp: 40, color: 0xffaa00, shoots: false },
     protector: { hp: 200, speed: 30, score: 70, xp: 50, color: 0x00aaff, shoots: false },
+    boss_cheese: { hp: 3000, speed: 20, score: 2000, xp: 1000, color: 0xffff00, shoots: true },
+    boss_irs: { hp: 4500, speed: 30, score: 3000, xp: 1500, color: 0xff0000, shoots: true },
+    boss_vacuum: { hp: 6000, speed: 40, score: 4000, xp: 2000, color: 0x00ffff, shoots: true },
 };
 
 /**
@@ -1408,7 +1411,7 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
-        if (type === 'boss' || type === 'mothership' || type === 'hivemind' || type === 'destroyer') {
+        if (type === 'boss' || type === 'mothership' || type === 'hivemind' || type === 'destroyer' || type.startsWith('boss_')) {
             this.bossRef = e;
             const bossScale = 1 + (this.waveNum * 0.8) + Math.pow(this.waveNum / 6, 2.5);
             e.hp = Math.floor(def.hp * bossScale) + (type === 'boss' ? 0 : (type === 'destroyer' ? 5000 : 3500));

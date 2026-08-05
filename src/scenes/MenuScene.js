@@ -131,6 +131,7 @@ export default class MenuScene extends Phaser.Scene {
         let bestScore = 0;
         let bestWave = 0;
         try {
+            this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10) || 0;
             const hsData = JSON.parse(localStorage.getItem('neon_highscores'));
             if (hsData && hsData.length > 0) {
                 bestName = hsData[0].name;

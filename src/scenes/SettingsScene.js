@@ -107,16 +107,16 @@ export default class SettingsScene extends Phaser.Scene {
             // Left arrow (Decrement)
             const btnLeft = this.add.text(cw / 2 + 10, y, '◀', { fontFamily: 'Orbitron', fontSize: '28px', color: colorStr })
                 .setOrigin(0.5).setInteractive({ useHandCursor: true });
-            btnLeft.on('pointerover', () => btnLeft.setScale(1.2).setTint(0xffffff));
+            btnLeft.on('pointerover', () => { btnLeft.setScale(1.2).setTint(0xffffff); if(this.game.audioSys) this.game.audioSys.playHover(); });
             btnLeft.on('pointerout', () => btnLeft.setScale(1).clearTint());
-            btnLeft.on('pointerdown', () => onLeft(valDisplay));
+            btnLeft.on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); onLeft(valDisplay); });
 
             // Right arrow (Increment)
             const btnRight = this.add.text(cw / 2 + 190, y, '▶', { fontFamily: 'Orbitron', fontSize: '28px', color: colorStr })
                 .setOrigin(0.5).setInteractive({ useHandCursor: true });
-            btnRight.on('pointerover', () => btnRight.setScale(1.2).setTint(0xffffff));
+            btnRight.on('pointerover', () => { btnRight.setScale(1.2).setTint(0xffffff); if(this.game.audioSys) this.game.audioSys.playHover(); });
             btnRight.on('pointerout', () => btnRight.setScale(1).clearTint());
-            btnRight.on('pointerdown', () => onRight(valDisplay));
+            btnRight.on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); onRight(valDisplay); });
         };
 
         /**
@@ -169,7 +169,7 @@ export default class SettingsScene extends Phaser.Scene {
                 btnBg.setStrokeStyle(2, 0xffffff, 1);
                 btnBg.fillColor = colorHex;
                 btnBg.fillAlpha = 0.2;
-                btnText.setTint(0xffffff).setScale(1.05);
+                btnText.setTint(0xffffff).setScale(1.05); if(this.game.audioSys) this.game.audioSys.playHover();
             });
             btnBg.on('pointerout', () => {
                 btnBg.setStrokeStyle(2, colorHex, 0.8);
@@ -177,7 +177,7 @@ export default class SettingsScene extends Phaser.Scene {
                 btnBg.fillAlpha = 0.6;
                 btnText.clearTint().setScale(1);
             });
-            btnBg.on('pointerdown', () => { btnBg.fillAlpha = 0.4; callback(); });
+            btnBg.on('pointerdown', () => { btnBg.fillAlpha = 0.4; if(this.game.audioSys) this.game.audioSys.playClick(); callback(); });
             btnBg.on('pointerup', () => { btnBg.fillAlpha = 0.2; });
         };
 

@@ -49,7 +49,7 @@ export default class TechTreeScene extends Phaser.Scene {
         });
 
         // --- DATA ---
-        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10);
+        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10) || 0;
 
         this.skills = [
             // ZENTRUM
@@ -114,6 +114,7 @@ export default class TechTreeScene extends Phaser.Scene {
         this.dragStartY = 0;
 
         this.input.on('pointerdown', (pointer) => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
             if (pointer.x > width - 320 && this.sidePanel.visible) return; // Prevent drag on UI
             this.isDragging = true;
             this.dragStartX = pointer.x;
@@ -342,6 +343,7 @@ export default class TechTreeScene extends Phaser.Scene {
         container.add([hex, iconText]);
 
         hex.on('pointerover', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playHover();
             if (!this.isDragging) {
                 hex.setStrokeStyle(5, 0xffffff);
                 this.tweens.add({ targets: container, scale: 1.1, duration: 150 });
@@ -354,6 +356,7 @@ export default class TechTreeScene extends Phaser.Scene {
         });
 
         hex.on('pointerdown', (pointer) => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
             // Distinguish click from drag
             this.time.delayedCall(150, () => {
                 if (!this.isDragging) {

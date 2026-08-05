@@ -125,7 +125,7 @@ export default class ShopScene extends Phaser.Scene {
          * @property {number} scrap
          * @description The player's current scrap balance, retrieved from local storage.
          */
-        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10);
+        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10) || 0;
 
         // Center the UI horizontally in the available right-side space
         const uiCenterX = cw * 0.65;
@@ -254,6 +254,8 @@ export default class ShopScene extends Phaser.Scene {
                 
                 // Purchase logic
                 btn.on('pointerdown', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
+                    if(this.game.audioSys) this.game.audioSys.playBuy();
                     // Deduct cost and save new state to local storage
                     this.scrap -= cost;
                     localStorage.setItem('neon_scrap', this.scrap);

@@ -189,9 +189,10 @@ export default class InGameShopScene extends Phaser.Scene {
             color: '#000000', backgroundColor: '#00ffcc', padding: { x: 22, y: 10 }
         }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(5);
 
-        btn.on('pointerover', () => btn.setStyle({ backgroundColor: '#ffffff' }));
+        btn.on('pointerover', () => { btn.setStyle({ backgroundColor: '#ffffff' }); if(this.game.audioSys) this.game.audioSys.playHover(); });
         btn.on('pointerout', () => btn.setStyle({ backgroundColor: '#00ffcc' }));
         btn.on('pointerdown', () => {
+            if(this.game.audioSys) this.game.audioSys.playClick();
             // Resume the paused GameScene with updated stats
             this.scene.resume('GameScene', { cubes: this.cubes, buffs: this.purchasedBuffs });
             this.scene.stop();
@@ -300,7 +301,7 @@ export default class InGameShopScene extends Phaser.Scene {
             if (canAfford) {
                 row.on('pointerover', () => row.setAlpha(0.85));
                 row.on('pointerout', () => row.setAlpha(1));
-                row.on('pointerdown', () => this._purchase(item));
+                row.on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); this._purchase(item); });
             }
         });
     }
@@ -315,6 +316,7 @@ export default class InGameShopScene extends Phaser.Scene {
         // Validation: Safety check in case of rapid clicking
         if (this.cubes < item.cost) {
             this.cameras.main.shake(180, 0.01);
+            if(this.game.audioSys) this.game.audioSys.playError();
             this.dialogText.setText('"Nicht genug Cubes! Geh töten und komm mit Geld zurück."');
             return;
         }
@@ -330,6 +332,7 @@ export default class InGameShopScene extends Phaser.Scene {
         this.purchasedBuffs.push(item.id);
         
         // Provide visual feedback for a successful transaction
+        if(this.game.audioSys) this.game.audioSys.playBuy();
         this.cameras.main.flash(120, 0, 120, 60);
         this.dialogText.setText(NYX_DIALOGS[Phaser.Math.Between(0, NYX_DIALOGS.length - 1)]);
 

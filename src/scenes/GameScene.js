@@ -546,6 +546,8 @@ export default class GameScene extends Phaser.Scene {
                     });
                 }
             }
+            const htmlHud = document.getElementById('html-hud');
+            if (htmlHud && !this.isGameOver) htmlHud.style.display = 'block';
             this.keys.W.reset(); this.keys.A.reset(); this.keys.S.reset(); this.keys.D.reset();
         });
 
@@ -2051,6 +2053,7 @@ export default class GameScene extends Phaser.Scene {
      */
     onScrapCollect(player, scrap) {
         if (!scrap.active) return;
+        if(this.audioSys) this.audioSys.playPickup('scrap');
         scrap.destroy();
         const value = Math.round(1 * (this.pd.greedMult || 1));
         this.pd.scrap += value;
@@ -2109,6 +2112,7 @@ export default class GameScene extends Phaser.Scene {
      */
     onCollectWeaponUpgrade(player, upgrade) {
         if (!upgrade.active) return;
+        if(this.audioSys) this.audioSys.playPickup('upgrade');
         upgrade.destroy();
         
         if (this.audioSys) this.audioSys.playLevelUp();
@@ -2131,6 +2135,8 @@ export default class GameScene extends Phaser.Scene {
      * @param {Phaser.Physics.Arcade.Sprite} cube - The collected cube.
      */
     onCollectCube(player, cube) {
+        if (!cube.active) return;
+        if(this.audioSys) this.audioSys.playPickup('cube');
         cube.destroy();
         this.pd.cubes++;
         
@@ -2167,6 +2173,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.triggerHitStop(1.5);
         this.eventSys.triggerCompanionComment('take_damage');
+        if(this.audioSys) this.audioSys.playPlayerHit();
 
         if (this.pd.shield > 0) {
             this.pd.shield--;
@@ -2282,6 +2289,7 @@ export default class GameScene extends Phaser.Scene {
                 c.setAlpha(0.6);
             }
             if (dist < 60) {
+                if(this.audioSys) this.audioSys.playPickup('xp');
                 this.addXP(c.xpVal);
                 c.destroy();
             }
@@ -2296,10 +2304,7 @@ export default class GameScene extends Phaser.Scene {
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
             }
             if (dist < 60) {
-                this.pd.scrap += c.scrapVal;
-                this.eventSys.triggerCompanionComment('scrap_pickup');
-                this.audioSys.playHover();
-                c.destroy();
+                this.onScrapCollect(this.player, c);
             }
         });
 
@@ -2542,6 +2547,7 @@ export default class GameScene extends Phaser.Scene {
     activateNovaBomb() {
         if (this.pd.nova <= 0 || this.isGameOver) return;
         this.pd.nova--;
+        if (this.audioSys) this.audioSys.playNovaBomb();
         this.cameras.main.flash(300, 255, 255, 255);
         this.cameras.main.shake(400, 0.015);
         this.enemies.getChildren().forEach(e => {
@@ -2895,13 +2901,19 @@ export default class GameScene extends Phaser.Scene {
                 }
             };
 
-            document.getElementById('go-restart').onclick = () => {
+            const goRestart = document.getElementById('go-restart');
+            goRestart.onmouseenter = () => { if (this.audioSys) this.audioSys.playHover(); };
+            goRestart.onclick = () => {
+                if (this.audioSys) this.audioSys.playClick();
                 saveHighscore();
                 ov.style.display = 'none';
                 this.input.keyboard.enabled = true;
                 this.scene.restart();
             };
-            document.getElementById('go-menu').onclick = () => {
+            const goMenu = document.getElementById('go-menu');
+            goMenu.onmouseenter = () => { if (this.audioSys) this.audioSys.playHover(); };
+            goMenu.onclick = () => {
+                if (this.audioSys) this.audioSys.playClick();
                 saveHighscore();
                 ov.style.display = 'none';
                 this.input.keyboard.enabled = true;

@@ -126,9 +126,9 @@ export default class HighscoreScene extends Phaser.Scene {
         const backBtn = this.add.text(40, 40, '◀ MAIN MENU', btnStyle)
             .setOrigin(0, 0)
             .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backBtn.setTint(0x00ffff))
+            .on('pointerover', () => { backBtn.setTint(0x00ffff); if(this.game.audioSys) this.game.audioSys.playHover(); })
             .on('pointerout', () => backBtn.clearTint())
-            .on('pointerdown', () => this._goBack());
+            .on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); this._goBack(); });
 
         // Initial fade-in for smooth transition
         this.cameras.main.fadeIn(500, 0, 0, 0);

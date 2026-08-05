@@ -169,9 +169,9 @@ export default class CreditsScene extends Phaser.Scene {
         const backBtn = this.add.text(40, 40, '◀ SKIP CREDITS', btnStyle)
             .setOrigin(0, 0)
             .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backBtn.setTint(0xff00ff))
+            .on('pointerover', () => { backBtn.setTint(0xff00ff); if(this.game.audioSys) this.game.audioSys.playHover(); })
             .on('pointerout', () => backBtn.clearTint())
-            .on('pointerdown', () => this._goBack());
+            .on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); this._goBack(); });
 
         // Initial camera fade in for smooth transition
         this.cameras.main.fadeIn(500, 0, 0, 0);

@@ -150,17 +150,17 @@ export default class IntroScene extends Phaser.Scene {
         this.tweens.add({ targets: this.hint, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
 
         // Skip button
-        this.add.text(cw - 24, 14, '[ ÜBERSPRINGEN ]', {
+        this.skipBtn = this.add.text(cw - 24, 14, '[ ÜBERSPRINGEN ]', {
             fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#555'
         }).setOrigin(1, 0).setDepth(99).setInteractive({ useHandCursor: true })
-          .on('pointerover', function() { this.setColor('#bbb'); })
-          .on('pointerout',  function() { this.setColor('#555'); })
-          .on('pointerdown', () => this.goToMenu());
+          .on('pointerover', () => { this.skipBtn.setColor('#bbb'); if(this.game.audioSys) this.game.audioSys.playHover(); })
+          .on('pointerout', () => { this.skipBtn.setColor('#555'); })
+          .on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); this.goToMenu(); });
 
         // ─────────────────── INPUT HANDLING ───────────────────
         
         // Input bindings to advance the slides
-        this.input.on('pointerdown', () => this.advance());
+        this.input.on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); this.advance(); });
         this.input.keyboard.on('keydown-SPACE', () => this.advance());
         this.input.keyboard.on('keydown-ENTER', () => this.advance());
         this.input.keyboard.on('keydown-ESC',   () => this.goToMenu());

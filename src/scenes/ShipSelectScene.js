@@ -159,6 +159,7 @@ export default class ShipSelectScene extends Phaser.Scene {
         launchBtn.add([lBg, lText]);
 
         lBg.on('pointerover', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playHover();
             this.tweens.add({ targets: launchBtn, scale: 1.1, duration: 150 });
             lBg.setFillStyle(0xffffff);
         });
@@ -167,6 +168,7 @@ export default class ShipSelectScene extends Phaser.Scene {
             lBg.setFillStyle(0x00ffcc);
         });
         lBg.on('pointerdown', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
             this.cameras.main.fadeOut(400, 0, 0, 0);
             this.cameras.main.once('camerafadeoutcomplete', () => {
                 // Pass selected loadout to the GameScene
@@ -238,6 +240,7 @@ export default class ShipSelectScene extends Phaser.Scene {
             
             // Interaction logic
             bg.on('pointerover', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playHover();
                 if (this.previewShipId !== s.id) {
                     this.previewShipId = s.id;
                     this.updateInfoCard(); // Update the right-side panel
@@ -248,6 +251,7 @@ export default class ShipSelectScene extends Phaser.Scene {
                 bg.setFillStyle(isSelected ? 0x112244 : 0x0a0a1a, 0.8);
             });
             bg.on('pointerdown', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
                 if (isUnlocked) {
                     // Equip ship
                     localStorage.setItem('neon_selected_ship', s.id);
@@ -316,6 +320,7 @@ export default class ShipSelectScene extends Phaser.Scene {
         
         // Similar logic as list clicks, but via the big button
         this.cardBtnBg.on('pointerdown', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
             const s = SHIPS.find(x => x.id === this.previewShipId);
             const isUnlocked = this.unlockedShips.includes(s.id);
             if (isUnlocked) {
@@ -471,6 +476,7 @@ export default class ShipSelectScene extends Phaser.Scene {
             
             // Allow selection only if unlocked
             bg.on('pointerdown', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
                 if (isUnlocked) {
                     localStorage.setItem('neon_selected_weapon', w.id);
                     this.scene.restart(); // Refresh UI completely

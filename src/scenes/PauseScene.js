@@ -77,9 +77,9 @@ export default class PauseScene extends Phaser.Scene {
         const createButton = (y, text, callback) => {
             const btn = this.add.text(cw / 2, y, text, btnStyle)
                 .setOrigin(0.5).setInteractive({ useHandCursor: true })
-                .on('pointerover', () => btn.setTint(0xff00ff))
+                .on('pointerover', () => { btn.setTint(0xff00ff); if(this.game.audioSys) this.game.audioSys.playHover(); })
                 .on('pointerout', () => btn.clearTint())
-                .on('pointerdown', callback);
+                .on('pointerdown', () => { if(this.game.audioSys) this.game.audioSys.playClick(); callback(); });
             return btn;
         };
 

@@ -134,6 +134,7 @@ export default class AchievementScene extends Phaser.Scene {
 
         // Hover visual effects (turns magenta and gets a glow)
         backBtn.on('pointerover', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playHover();
             backBtn.setColor('#ff00ff');
             backBtn.setShadow(0, 0, '#ff00ff', 20, true, true);
             this.input.setDefaultCursor('pointer');
@@ -148,6 +149,7 @@ export default class AchievementScene extends Phaser.Scene {
 
         // On click transition logic
         backBtn.on('pointerdown', () => {
+            if(this.game && this.game.audioSys) this.game.audioSys.playClick();
             this.input.setDefaultCursor('default');
             this.cameras.main.fadeOut(500, 0, 0, 0);
             this.cameras.main.once('camerafadeoutcomplete', () => {

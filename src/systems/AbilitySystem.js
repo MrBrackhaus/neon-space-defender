@@ -65,6 +65,7 @@ export default class AbilitySystem {
         if (!shipClass) return;
 
         this.lastUsedTime = time;
+        if (this.scene.audioSys) this.scene.audioSys.playAbility();
 
         // Route to the specific ship's ultimate ability
         if (shipClass === 'bomber') {

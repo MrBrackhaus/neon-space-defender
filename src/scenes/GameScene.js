@@ -46,7 +46,7 @@ const ENEMY_DEFS = {
     stealth: { hp: 70,  speed: 140, score: 50, xp: 35, color: 0x222222, shoots: false },
     carrier: { hp: 400, speed: 20,  score: 100, xp: 80, color: 0x00ffaa, shoots: false },
     laser:   { hp: 60,  speed: 35,  score: 60, xp: 40, color: 0xff0000, shoots: true },
-    boss:      { hp: 800, speed: 25, score: 1000, xp: 500, color: 0xff0000, shoots: true },
+    boss:      { hp: 3500, speed: 25, score: 1000, xp: 500, color: 0xff0000, shoots: true },
     mothership:{ hp: 4500, speed: 30, score: 1500, xp: 800, color: 0xff00ff, shoots: true },
     hivemind:  { hp: 6000, speed: 40, score: 2000, xp: 1000, color: 0x00ff00, shoots: true },
     hivemind_clone: { hp: 1500, speed: 110, score: 400, xp: 200, color: 0x55ff55, shoots: true },
@@ -1362,7 +1362,10 @@ export default class GameScene extends Phaser.Scene {
             hivemind_clone: { sheet: 'enemy_hivemind_sheet', anim: 'anim_hivemind', scale: 0.45 },
             destroyer: { sheet: 'enemy_destroyer_sheet', anim: 'anim_destroyer', scale: 0.85 },
             charger: { sheet: 'enemy_charger_sheet', anim: null, scale: 0.3 },
-            protector: { sheet: 'enemy_protector_sheet', anim: null, scale: 0.4 }
+            protector: { sheet: 'enemy_protector_sheet', anim: null, scale: 0.4 },
+            boss_cheese: { sheet: 'boss_cheese', anim: null, scale: 0.5 },
+            boss_irs: { sheet: 'boss_irs', anim: null, scale: 0.5 },
+            boss_vacuum: { sheet: 'boss_vacuum', anim: null, scale: 0.5 }
         };
         const sm  = SPRITE_MAP[type] || SPRITE_MAP.basic;
         const def = ENEMY_DEFS[type] || ENEMY_DEFS.basic;

@@ -1363,7 +1363,7 @@ export default class GameScene extends Phaser.Scene {
             destroyer: { sheet: 'enemy_destroyer_sheet', anim: 'anim_destroyer', scale: 0.85 },
             charger: { sheet: 'enemy_charger_sheet', anim: null, scale: 0.3 },
             protector: { sheet: 'enemy_protector_sheet', anim: null, scale: 0.4 },
-            boss_cheese: { sheet: 'boss_cheese', anim: 'anim_boss_cheese', scale: 0.5 },
+            boss_cheese: { sheet: 'boss_cheese', anim: 'anim_boss_cheese_idle', scale: 1.5 },
             boss_irs: { sheet: 'boss_irs', anim: null, scale: 0.5 },
             boss_vacuum: { sheet: 'boss_vacuum', anim: null, scale: 0.5 }
         };

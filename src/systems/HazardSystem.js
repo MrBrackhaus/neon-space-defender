@@ -61,7 +61,7 @@ export default class HazardSystem {
         asteroidVisual.setScale((radius * 2) / 341);
         
         this.asteroids.add(asteroidVisual);
-        asteroidVisual.body.setCircle(450, 62, 62);
+        asteroidVisual.body.setCircle(170, 0, 0);
         asteroidVisual.setBounce(1, 1);
         asteroidVisual.body.setMass(sizeTier * 10);
         

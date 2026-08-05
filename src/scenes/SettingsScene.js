@@ -75,7 +75,8 @@ export default class SettingsScene extends Phaser.Scene {
         // Retrieve saved settings or apply defaults
         let volMusic = parseFloat(localStorage.getItem('neon_vol_music') ?? '0.5');
         let volSfx = parseFloat(localStorage.getItem('neon_vol_sfx') ?? '0.8');
-        let shakeOn = (localStorage.getItem('neon_shake') ?? 'true') === 'true';
+        let defaultShake = (localStorage.getItem('neon_shake') === 'false') ? 0.0 : 1.0;
+        let volShake = parseFloat(localStorage.getItem('neon_shake_intensity') ?? defaultShake.toString());
 
         // ─────────────────── UI HELPERS ───────────────────
 
@@ -92,26 +93,26 @@ export default class SettingsScene extends Phaser.Scene {
          */
         const createSettingRow = (y, labelText, initialValue, colorHex, colorStr, onLeft, onRight) => {
             // Setting label
-            this.add.text(cw / 2 - 200, y, labelText, {
+            this.add.text(cw / 2 - 60, y, labelText, {
                 fontFamily: 'Orbitron', fontSize: '24px', color: '#ffffff',
                 shadow: { offsetX: 0, offsetY: 0, color: colorStr, blur: 8, fill: true }
-            }).setOrigin(0, 0.5);
+            }).setOrigin(1, 0.5);
 
             // Display of current value
-            const valDisplay = this.add.text(cw / 2 + 80, y, initialValue, {
+            const valDisplay = this.add.text(cw / 2 + 100, y, initialValue, {
                 fontFamily: 'Orbitron', fontSize: '24px', color: colorStr,
                 shadow: { offsetX: 0, offsetY: 0, color: colorStr, blur: 8, fill: true }
             }).setOrigin(0.5);
 
             // Left arrow (Decrement)
-            const btnLeft = this.add.text(cw / 2 - 20, y, '◀', { fontFamily: 'Orbitron', fontSize: '28px', color: colorStr })
+            const btnLeft = this.add.text(cw / 2 + 10, y, '◀', { fontFamily: 'Orbitron', fontSize: '28px', color: colorStr })
                 .setOrigin(0.5).setInteractive({ useHandCursor: true });
             btnLeft.on('pointerover', () => btnLeft.setScale(1.2).setTint(0xffffff));
             btnLeft.on('pointerout', () => btnLeft.setScale(1).clearTint());
             btnLeft.on('pointerdown', () => onLeft(valDisplay));
 
             // Right arrow (Increment)
-            const btnRight = this.add.text(cw / 2 + 180, y, '▶', { fontFamily: 'Orbitron', fontSize: '28px', color: colorStr })
+            const btnRight = this.add.text(cw / 2 + 190, y, '▶', { fontFamily: 'Orbitron', fontSize: '28px', color: colorStr })
                 .setOrigin(0.5).setInteractive({ useHandCursor: true });
             btnRight.on('pointerover', () => btnRight.setScale(1.2).setTint(0xffffff));
             btnRight.on('pointerout', () => btnRight.setScale(1).clearTint());
@@ -190,8 +191,9 @@ export default class SettingsScene extends Phaser.Scene {
                 localStorage.setItem('neon_vol_music', volMusic.toString());
                 display.setText(`${Math.round(volMusic * 100)}%`);
                 // Dynamically update audio system if GameScene is running
-                if (this.scene.get('GameScene') && this.scene.get('GameScene').audioSys) {
-                    this.scene.get('GameScene').audioSys.updateVolumes();
+                if (this.game.audioSys) {
+                    this.game.audioSys.volMusic = volMusic;
+                    this.game.audioSys.updateVolumes();
                 }
             },
             (display) => {
@@ -199,8 +201,9 @@ export default class SettingsScene extends Phaser.Scene {
                 volMusic = Phaser.Math.Clamp(volMusic + 0.1, 0, 1);
                 localStorage.setItem('neon_vol_music', volMusic.toString());
                 display.setText(`${Math.round(volMusic * 100)}%`);
-                if (this.scene.get('GameScene') && this.scene.get('GameScene').audioSys) {
-                    this.scene.get('GameScene').audioSys.updateVolumes();
+                if (this.game.audioSys) {
+                    this.game.audioSys.volMusic = volMusic;
+                    this.game.audioSys.updateVolumes();
                 }
             }
         );
@@ -211,27 +214,39 @@ export default class SettingsScene extends Phaser.Scene {
                 volSfx = Phaser.Math.Clamp(volSfx - 0.1, 0, 1);
                 localStorage.setItem('neon_vol_sfx', volSfx.toString());
                 display.setText(`${Math.round(volSfx * 100)}%`);
-                if (this.scene.get('GameScene') && this.scene.get('GameScene').audioSys) {
-                    this.scene.get('GameScene').audioSys.updateVolumes();
+                if (this.game.audioSys) {
+                    this.game.audioSys.volMusic = volMusic;
+                    this.game.audioSys.updateVolumes();
                 }
             },
             (display) => {
                 volSfx = Phaser.Math.Clamp(volSfx + 0.1, 0, 1);
                 localStorage.setItem('neon_vol_sfx', volSfx.toString());
                 display.setText(`${Math.round(volSfx * 100)}%`);
-                if (this.scene.get('GameScene') && this.scene.get('GameScene').audioSys) {
-                    this.scene.get('GameScene').audioSys.updateVolumes();
+                if (this.game.audioSys) {
+                    this.game.audioSys.volMusic = volMusic;
+                    this.game.audioSys.updateVolumes();
                 }
             }
         );
 
         // ── SCREEN SHAKE ──
-        createToggleRow(ch / 2 + 80, 'SCREEN SHAKE', shakeOn ? 'ENABLED' : 'DISABLED', 0xffff00, '#ffff00', 
+        createSettingRow(ch / 2 + 80, 'SCREEN SHAKE', `${Math.round(volShake * 100)}%`, 0xffff00, '#ffff00', 
             (display) => {
-                // Invert current boolean state and persist
-                shakeOn = !shakeOn;
-                localStorage.setItem('neon_shake', shakeOn ? 'true' : 'false');
-                display.setText(shakeOn ? 'ENABLED' : 'DISABLED');
+                volShake = Phaser.Math.Clamp(volShake - 0.1, 0, 1);
+                localStorage.setItem('neon_shake_intensity', volShake.toString());
+                display.setText(`${Math.round(volShake * 100)}%`);
+                if (this.scene.get('GameScene')) {
+                    this.scene.get('GameScene').shakeIntensity = volShake;
+                }
+            },
+            (display) => {
+                volShake = Phaser.Math.Clamp(volShake + 0.1, 0, 1);
+                localStorage.setItem('neon_shake_intensity', volShake.toString());
+                display.setText(`${Math.round(volShake * 100)}%`);
+                if (this.scene.get('GameScene')) {
+                    this.scene.get('GameScene').shakeIntensity = volShake;
+                }
             }
         );
 

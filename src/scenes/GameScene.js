@@ -1355,8 +1355,8 @@ export default class GameScene extends Phaser.Scene {
             hivemind: { sheet: 'enemy_hivemind_sheet', anim: 'anim_hivemind', scale: 0.8 },
             hivemind_clone: { sheet: 'enemy_hivemind_sheet', anim: 'anim_hivemind', scale: 0.45 },
             destroyer: { sheet: 'enemy_destroyer_sheet', anim: 'anim_destroyer', scale: 0.85 },
-            charger: { sheet: 'enemy_charger_sheet', anim: 'anim_charger', scale: 0.3 },
-            protector: { sheet: 'enemy_protector_sheet', anim: 'anim_protector', scale: 0.4 }
+            charger: { sheet: 'enemy_charger_sheet', anim: null, scale: 0.3 },
+            protector: { sheet: 'enemy_protector_sheet', anim: null, scale: 0.4 }
         };
         const sm  = SPRITE_MAP[type] || SPRITE_MAP.basic;
         const def = ENEMY_DEFS[type] || ENEMY_DEFS.basic;
@@ -1366,8 +1366,8 @@ export default class GameScene extends Phaser.Scene {
 
         const e = this.physics.add.sprite(x, y, sm.sheet)
             .setDepth(5)
-            .setScale(finalScale)
-            .play(sm.anim);
+            .setScale(finalScale);
+        if (sm.anim) e.play(sm.anim);
         
         e.spawnScale = finalScale;
 

@@ -3065,9 +3065,21 @@ export default class GameScene extends Phaser.Scene {
         };
 
         // Buttons
-        createBtn(0, -150, 'JUMP TO WAVE 10 (BOSS)', () => {
-            this.waveNum = 9; // will be incremented to 10
+        createBtn(0, -150, 'JUMP TO BOSS 1 (LVL 10)', () => {
+            this.waveNum = 4; // will be incremented to 5
             this.waveLeft = 0;
+            
+            // Buff player to level 10
+            this.pd.level = 10;
+            this.pd.maxHp += 200;
+            this.pd.hp = this.pd.maxHp;
+            this.pd.damage *= 2;
+            this.pd.fireDelay = Math.max(50, this.pd.fireDelay - 100);
+            this.pd.shots += 2;
+            this.pd.orbitals = 2;
+            this.updateOrbitals();
+            this.updateHUD();
+
             this.enemies.clear(true, true);
             this.checkWaveComplete();
         });

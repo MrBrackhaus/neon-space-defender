@@ -56,7 +56,7 @@ export default class HazardSystem {
         else if (sizeTier === 2) radius = Phaser.Math.Between(25, 40);
         else radius = Phaser.Math.Between(10, 20);
 
-        const texKey = isOre ? 'asteroid_ore' : 'asteroid_' + Phaser.Math.Between(1, 3);
+        const texKey = isOre ? 'asteroid_2' : (Math.random() > 0.5 ? 'asteroid_1' : 'asteroid_3');
         const asteroidVisual = this.scene.physics.add.sprite(x, y, texKey);
         asteroidVisual.setScale((radius * 2) / 512);
         
@@ -67,6 +67,7 @@ export default class HazardSystem {
         
         // Custom properties
         asteroidVisual.sizeTier = sizeTier;
+        asteroidVisual.spawnTime = this.scene.time.now;
         asteroidVisual.isOre = isOre;
         asteroidVisual.hp = isOre ? sizeTier * 100 : sizeTier * 50; // Ore has more HP
         
@@ -160,4 +161,5 @@ export default class HazardSystem {
         asteroid.destroy();
     }
 }
+
 

@@ -212,7 +212,7 @@ export default class BossSystem {
         bossName.setScale(0); 
         introContainer.add(bossName);
 
-        const subtitle = this.scene.add.text(width / 2, height * 0.3 + 70, subtitleText, {
+        const subtitle = this.scene.add.text(width / 2, portraitKey ? height * 0.45 + 70 : height * 0.3 + 70, subtitleText, {
             fontFamily: 'Arial',
             fontSize: '28px',
             color: '#ffff00',

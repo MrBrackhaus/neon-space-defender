@@ -56,20 +56,21 @@ export default class HazardSystem {
         else if (sizeTier === 2) radius = Phaser.Math.Between(25, 40);
         else radius = Phaser.Math.Between(10, 20);
 
-        const texKey = 'asteroid_' + Phaser.Math.Between(1, 3);
+        const texKey = isOre ? 'asteroid_ore' : 'asteroid_' + Phaser.Math.Between(1, 3);
         const asteroidVisual = this.scene.physics.add.sprite(x, y, texKey);
         asteroidVisual.setScale((radius * 2) / 512);
         
         this.asteroids.add(asteroidVisual);
-        asteroidVisual.body.setCircle(256);
+        asteroidVisual.body.setCircle(190, 66, 66);
+        asteroidVisual.setBounce(1, 1);
+        asteroidVisual.body.setMass(sizeTier * 10);
         
         // Custom properties
         asteroidVisual.sizeTier = sizeTier;
         asteroidVisual.isOre = isOre;
         asteroidVisual.hp = isOre ? sizeTier * 100 : sizeTier * 50; // Ore has more HP
         
-        if (isOre) {
-            asteroidVisual.setTint(0x00ffff); // Glowing cyan tint
+        if (isOre) { // Glowing cyan tint
             if (this.scene.add.particles) { // Add a small glow effect if possible
                 // (Omitted complex particles here to keep it simple, tint is usually enough)
             }
@@ -159,3 +160,4 @@ export default class HazardSystem {
         asteroid.destroy();
     }
 }
+

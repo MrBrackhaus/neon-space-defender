@@ -117,6 +117,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('asteroid_1',   'asteroid_1.png?v=6');
         this.load.image('asteroid_2',   'asteroid_2.png?v=6');
         this.load.image('asteroid_3',   'asteroid_3.png?v=6');
+        this.load.image('asteroid_ore', 'asteroid_ore.png?v=6');
         this.load.image('crystal_xp',   'crystal_xp.png?v=6');
         this.load.image('scrap_gear',   'scrap_gear.png?v=6');
         this.load.image('datacube',     'datacube.png?v=6');
@@ -279,3 +280,4 @@ export default class BootScene extends Phaser.Scene {
         }
     }
 }
+

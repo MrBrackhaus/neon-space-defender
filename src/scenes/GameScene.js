@@ -363,6 +363,7 @@ export default class GameScene extends Phaser.Scene {
         
         // Hazard System collisions
         if (this.hazardSys && this.hazardSys.asteroids) {
+            this.physics.add.collider(this.hazardSys.asteroids, this.hazardSys.asteroids);
             
             const handleAsteroidHit = (a, damage) => {
                 if (!a.active) return;
@@ -1072,7 +1073,7 @@ export default class GameScene extends Phaser.Scene {
 
         const b = this.bullets.get(x, y, tex);
         if (!b) return;
-        b.setTexture(tex);
+        if (typeof b.setTexture === 'function') { b.setTexture(tex); } else { b.destroy(); return; }
         if (isLaserDrone) b.setTint(0xff00ff); // Purple lasers
 
         b.setActive(true).setVisible(true);
@@ -1299,6 +1300,7 @@ export default class GameScene extends Phaser.Scene {
             
             // Asteroid Avoidance Steering
             if (this.hazardSys && this.hazardSys.asteroids) {
+            this.physics.add.collider(this.hazardSys.asteroids, this.hazardSys.asteroids);
                 let avoidX = 0, avoidY = 0, avoids = 0;
                 this.hazardSys.asteroids.getChildren().forEach(a => {
                     if (a.active) {
@@ -3084,3 +3086,5 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 }
+
+

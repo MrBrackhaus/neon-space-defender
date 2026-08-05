@@ -20,13 +20,15 @@ export default class TechTreeScene extends Phaser.Scene {
 
         // --- CAMERA SETTINGS ---
         this.cam = this.cameras.main;
+        this.uiCam = this.cameras.add(0, 0, width, height);
+        
         this.cam.fadeIn(500, 0, 0, 0);
         // The virtual world size for the tech tree
         this.cam.setBounds(-2000, -2000, 4000, 4000);
         this.cam.setZoom(1);
 
         // --- BACKGROUND ---
-        this.add.rectangle(-2000, -2000, 4000, 4000, 0x02020a).setOrigin(0, 0);
+        this.cam.setBackgroundColor(0x02020a);
 
         // Cyberpunk Parallax Grid (Moves with camera but slower)
         this.gridGraphics = this.add.graphics();
@@ -36,7 +38,7 @@ export default class TechTreeScene extends Phaser.Scene {
         this.gridGraphics.strokePath();
         
         // Deep Space Particles
-        this.add.particles(0, 0, 'p_glow', {
+        this.particles = this.add.particles(0, 0, 'p_glow', {
             x: { min: -2000, max: 2000 },
             y: { min: -2000, max: 2000 },
             lifespan: { min: 4000, max: 10000 },
@@ -53,43 +55,43 @@ export default class TechTreeScene extends Phaser.Scene {
 
         this.skills = [
             // ZENTRUM
-            { id: 'dash', key: 'neon_tech_dash', name: 'Dash Modul', desc: 'Schaltet den Ausweich-Dash (Shift) frei. Der Ursprung deiner Reise.', cost: 50, x: 0, y: 0, req: null },
+            { id: 'dash', sheet: 'tech_defense', frame: 0, key: 'neon_tech_dash', name: 'Dash Modul', desc: 'Schaltet den Ausweich-Dash (Shift) frei. Der Ursprung deiner Reise.', cost: 50, x: 0, y: 0, req: null },
             
             // AST 1 (Links) - Überleben & Verteidigung
-            { id: 'shield', key: 'neon_tech_shield', name: 'Schild Matrix', desc: 'Erlaubt regenerative Schilde als Upgrade im Level-Up Pool.', cost: 100, x: -200, y: 150, req: 'dash' },
-            { id: 'revive', key: 'neon_tech_revive', name: 'Notfall-Reanimator', desc: 'Einmalige Wiederbelebung pro Lauf mit 30 HP.', cost: 400, x: -400, y: 150, req: 'shield' },
-            { id: 'mirror_shield', key: 'neon_tech_mirror_shield', name: 'Reflektor-Schild', desc: 'Ersetzt normales Schild: Feuert bei Bruch Rache-Kugeln ab!', cost: 350, x: -400, y: 0, req: 'shield' },
-            { id: 'aegis', key: 'neon_tech_aegis', name: 'Aegis-Rumpf', desc: '+50% maximale Gesundheit des Schiffs. Permanent.', cost: 300, x: -200, y: 350, req: 'shield' },
-            { id: 'cryo', key: 'neon_tech_cryo', name: 'Cryo-Strahl', desc: 'Schaltet dauerhaft verlangsamende Frostwaffen frei.', cost: 250, x: -400, y: 350, req: 'aegis' },
+            { id: 'shield', sheet: 'tech_defense', frame: 1, key: 'neon_tech_shield', name: 'Schild Matrix', desc: 'Erlaubt regenerative Schilde als Upgrade im Level-Up Pool.', cost: 100, x: -200, y: 150, req: 'dash' },
+            { id: 'revive', sheet: 'tech_defense', frame: 2, key: 'neon_tech_revive', name: 'Notfall-Reanimator', desc: 'Einmalige Wiederbelebung pro Lauf mit 30 HP.', cost: 400, x: -400, y: 150, req: 'shield' },
+            { id: 'mirror_shield', sheet: 'tech_defense', frame: 3, key: 'neon_tech_mirror_shield', name: 'Reflektor-Schild', desc: 'Ersetzt normales Schild: Feuert bei Bruch Rache-Kugeln ab!', cost: 350, x: -400, y: 0, req: 'shield' },
+            { id: 'aegis', sheet: 'tech_defense', frame: 4, key: 'neon_tech_aegis', name: 'Aegis-Rumpf', desc: '+50% maximale Gesundheit des Schiffs. Permanent.', cost: 300, x: -200, y: 350, req: 'shield' },
+            { id: 'cryo', sheet: 'tech_weapons', frame: 0, key: 'neon_tech_cryo', name: 'Cryo-Strahl', desc: 'Schaltet dauerhaft verlangsamende Frostwaffen frei.', cost: 250, x: -400, y: 350, req: 'aegis' },
             
             // AST 2 (Oben) - Energie & Anomalie
-            { id: 'tesla', key: 'neon_tech_tesla', name: 'Tesla Spule', desc: 'Ermöglicht Kettenblitz-Upgrades im Spiel.', cost: 150, x: 0, y: -200, req: 'dash' },
-            { id: 'singularity', key: 'neon_tech_singularity', name: 'Singularität', desc: 'Schaltet Schwarze Löcher frei, die Gegner gnadenlos einsaugen.', cost: 350, x: 0, y: -400, req: 'tesla' },
-            { id: 'void_shield', key: 'neon_tech_void_shield', name: 'Void-Antiresonanz', desc: 'Reduziert den Schaden durch Void-Feinde passiv um 15%.', cost: 400, x: -200, y: -550, req: 'singularity' },
-            { id: 'fusion', key: 'neon_tech_fusion', name: 'Fusion Core', desc: 'Schaltet extrem mächtige Waffen-Evolutionen beim Level-Up frei!', cost: 600, x: 200, y: -550, req: 'singularity' },
-            { id: 'doom_beam', key: 'neon_tech_doom_beam', name: 'Void-Giga-Laser', desc: 'Massiver, konstanter Laserstrahl direkt nach vorne.', cost: 750, x: 0, y: -700, req: ['void_shield', 'fusion'] },
+            { id: 'tesla', sheet: 'tech_weapons', frame: 1, key: 'neon_tech_tesla', name: 'Tesla Spule', desc: 'Ermöglicht Kettenblitz-Upgrades im Spiel.', cost: 150, x: 0, y: -200, req: 'dash' },
+            { id: 'singularity', sheet: 'tech_weapons', frame: 2, key: 'neon_tech_singularity', name: 'Singularität', desc: 'Schaltet Schwarze Löcher frei, die Gegner gnadenlos einsaugen.', cost: 350, x: 0, y: -400, req: 'tesla' },
+            { id: 'void_shield', sheet: 'tech_defense', frame: 5, key: 'neon_tech_void_shield', name: 'Void-Antiresonanz', desc: 'Reduziert den Schaden durch Void-Feinde passiv um 15%.', cost: 400, x: -200, y: -550, req: 'singularity' },
+            { id: 'fusion', sheet: 'tech_weapons', frame: 3, key: 'neon_tech_fusion', name: 'Fusion Core', desc: 'Schaltet extrem mächtige Waffen-Evolutionen beim Level-Up frei!', cost: 600, x: 200, y: -550, req: 'singularity' },
+            { id: 'doom_beam', sheet: 'tech_weapons', frame: 4, key: 'neon_tech_doom_beam', name: 'Void-Giga-Laser', desc: 'Massiver, konstanter Laserstrahl direkt nach vorne.', cost: 750, x: 0, y: -700, req: ['void_shield', 'fusion'] },
             
             // AST 3 (Rechts) - Artillerie & Helfer
-            { id: 'drones', key: 'neon_tech_drones', name: 'Kampfdrohnen', desc: 'Schaltet begleitende Angriffs-Drohnen frei.', cost: 150, x: 200, y: 150, req: 'dash' },
-            { id: 'sonic_wave', key: 'neon_tech_sonic_wave', name: 'Schall-Blaster', desc: 'Fügt eine extrem breite Druckwelle mit Knockback in den Pool ein.', cost: 300, x: 200, y: 0, req: 'drones' },
-            { id: 'mines', key: 'neon_tech_mines', name: 'Nova-Minenleger', desc: 'Droppt schwebende Neon-Minen hinter dir, die massiven Flächenschaden verursachen.', cost: 350, x: 400, y: 0, req: 'sonic_wave' },
-            { id: 'laser_drones', key: 'neon_tech_laser_drones', name: 'Laser-Drohnen', desc: 'Deine Kampfdrohnen feuern nun durchschlagende Laser statt normaler Projektile.', cost: 300, x: 400, y: 150, req: 'drones' },
-            { id: 'orbitals', key: 'neon_tech_orbitals', name: 'Plasma Orbitals', desc: 'Ermöglicht rotierende Nahkampf-Sägen um dein Schiff.', cost: 250, x: 200, y: 350, req: 'drones' },
-            { id: 'pierce_start', key: 'neon_tech_pierce_start', name: 'Durchdringer', desc: 'Startet JEDEN Lauf direkt mit einem Pierce-Buff.', cost: 350, x: 400, y: 350, req: 'orbitals' },
-            { id: 'scatter', key: 'neon_tech_scatter', name: 'Scatter Schiff', desc: 'Schaltet das Streuschuss-Schiff zur Auswahl frei.', cost: 500, x: 600, y: 200, req: 'pierce_start' },
-            { id: 'railgun', key: 'neon_tech_railgun', name: 'Railgun Schiff', desc: 'Schaltet das durchschlagende Scharfschützen-Schiff frei.', cost: 500, x: 600, y: 500, req: 'pierce_start' },
+            { id: 'drones', sheet: 'tech_weapons', frame: 5, key: 'neon_tech_drones', name: 'Kampfdrohnen', desc: 'Schaltet begleitende Angriffs-Drohnen frei.', cost: 150, x: 200, y: 150, req: 'dash' },
+            { id: 'sonic_wave', sheet: 'tech_weapons', frame: 6, key: 'neon_tech_sonic_wave', name: 'Schall-Blaster', desc: 'Fügt eine extrem breite Druckwelle mit Knockback in den Pool ein.', cost: 300, x: 200, y: 0, req: 'drones' },
+            { id: 'mines', sheet: 'tech_weapons', frame: 7, key: 'neon_tech_mines', name: 'Nova-Minenleger', desc: 'Droppt schwebende Neon-Minen hinter dir, die massiven Flächenschaden verursachen.', cost: 350, x: 400, y: 0, req: 'sonic_wave' },
+            { id: 'laser_drones', sheet: 'tech_weapons', frame: 8, key: 'neon_tech_laser_drones', name: 'Laser-Drohnen', desc: 'Deine Kampfdrohnen feuern nun durchschlagende Laser statt normaler Projektile.', cost: 300, x: 400, y: 150, req: 'drones' },
+            { id: 'orbitals', sheet: 'tech_weapons', frame: 9, key: 'neon_tech_orbitals', name: 'Plasma Orbitals', desc: 'Ermöglicht rotierende Nahkampf-Sägen um dein Schiff.', cost: 250, x: 200, y: 350, req: 'drones' },
+            { id: 'pierce_start', sheet: 'tech_weapons', frame: 10, key: 'neon_tech_pierce_start', name: 'Durchdringer', desc: 'Startet JEDEN Lauf direkt mit einem Pierce-Buff.', cost: 350, x: 400, y: 350, req: 'orbitals' },
+            { id: 'scatter', sheet: 'tech_weapons', frame: 11, key: 'neon_tech_scatter', name: 'Scatter Schiff', desc: 'Schaltet das Streuschuss-Schiff zur Auswahl frei.', cost: 500, x: 600, y: 200, req: 'pierce_start' },
+            { id: 'railgun', sheet: 'tech_weapons', frame: 12, key: 'neon_tech_railgun', name: 'Railgun Schiff', desc: 'Schaltet das durchschlagende Scharfschützen-Schiff frei.', cost: 500, x: 600, y: 500, req: 'pierce_start' },
 
             // AST 4 (Rechts-Oben) - Klingen & Strahlen
-            { id: 'sawblades', key: 'neon_tech_sawblades', name: 'Neon-Sägeblätter', desc: 'Wirbelnde Laserklingen, die Gegner bei Kontakt zerfetzen.', cost: 200, x: 400, y: -200, req: 'drones' },
-            { id: 'focus_laser', key: 'neon_tech_focus_laser', name: 'Fokus-Laser', desc: 'Gebündelter Dauerstrahl. Schmilzt alles auf einer Linie.', cost: 450, x: 600, y: -200, req: 'sawblades' },
+            { id: 'sawblades', sheet: 'tech_weapons', frame: 13, key: 'neon_tech_sawblades', name: 'Neon-Sägeblätter', desc: 'Wirbelnde Laserklingen, die Gegner bei Kontakt zerfetzen.', cost: 200, x: 400, y: -200, req: 'drones' },
+            { id: 'focus_laser', sheet: 'tech_weapons', frame: 14, key: 'neon_tech_focus_laser', name: 'Fokus-Laser', desc: 'Gebündelter Dauerstrahl. Schmilzt alles auf einer Linie.', cost: 450, x: 600, y: -200, req: 'sawblades' },
 
             // AST 5 (Unten) - Schwere Waffen & Aura
-            { id: 'heavy_cannon', key: 'neon_tech_heavy_cannon', name: 'Schiffskanone', desc: 'Feuert massige Neon-Kugeln ab. Langsam aber absolut brutal.', cost: 300, x: 0, y: 200, req: 'dash' },
-            { id: 'damage_aura', key: 'neon_tech_damage_aura', name: 'Schadensaura', desc: 'Permanenter Schadensring um dein Schiff. Vernichtet Nahkämpfer.', cost: 350, x: 0, y: 400, req: 'heavy_cannon' },
+            { id: 'heavy_cannon', sheet: 'tech_weapons', frame: 15, key: 'neon_tech_heavy_cannon', name: 'Schiffskanone', desc: 'Feuert massige Neon-Kugeln ab. Langsam aber absolut brutal.', cost: 300, x: 0, y: 200, req: 'dash' },
+            { id: 'damage_aura', sheet: 'tech_weapons', frame: 16, key: 'neon_tech_damage_aura', name: 'Schadensaura', desc: 'Permanenter Schadensring um dein Schiff. Vernichtet Nahkämpfer.', cost: 350, x: 0, y: 400, req: 'heavy_cannon' },
 
             // AST 6 (Links-Oben) - Ressourcen & Magneten
-            { id: 'scrap_magnet', key: 'neon_tech_scrap_magnet', name: 'Schrott-Magnet', desc: 'Zieht Schrott und Glitzer-Cubes aus doppelter Entfernung an.', cost: 150, x: -200, y: -200, req: 'dash' },
-            { id: 'cube_booster', key: 'neon_tech_cube_booster', name: 'Glitzer-Booster', desc: '+50% Chance auf Bonus-Cubes bei jedem Kill.', cost: 250, x: -400, y: -200, req: 'scrap_magnet' }
+            { id: 'scrap_magnet', sheet: 'tech_defense', frame: 6, key: 'neon_tech_scrap_magnet', name: 'Schrott-Magnet', desc: 'Zieht Schrott und Glitzer-Cubes aus doppelter Entfernung an.', cost: 150, x: -200, y: -200, req: 'dash' },
+            { id: 'cube_booster', sheet: 'tech_defense', frame: 7, key: 'neon_tech_cube_booster', name: 'Glitzer-Booster', desc: '+50% Chance auf Bonus-Cubes bei jedem Kill.', cost: 250, x: -400, y: -200, req: 'scrap_magnet' }
         ];
 
         this.skills.forEach(skill => {
@@ -220,6 +222,14 @@ export default class TechTreeScene extends Phaser.Scene {
 
         this.sidePanel.x = width + 400; // Hidden initially
         this.selectedSkill = null;
+
+        // --- CAMERA CULLING ---
+        // Main camera ignores UI elements
+        this.cam.ignore([title, backBtn, this.scrapText, this.sidePanel]);
+        // UI camera ignores game elements
+        if (this.uiCam) {
+            this.uiCam.ignore([this.gridGraphics, this.nodeGraphics, this.particles]);
+        }
     }
 
     drawConnections() {
@@ -334,13 +344,19 @@ export default class TechTreeScene extends Phaser.Scene {
             });
         }
 
-        const initials = skill.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-        const iconText = this.add.text(0, 0, initials, {
-            fontFamily: 'Orbitron', fontSize: '30px', color: textColor, fontStyle: 'bold'
-        }).setOrigin(0.5);
-        if (glow) iconText.setShadow(0, 0, '#00ffff', 10, true, true);
+        const iconSprite = this.add.sprite(0, 0, skill.sheet || 'tech_defense', skill.frame || 0);
+        iconSprite.setScale(0.5); // scaled up for 128x144
+        if (!isUnlocked) {
+            iconSprite.setTint(0x666677);
+            iconSprite.setAlpha(0.5);
+        } else {
+            iconSprite.setTint(0xffffff);
+            iconSprite.setAlpha(1.0);
+        }
 
-        container.add([hex, iconText]);
+        container.add([hex, iconSprite]);
+
+        if (this.uiCam) this.uiCam.ignore(container);
 
         hex.on('pointerover', () => {
             if(this.game && this.game.audioSys) this.game.audioSys.playHover();

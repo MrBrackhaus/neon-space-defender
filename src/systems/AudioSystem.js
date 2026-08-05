@@ -57,7 +57,7 @@ export default class AudioSystem {
         this.isPlaying = false;
         
         // Step resolution
-        this.bpm = 110;
+        this.bpm = 120;
         this.stepDuration = (60 / this.bpm) / 4; // 16th note step duration
         
         this.patternIndex = 0; // Which pattern in the track sequence
@@ -1239,27 +1239,31 @@ export default class AudioSystem {
         const gain = this.ctx.createGain();
         gain.connect(this.masterGainMusic);
 
-        // Modern dual oscillator lead
+        // Warm, musical dual oscillator lead
         const osc1 = this.ctx.createOscillator();
         const osc2 = this.ctx.createOscillator();
-        osc1.type = 'square';
-        osc2.type = 'sawtooth';
+        osc1.type = 'triangle'; // Softer fundamental
+        osc2.type = 'sawtooth'; // Light overtones
         
-        // Slight portamento/glide effect for modern feel
-        osc1.frequency.setValueAtTime(freq * 0.95, time);
-        osc1.frequency.exponentialRampToValueAtTime(freq, time + 0.05);
-        osc2.frequency.setValueAtTime(freq * 0.95 * 1.005, time);
-        osc2.frequency.exponentialRampToValueAtTime(freq * 1.005, time + 0.05);
+        // Slight detune for chorus effect
+        osc1.frequency.setValueAtTime(freq, time);
+        osc2.frequency.setValueAtTime(freq * 1.002, time);
 
-        osc1.connect(gain);
-        osc2.connect(gain);
+        // Filter out harsh highs
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(3000, time);
+        
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gain);
 
         gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(0.12, time + 0.02);
+        gain.gain.linearRampToValueAtTime(0.1, time + 0.02);
         
-        // Flowing melody notes (longer sustain)
-        const dur = this.stepDuration * 2.5; 
-        gain.gain.setValueAtTime(0.12, time + dur * 0.7);
+        // Tighten duration to prevent overlapping dissonant notes
+        const dur = this.stepDuration * 0.95; 
+        gain.gain.setValueAtTime(0.1, time + dur * 0.5);
         gain.gain.exponentialRampToValueAtTime(0.01, time + dur);
 
         osc1.start(time); osc1.stop(time + dur);
@@ -1298,15 +1302,16 @@ export default class AudioSystem {
         driveGain.connect(filter);
         filter.connect(gain);
 
-        // Sustained bass envelope (NOT a drum envelope)
+        // Tight bass envelope (prevents muddy overlapping dissonance)
+        const dur = this.stepDuration * 0.95; 
         gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(0.6, time + 0.03); 
-        // Hold the bass longer for a smooth, rolling synthwave feel
-        gain.gain.setValueAtTime(0.6, time + this.stepDuration * 1.2); 
-        gain.gain.linearRampToValueAtTime(0.01, time + this.stepDuration * 1.5);
+        gain.gain.linearRampToValueAtTime(0.7, time + 0.02); 
+        // Quick decay to 0.2 for punch, then fade out
+        gain.gain.exponentialRampToValueAtTime(0.2, time + dur * 0.5);
+        gain.gain.linearRampToValueAtTime(0.01, time + dur);
 
-        osc1.start(time); osc1.stop(time + this.stepDuration * 1.5);
-        oscSub.start(time); oscSub.stop(time + this.stepDuration * 1.5);
+        osc1.start(time); osc1.stop(time + dur);
+        oscSub.start(time); oscSub.stop(time + dur);
     }
 
     _setArp(chordStr) {

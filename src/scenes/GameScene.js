@@ -1329,7 +1329,7 @@ export default class GameScene extends Phaser.Scene {
         let x, y;
         
         // Bosses always spawn at the top center to drift downwards slowly
-        if (type === 'boss' || type === 'mothership' || type === 'hivemind' || type === 'destroyer') {
+        if (type === 'boss' || type === 'mothership' || type === 'hivemind' || type === 'destroyer' || type.startsWith('boss_')) {
             x = cw / 2;
             y = -150;
         } else {
@@ -1373,6 +1373,13 @@ export default class GameScene extends Phaser.Scene {
         if (sm.anim) e.play(sm.anim);
         
         e.spawnScale = finalScale;
+        
+        if (type.startsWith('boss_')) {
+            if (this.bossSys) {
+                // Initialize the interactive boss intro and specific mechanics
+                this.bossSys.initCustomBoss(e, type);
+            }
+        }
 
         const hpScale = 1 + (this.waveNum - 1) * 0.35 + Math.pow(this.waveNum / 10, 2);
         e.hp = Math.floor(def.hp * hpScale); 
@@ -2643,7 +2650,7 @@ export default class GameScene extends Phaser.Scene {
         const comp = getWaveComp(n);
         
         if (this.audioSys) {
-            if (comp.boss || comp.mothership || comp.hivemind || comp.destroyer) {
+            if (comp.boss || comp.mothership || comp.hivemind || comp.destroyer || comp.boss_cheese || comp.boss_irs || comp.boss_vacuum) {
                 const bTracks = ['boss_1', 'boss_2', 'boss_3', 'boss_4'];
                 this.audioSys.playMusic(Phaser.Utils.Array.GetRandom(bTracks));
             } else {

@@ -86,6 +86,11 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('enemy_charger_sheet','enemy_charger_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
         this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
 
+        // Boss Overhaul Sprites
+        this.load.image('boss_cheese', 'boss_cheese.png?v=1');
+        this.load.image('boss_irs', 'boss_irs.png?v=1');
+        this.load.image('boss_vacuum', 'boss_vacuum.png?v=1');
+
         // Cinematic intro images
         this.load.image('intro_hero',  'intro_hero_anime.jpg?v=6');
         this.load.image('intro_fleet', 'intro_fleet_anime.jpg?v=6');

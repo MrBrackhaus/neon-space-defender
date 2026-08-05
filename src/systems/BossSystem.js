@@ -4,41 +4,182 @@
  * @module BossSystem
  */
 
+import Phaser from 'phaser';
+
 export default class BossSystem {
-    /**
-     * @class BossSystem
-     * @description Manages boss intro sequences, UI overlays, and modular boss components.
-     * @param {Phaser.Scene} scene - The main game scene.
-     */
     constructor(scene) {
-        /** @type {Phaser.Scene} Reference to the active scene */
         this.scene = scene;
+    }
+
+    // ─────────────────── CUSTOM BOSS INITIALIZATION ───────────────────
+    initCustomBoss(bossSprite, type) {
+        let title = "UNKNOWN ENTITY";
+        let subtitle = "THE GALACTIC MENACE";
+        let c1 = "[1] Attack!";
+        let c2 = "[2] Defend!";
+        
+        if (type === 'boss_cheese') {
+            title = "LORD GOUDA";
+            subtitle = "THE LACTOSE OVERLORD";
+            c1 = "[1] 'Ich bin laktoseintolerant!'";
+            c2 = "[2] 'Wer hat den Käse angeschnitten?'";
+        } else if (type === 'boss_irs') {
+            title = "VOID I.R.S.";
+            subtitle = "INTERDIMENSIONAL REVENUE SERVICE";
+            c1 = "[1] 'Ich zahle keine Steuern!'";
+            c2 = "[2] 'Ich habe meine Quittungen!'";
+        } else if (type === 'boss_vacuum') {
+            title = "ROOMBA-TRON 9000";
+            subtitle = "THE 4D LITTER BOX";
+            c1 = "[1] 'Staub saugen? Niemals!'";
+            c2 = "[2] 'Katzenhaare blockieren deine Bürsten!'";
+        }
+
+        this.showInteractiveBossIntro(title, subtitle, c1, c2, (modifier) => {
+            // Apply unique boss AI logic after dialogue
+            bossSprite.customType = type;
+            bossSprite.nextAttack = this.scene.time.now + 2000;
+            bossSprite.bossPhase = 1;
+            
+            // Setup base HP and zones if needed
+            if (type === 'boss_irs') {
+                this.setupHitZones(bossSprite); // IRS uses hitzones (tax evasion shields)
+            }
+            
+            // Custom Update Loop for Boss Mechanics
+            bossSprite.customUpdate = () => {
+                if (!bossSprite.active) return;
+                
+                const now = this.scene.time.now;
+                
+                if (type === 'boss_cheese') {
+                    // Lord Gouda: Shoots milk lasers (thick white beams) and spawns cheese meteorites
+                    if (now > bossSprite.nextAttack) {
+                        this.cheeseAttack(bossSprite, modifier);
+                        bossSprite.nextAttack = now + (modifier.aggro ? 1500 : 2500);
+                    }
+                } else if (type === 'boss_irs') {
+                    // IRS: Homing coins and heavy stamps
+                    if (now > bossSprite.nextAttack) {
+                        this.irsAttack(bossSprite, modifier);
+                        bossSprite.nextAttack = now + 2000;
+                    }
+                } else if (type === 'boss_vacuum') {
+                    // Roomba: Gravity well effect (sucks player in) and dust balls
+                    this.vacuumGravityEffect(bossSprite);
+                    if (now > bossSprite.nextAttack) {
+                        this.vacuumAttack(bossSprite, modifier);
+                        bossSprite.nextAttack = now + 3000;
+                    }
+                }
+            };
+            
+            this.scene.events.on('update', bossSprite.customUpdate);
+            bossSprite.once('destroy', () => {
+                this.scene.events.off('update', bossSprite.customUpdate);
+            });
+        });
+    }
+    
+    // ─────────────────── BOSS ATTACKS ───────────────────
+    
+    cheeseAttack(bossSprite, modifier) {
+        if (!this.scene.player || !this.scene.player.active) return;
+        
+        // Spawn a cheese meteorite (using asteroid_2 as placeholder or normal asteroid)
+        if (Math.random() > 0.5) {
+            // Milk Laser (thick white projectile)
+            const angle = Phaser.Math.Angle.Between(bossSprite.x, bossSprite.y, this.scene.player.x, this.scene.player.y);
+            const laser = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'enemy_projectile');
+            laser.setTint(0xffffff); // White milk laser
+            laser.setScale(0.8, 2.5); // Thick
+            laser.setRotation(angle);
+            this.scene.eBullets.add(laser);
+            this.scene.physics.velocityFromRotation(angle, 400, laser.body.velocity);
+            
+            this.scene.time.delayedCall(3000, () => { if(laser.active) laser.destroy(); });
+        } else {
+            // Cheese meteorite (small bouncing hazard)
+            if (this.scene.hazardSys) {
+                this.scene.hazardSys.createAsteroid(
+                    bossSprite.x + Phaser.Math.Between(-50, 50),
+                    bossSprite.y + 100,
+                    1,
+                    Phaser.Math.Between(-150, 150),
+                    Phaser.Math.Between(200, 400),
+                    false
+                );
+            }
+        }
+        if(this.scene.audioSys) this.scene.audioSys.playShoot();
+    }
+    
+    irsAttack(bossSprite, modifier) {
+        if (!this.scene.player || !this.scene.player.active) return;
+        
+        // Homing coin
+        const coin = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'scrap_gear');
+        coin.setTint(0xffd700); // Gold
+        coin.setScale(1.5);
+        this.scene.eBullets.add(coin);
+        
+        // Custom update for homing
+        coin.homingUpdate = () => {
+            if (!coin.active || !this.scene.player || !this.scene.player.active) return;
+            const angle = Phaser.Math.Angle.Between(coin.x, coin.y, this.scene.player.x, this.scene.player.y);
+            this.scene.physics.velocityFromRotation(angle, 250, coin.body.velocity);
+            coin.rotation += 0.1;
+        };
+        this.scene.events.on('update', coin.homingUpdate);
+        coin.once('destroy', () => this.scene.events.off('update', coin.homingUpdate));
+        
+        this.scene.time.delayedCall(5000, () => { if(coin.active) coin.destroy(); });
+        if(this.scene.audioSys) this.scene.audioSys.playShoot();
+    }
+    
+    vacuumGravityEffect(bossSprite) {
+        if (!this.scene.player || !this.scene.player.active) return;
+        // Suck player towards boss
+        const angle = Phaser.Math.Angle.Between(this.scene.player.x, this.scene.player.y, bossSprite.x, bossSprite.y);
+        const distance = Phaser.Math.Distance.Between(this.scene.player.x, this.scene.player.y, bossSprite.x, bossSprite.y);
+        
+        // Stronger pull when closer
+        if (distance < 600) {
+            const pullForce = (600 - distance) * 0.5;
+            this.scene.player.body.velocity.x += Math.cos(angle) * pullForce * 0.05;
+            this.scene.player.body.velocity.y += Math.sin(angle) * pullForce * 0.05;
+        }
+    }
+    
+    vacuumAttack(bossSprite, modifier) {
+        // Shoot dust balls (spread of 5 projectiles)
+        for(let i=0; i<5; i++) {
+            const angle = Phaser.Math.FloatBetween(Math.PI/4, Math.PI*3/4);
+            const p = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y + 50, 'enemy_projectile');
+            p.setTint(0x555555); // Dust color
+            p.setScale(1.2);
+            this.scene.eBullets.add(p);
+            this.scene.physics.velocityFromRotation(angle, Phaser.Math.Between(150, 300), p.body.velocity);
+            
+            this.scene.time.delayedCall(4000, () => { if(p.active) p.destroy(); });
+        }
+        if(this.scene.audioSys) this.scene.audioSys.playShoot();
     }
 
     // ─────────────────── BOSS INTRO & DIALOGUE ───────────────────
 
-    /**
-     * @description Pauses the game, shows a Borderlands-style boss intro, and presents dialogue choices.
-     * @param {string} bossType - The name or type of the boss.
-     * @param {function} onChoiceComplete - Callback receiving the combat modifier object once a choice is made.
-     * @returns {void}
-     */
-    showInteractiveBossIntro(bossType, onChoiceComplete) {
-        // 1. Pause physics to freeze action during intro
+    showInteractiveBossIntro(bossType, subtitleText, c1, c2, onChoiceComplete) {
         this.scene.physics.world.pause();
 
         const { width, height } = this.scene.cameras.main;
 
-        // Create UI container for the intro
         const introContainer = this.scene.add.container(0, 0);
         introContainer.setDepth(1000);
 
-        // Dark overlay to focus on the boss UI
         const overlay = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.7);
         overlay.setOrigin(0, 0);
         introContainer.add(overlay);
 
-        // Boss Name / Title (Borderlands style splash text)
         const bossName = this.scene.add.text(width / 2, height * 0.3, bossType.toUpperCase(), {
             fontFamily: 'Impact, sans-serif',
             fontSize: '72px',
@@ -47,21 +188,19 @@ export default class BossSystem {
             strokeThickness: 8,
             shadow: { offsetX: 4, offsetY: 4, color: '#000000', blur: 0, stroke: false, fill: true }
         }).setOrigin(0.5);
-        bossName.setScale(0); // Start hidden for tweening
+        bossName.setScale(0); 
         introContainer.add(bossName);
 
-        // Subtitle / Tagline
-        const subtitle = this.scene.add.text(width / 2, height * 0.3 + 70, 'THE GALACTIC MENACE', {
+        const subtitle = this.scene.add.text(width / 2, height * 0.3 + 70, subtitleText, {
             fontFamily: 'Arial',
             fontSize: '28px',
             color: '#ffff00',
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5);
-        subtitle.setAlpha(0); // Start hidden
+        subtitle.setAlpha(0);
         introContainer.add(subtitle);
 
-        // Tween for Borderlands style splash animation
         this.scene.tweens.add({
             targets: bossName,
             scaleX: 1,
@@ -74,25 +213,15 @@ export default class BossSystem {
                     alpha: 1,
                     duration: 300,
                     onComplete: () => {
-                        this.showChoices(introContainer, width, height, onChoiceComplete);
+                        this.showChoices(introContainer, width, height, c1, c2, onChoiceComplete);
                     }
                 });
             }
         });
     }
 
-    /**
-     * @description Internal method to display the dialogue choices and handle user selection.
-     * @param {Phaser.GameObjects.Container} container - The UI container to append choices to.
-     * @param {number} width - Screen width.
-     * @param {number} height - Screen height.
-     * @param {function} onChoiceComplete - Callback to execute after selection.
-     * @returns {void}
-     * @private
-     */
-    showChoices(container, width, height, onChoiceComplete) {
-        // 2. Add interactive choices for the player
-        const choice1 = this.scene.add.text(width / 2, height * 0.6, "[1] 'Dein Schiff sieht aus wie ein Toaster'", {
+    showChoices(container, width, height, c1Text, c2Text, onChoiceComplete) {
+        const choice1 = this.scene.add.text(width / 2, height * 0.6, c1Text, {
             fontFamily: 'Arial',
             fontSize: '24px',
             color: '#ffffff',
@@ -100,7 +229,7 @@ export default class BossSystem {
             padding: { x: 15, y: 15 }
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-        const choice2 = this.scene.add.text(width / 2, height * 0.7, "[2] (Schweigen)", {
+        const choice2 = this.scene.add.text(width / 2, height * 0.7, c2Text, {
             fontFamily: 'Arial',
             fontSize: '24px',
             color: '#ffffff',
@@ -111,7 +240,6 @@ export default class BossSystem {
         container.add(choice1);
         container.add(choice2);
 
-        // Hover effects for UI feedback
         choice1.on('pointerover', () => choice1.setStyle({ color: '#ff5555', backgroundColor: '#555555' }));
         choice1.on('pointerout', () => choice1.setStyle({ color: '#ffffff', backgroundColor: '#333333' }));
         
@@ -119,18 +247,13 @@ export default class BossSystem {
         choice2.on('pointerout', () => choice2.setStyle({ color: '#ffffff', backgroundColor: '#333333' }));
 
         const resolveChoice = (modifier) => {
-            // Destroy the UI
             container.destroy();
-            // Resume the game mechanics
             this.scene.physics.world.resume();
-            
-            // 3. Pass modifier to callback
             if (onChoiceComplete) {
                 onChoiceComplete(modifier);
             }
         };
 
-        // Click handlers with respective combat modifiers
         choice1.on('pointerdown', () => {
             resolveChoice({ aggro: true, noShields: true });
         });
@@ -140,18 +263,12 @@ export default class BossSystem {
         });
     }
 
-    // ─────────────────── BOSS MECHANICS ───────────────────
-
-    /**
-     * @description Sets up distinct hit zones (e.g., engines) for a multi-part boss.
-     * @param {Phaser.GameObjects.Sprite} bossSprite - The main boss sprite.
-     * @returns {void}
-     */
+    // ─────────────────── BOSS HIT ZONES (from old file) ───────────────────
     setupHitZones(bossSprite) {
         bossSprite.hitZones = [];
 
-        // Define hit zone properties (Left Engine)
-        const leftEngine = this.scene.add.rectangle(0, 0, 40, 60, 0xff0000, 0); // alpha 0 for invisible hitbox
+        // Define hit zone properties (Tax Shield 1)
+        const leftEngine = this.scene.add.rectangle(0, 0, 60, 80, 0xff0000, 0); 
         this.scene.physics.add.existing(leftEngine);
         leftEngine.body.setAllowGravity(false);
         leftEngine.body.setImmovable(true);
@@ -159,14 +276,14 @@ export default class BossSystem {
         leftEngine.isHitZone = true;
         leftEngine.parentBoss = bossSprite;
         leftEngine.type = 'hitzone';
-        leftEngine.hp = 300;
+        leftEngine.hp = 800;
         leftEngine.isDestroyed = false;
-        leftEngine.partName = 'Left Engine';
-        leftEngine.offsetX = -80; // Relative to boss center
+        leftEngine.partName = 'Tax Shield Left';
+        leftEngine.offsetX = -100; 
         leftEngine.offsetY = 40;
 
-        // Define hit zone properties (Right Engine)
-        const rightEngine = this.scene.add.rectangle(0, 0, 40, 60, 0xff0000, 0);
+        // Define hit zone properties (Tax Shield 2)
+        const rightEngine = this.scene.add.rectangle(0, 0, 60, 80, 0xff0000, 0);
         this.scene.physics.add.existing(rightEngine);
         rightEngine.body.setAllowGravity(false);
         rightEngine.body.setImmovable(true);
@@ -174,94 +291,77 @@ export default class BossSystem {
         rightEngine.isHitZone = true;
         rightEngine.parentBoss = bossSprite;
         rightEngine.type = 'hitzone';
-        rightEngine.hp = 300;
+        rightEngine.hp = 800;
         rightEngine.isDestroyed = false;
-        rightEngine.partName = 'Right Engine';
-        rightEngine.offsetX = 80;
+        rightEngine.partName = 'Tax Shield Right';
+        rightEngine.offsetX = 100;
         rightEngine.offsetY = 40;
 
         bossSprite.hitZones.push(leftEngine, rightEngine);
 
-        // Create an update function to sync hit zone positions with the boss body
+        // Make boss itself invulnerable until shields are down
+        bossSprite.isInvulnerable = true;
+        const shieldVisual = this.scene.add.circle(0, 0, 150, 0x00aaff, 0.2);
+        shieldVisual.setStrokeStyle(4, 0x00ffff);
+        
         bossSprite.updateHitZones = () => {
             if (!bossSprite.active) {
                 leftEngine.destroy();
                 rightEngine.destroy();
+                shieldVisual.destroy();
                 return;
             }
 
             leftEngine.setPosition(bossSprite.x + leftEngine.offsetX, bossSprite.y + leftEngine.offsetY);
             rightEngine.setPosition(bossSprite.x + rightEngine.offsetX, bossSprite.y + rightEngine.offsetY);
+            shieldVisual.setPosition(bossSprite.x, bossSprite.y);
+            
+            if (leftEngine.isDestroyed && rightEngine.isDestroyed) {
+                bossSprite.isInvulnerable = false;
+                shieldVisual.setVisible(false);
+            }
         };
 
-        // Hook into scene update event to continuously attach the hit zones
         this.scene.events.on('update', bossSprite.updateHitZones);
         
-        // Cleanup when the boss is destroyed
         bossSprite.once('destroy', () => {
             this.scene.events.off('update', bossSprite.updateHitZones);
             leftEngine.destroy();
             rightEngine.destroy();
+            shieldVisual.destroy();
         });
     }
 
-    /**
-     * @description Handles damage applied specifically to a boss hit zone.
-     * @param {Phaser.GameObjects.Rectangle} hitZone - The specific hit zone (e.g., engine).
-     * @param {number} amount - Damage amount.
-     * @param {Phaser.GameObjects.Sprite} bossSprite - The main boss sprite.
-     * @returns {void}
-     */
     damageHitZone(hitZone, amount, bossSprite) {
         if (hitZone.isDestroyed) return;
 
         hitZone.hp -= amount;
         if (hitZone.hp <= 0) {
             hitZone.isDestroyed = true;
-            
-            // Disable physics body so it can't be hit anymore
             hitZone.body.enable = false;
-
-            // Trigger visual explosion
             this.triggerPartExplosion(hitZone);
-
-            // Trigger a state change on the boss
+            
             if (bossSprite && bossSprite.active) {
-                bossSprite.setTint(0xffaaaa); // Change tint as visual feedback
-                
-                // Example state change: slow down the boss when an engine is destroyed
+                bossSprite.setTint(0xffaaaa); 
                 if (bossSprite.body) {
                     bossSprite.body.maxVelocity.x *= 0.7; 
                     bossSprite.body.maxVelocity.y *= 0.7;
                 }
-                
-                // Emit a custom event to notify the GameScene
                 this.scene.events.emit('bossPartDestroyed', hitZone.partName, bossSprite);
             }
         }
     }
 
-    /**
-     * @description Triggers a visual effect when a hit zone is destroyed.
-     * @param {Phaser.GameObjects.Rectangle} hitZone - The hit zone object.
-     * @returns {void}
-     */
     triggerPartExplosion(hitZone) {
-        // Fallback to simple circle explosion if particle texture ('flare' or 'spark') isn't available
-        const explosion = this.scene.add.circle(hitZone.x, hitZone.y, 10, 0xffaa00);
-        
+        if (this.scene.audioSys) this.scene.audioSys.playExplosion();
+        const blast = this.scene.add.circle(hitZone.x, hitZone.y, 40, 0xffaa00, 0.8);
         this.scene.tweens.add({
-            targets: explosion,
-            scale: 5,
+            targets: blast,
+            scale: 2,
             alpha: 0,
             duration: 400,
-            ease: 'Cubic.easeOut',
-            onComplete: () => {
-                explosion.destroy();
-            }
+            onComplete: () => blast.destroy()
         });
-        
-        // Add a camera shake for extra impact
-        this.scene.cameras.main.shake(150, 0.01);
+        this.scene.cameras.main.shake(100, 0.01);
     }
 }

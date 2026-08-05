@@ -19,10 +19,10 @@ export default class BossSystem {
         let c2 = "[2] Defend!";
         
         if (type === 'boss') {
-            title = "DREADNOUGHT";
-            subtitle = "THE STEEL BEHEMOTH";
-            c1 = "[1] 'Friss Laser, Blecheimer!'";
-            c2 = "[2] 'Ausweichmanöver aktivieren!'";
+            title = "MECHA-GOUDA";
+            subtitle = "PROTOKOLL: ÜBERBACKEN";
+            c1 = "[1] 'Knack die Kruste!'";
+            c2 = "[2] 'Ausweichen, das Fett spritzt!'";
         } else if (type === 'mothership') {
             title = "MOTHERSHIP";
             subtitle = "ALIEN CARRIER";
@@ -40,9 +40,9 @@ export default class BossSystem {
             c2 = "[2] 'Schilde auf Maximum!'";
         } else if (type === 'boss_cheese') {
             title = "LORD GOUDA";
-            subtitle = "THE LACTOSE OVERLORD";
-            c1 = "[1] 'Ich bin laktoseintolerant!'";
-            c2 = "[2] 'Wer hat den Käse angeschnitten?'";
+            subtitle = "CHOLERISCHER SCHMELZKÄSE-IMPERATOR";
+            c1 = "[1] 'Dein Verfallsdatum ist abgelaufen!'";
+            c2 = "[2] 'Ich habe laktosefreie Torpedos!'";
         } else if (type === 'boss_irs') {
             title = "VOID I.R.S.";
             subtitle = "INTERDIMENSIONAL REVENUE SERVICE";

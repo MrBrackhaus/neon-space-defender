@@ -777,6 +777,380 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    // ─────────────────────────────────────────────────────
+    // PLAYER MOVEMENT
+    // ─────────────────────────────────────────────────────
+    /**
+     * @description Processes player input (Keyboard, Gamepad, Mouse) and applies velocity and rotation to the ship.
+     */
+    handleMovement() {
+        const { keys, player, pd } = this;
+        
+        if (pd.isDashing) return; // Lock controls during dash
+
+        let vx = 0, vy = 0;
+
+        // 1. Keyboard
+        if (keys.A.isDown || keys.LEFT.isDown)  vx -= 1;
+        if (keys.D.isDown || keys.RIGHT.isDown) vx += 1;
+        if (keys.W.isDown || keys.UP.isDown)    vy -= 1;
+        if (keys.S.isDown || keys.DOWN.isDown)  vy += 1;
+
+        // 2. Gamepad (Phaser Native Cross-Browser Support for Xbox/PS)
+        const pad = this.input.gamepad ? this.input.gamepad.pad1 : null;
+        if (pad) {
+            // Movement (Left Stick & D-Pad)
+            let lx = 0, ly = 0;
+            if (pad.leftStick) { lx = pad.leftStick.x; ly = pad.leftStick.y; }
+            if (Math.abs(lx) > 0.2) vx = lx;
+            if (Math.abs(ly) > 0.2) vy = ly;
+
+            if (pad.left) vx -= 1;
+            if (pad.right) vx += 1;
+            if (pad.up) vy -= 1;
+            if (pad.down) vy += 1;
+
+            // Gamepad Nova Bomb (Trigger R2 or Button A / Cross)
+            if (pad.A || pad.R2) {
+                if (!pd.novaCooldown || this.time.now > pd.novaCooldown) {
+                    if (this.triggerNova()) pd.novaCooldown = this.time.now + 1000;
+                }
+            }
+        }
+
+        // 3. Mouse/Touch movement (fallback)
+        if (vx === 0 && vy === 0 && this.input.activePointer.isDown) {
+            const dx = this.input.activePointer.x - player.x;
+            const dy = this.input.activePointer.y - player.y;
+            const d = Math.hypot(dx, dy);
+            if (d > 15) { vx = dx / d; vy = dy / d; }
+        }
+
+        // Normalize vector if using keyboard/mouse
+        const len = Math.hypot(vx, vy);
+        if (len > 1) {
+            vx /= len; vy /= len;
+        }
+        
+        // Dash activation (SHIFT or Gamepad B/Circle/L1/R1)
+        let dashPressed = Phaser.Input.Keyboard.JustDown(keys.SHIFT);
+        if (pad && (pad.B || pad.L1 || pad.R1)) {
+            dashPressed = true;
+        }
+
+        if (pd.unlockDash && dashPressed && this.time.now > (pd.dashCooldown || 0) && (vx !== 0 || vy !== 0)) {
+            pd.isDashing = true;
+            this.playerInvincible = true;
+            player.setVelocity(vx * pd.speed * 3.5, vy * pd.speed * 3.5);
+            
+            // Visual after-image effect
+            this.time.addEvent({
+                delay: 40, repeat: 5,
+                callback: () => {
+                    if (!player || !player.active) return;
+                    const ghost = this.add.sprite(player.x, player.y, player.texture.key).setScale(player.scale).setDepth(8).setTint(0x00ffff).setAlpha(0.6);
+                    if (player.anims && player.anims.currentAnim) ghost.play(player.anims.currentAnim.key);
+                    this.tweens.add({ targets: ghost, alpha: 0, scale: player.scale * 1.33, duration: 300, onComplete: () => ghost.destroy() });
+                }
+            });
+
+            this.time.delayedCall(250, () => {
+                pd.isDashing = false;
+                this.playerInvincible = false;
+                pd.dashCooldown = this.time.now + 1200; // 1.2s cooldown
+            });
+            return;
+        }
+
+        player.setVelocity(vx * pd.speed, vy * pd.speed);
+        
+        pd.isMoving = (vx !== 0 || vy !== 0);
+        
+        // Smooth tilt without 360 degree spin wrapping bugs
+        const targetAngle = this.playerBaseAngle + vx * 8;
+        let diff = targetAngle - player.angle;
+        diff = ((diff + 540) % 360) - 180; // Normalize between -180 and +180
+        player.angle += diff * 0.15;
+    }
+
+    // ─────────────────────────────────────────────────────
+    // AUTO SHOOT
+    // ─────────────────────────────────────────────────────
+    /**
+     * @description Determines target angles and triggers weapon firing logic based on current weapon class and level.
+     */
+    autoShoot() {
+        if (this.isGameOver || this.betweenWaves) return;
+        
+        // INTERCEPTOR Momentum Passive
+        if (this.shipClass === 'interceptor') {
+            if (this.pd.isMoving) {
+                this.pd.moveTime = (this.pd.moveTime || 0) + this.game.loop.delta;
+            } else {
+                this.pd.moveTime = 0;
+            }
+            const speedup = Math.min(1.0, (this.pd.moveTime || 0) / 3000);
+            this.shootTimer.delay = this.pd.fireDelay * (1 - (speedup * 0.5));
+        }
+        
+        let targetAngle = null;
+        let targetAngle2 = null; // for Phantom dual aim
+        const dronesLvl = this.pd.upgLevels['drones'] || 0;
+        
+        // Twin-Stick Aiming (Cross-Browser Gamepad API)
+        const pad = this.input.gamepad ? this.input.gamepad.pad1 : null;
+        if (pad && pad.rightStick) {
+            const rx = pad.rightStick.x;
+            const ry = pad.rightStick.y;
+            if (Math.abs(rx) > 0.2 || Math.abs(ry) > 0.2) {
+                targetAngle = Math.atan2(ry, rx);
+                if (this.pd.autoTargetCount > 1) {
+                    targetAngle2 = targetAngle + 0.3; // simple spread when twin sticking
+                }
+            }
+        }
+        
+        // Fallback to nearest enemy if no stick input
+        if (targetAngle === null) {
+            const limit = this.pd.autoTargetCount || 1;
+            const searchLimit = dronesLvl > 0 ? Math.max(limit, 3) : limit;
+            
+            const targets = this.findNearestEnemies(searchLimit);
+            if (targets.length === 0) return;
+            
+            targetAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, targets[0].x, targets[0].y);
+            if (targets.length > 1 && limit > 1) {
+                targetAngle2 = Phaser.Math.Angle.Between(this.player.x, this.player.y, targets[1].x, targets[1].y);
+            } else {
+                targetAngle2 = targetAngle;
+            }
+            
+            // Store targets temporarily for drone usage later
+            this._lastTargets = targets;
+        }
+
+        const angle = targetAngle;
+        
+        // Apply Weapon Level Bonus
+        const baseShots = this.pd.shots;
+        let finalShots = baseShots;
+        if (this.weaponClass === 'scatter' && this.pd.weaponLevel > 1) finalShots += (this.pd.weaponLevel - 1) * 2;
+        else if (this.pd.weaponLevel > 1) finalShots += (this.pd.weaponLevel - 1);
+        
+        const spread = finalShots > 1 ? 0.16 : 0;
+
+        const targetAngles = [angle];
+        if (targetAngle2 !== angle && this.pd.autoTargetCount > 1) {
+            targetAngles.push(targetAngle2);
+        }
+
+        let shotsForTarget = [finalShots];
+        if (this.shipClass === 'phantom' && targetAngles.length > 1) {
+            shotsForTarget[0] = Math.ceil(finalShots / 2);
+            shotsForTarget[1] = finalShots - shotsForTarget[0];
+        } else if (targetAngles.length > 1) {
+            shotsForTarget[1] = finalShots;
+        }
+
+        targetAngles.forEach((ang, index) => {
+            const shots = shotsForTarget[index];
+            if (shots <= 0) return;
+
+            const pAngle = ang + Math.PI / 2;
+            const ox = Math.cos(pAngle);
+            const oy = Math.sin(pAngle);
+            
+            if (shots === 1) {
+                this.fireSide = (this.fireSide === 1) ? -1 : 1;
+                this.fireBullet(this.player.x + (ox * 16 * this.fireSide), this.player.y + (oy * 16 * this.fireSide), ang);
+            } else {
+                for (let i = 0; i < shots; i++) {
+                    const a = ang + (i - (shots - 1) / 2) * spread;
+                    this.fireBullet(this.player.x, this.player.y, a);
+                }
+            }
+        });
+
+        // Fire Special Weapons
+        const lightningLvl = this.pd.upgLevels['chain_lightning'] || 0;
+        if (lightningLvl > 0 && Phaser.Math.Between(1, 100) <= 25) {
+            this.weaponSys.fireChainLightning(this.player, this.enemies, this.pd.damage, lightningLvl);
+        }
+
+        const blackHoleLvl = this.pd.upgLevels['black_hole'] || 0;
+        if (blackHoleLvl > 0) {
+            if (!this.lastBlackHole || this.time.now > this.lastBlackHole + 4000) {
+                this.lastBlackHole = this.time.now;
+                const bx = this.player.x + (Math.random()*100 - 50);
+                const by = this.player.y - 150 + (Math.random()*50);
+                this.weaponSys.fireBlackHole(bx, by, 3000, 180, this.pd.damage * 0.5, this.enemies, blackHoleLvl);
+            }
+        }
+
+        if (this.pd.hasFrostAegis) {
+            if (!this.lastAegis || this.time.now > this.lastAegis + 8000) {
+                this.lastAegis = this.time.now;
+                this.weaponSys.triggerFrostAegis(this.player, this.enemies, this.pd.damage);
+            }
+        }
+
+        // ⚔️ NEW WEAPONS ⚔️
+        const sonicLvl = this.pd.upgLevels['sonic_wave'] || 0;
+        if (sonicLvl > 0) {
+            if (!this.lastSonicWave || this.time.now > this.lastSonicWave + 3000) {
+                this.lastSonicWave = this.time.now;
+                this.weaponSys.fireSonicWave(this.player, this.enemies, this.pd.damage, sonicLvl);
+            }
+        }
+
+        const minesLvl = this.pd.upgLevels['mines'] || 0;
+        if (minesLvl > 0) {
+            const mineInterval = Math.max(1000, (4000 - minesLvl * 500));
+            if (!this.lastMineDrop || this.time.now > this.lastMineDrop + mineInterval) {
+                this.lastMineDrop = this.time.now;
+                this.weaponSys.dropMine(this.player.x, this.player.y + 30, this.pd.damage, this.enemies, minesLvl);
+            }
+        }
+
+        if (this.pd.unlockDoomBeam) {
+            if (!this.lastDoomBeam || this.time.now > this.lastDoomBeam + 8000) {
+                this.lastDoomBeam = this.time.now;
+                this.weaponSys.fireDoomBeam(this.player, this.enemies, this.pd.damage);
+            }
+        }
+
+        const sawLvl = this.pd.upgLevels['sawblades'] || 0;
+        if (sawLvl > 0) {
+            if (!this.lastSawblades || this.time.now > this.lastSawblades + 6000) {
+                this.lastSawblades = this.time.now;
+                this.weaponSys.spawnSawblades(this.player, this.enemies, this.pd.damage, sawLvl);
+            }
+        }
+
+        const focusLvl = this.pd.upgLevels['focus_laser'] || 0;
+        if (focusLvl > 0) {
+            if (!this.lastFocusLaser || this.time.now > this.lastFocusLaser + 5000) {
+                this.lastFocusLaser = this.time.now;
+                this.weaponSys.fireFocusLaser(this.player, this.enemies, this.pd.damage, focusLvl);
+            }
+        }
+
+        const cannonLvl = this.pd.upgLevels['heavy_cannon'] || 0;
+        if (cannonLvl > 0) {
+            if (!this.lastHeavyCannon || this.time.now > this.lastHeavyCannon + 2500) {
+                this.lastHeavyCannon = this.time.now;
+                this.weaponSys.fireHeavyCannon(this.player, this.enemies, this.pd.damage, cannonLvl);
+            }
+        }
+
+        const auraLvl = this.pd.upgLevels['damage_aura'] || 0;
+        if (auraLvl > 0) {
+            this.weaponSys.updateDamageAura(this.player, this.enemies, this.pd.damage, auraLvl);
+        }
+
+        if (dronesLvl > 0) {
+            let droneAngle = angle;
+            if (this._lastTargets) {
+                let dt = this._lastTargets[0];
+                if (this._lastTargets.length > 2) dt = this._lastTargets[2];
+                else if (this._lastTargets.length > 1) dt = this._lastTargets[1];
+                if (dt) droneAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, dt.x, dt.y);
+            }
+            
+            for (let i = 0; i < dronesLvl; i++) {
+                const offsetA = (Math.PI * 2 / dronesLvl) * i;
+                this.fireBullet(
+                    this.player.x + Math.cos(offsetA) * 40,
+                    this.player.y + Math.sin(offsetA) * 40,
+                    droneAngle + Phaser.Math.FloatBetween(-0.1, 0.1),
+                    this.pd.unlockLaserDrones
+                );
+            }
+        }
+
+        if (this.pd.hasLaserWhip) {
+            if (!this.lastLaserWhip || this.time.now > this.lastLaserWhip + 800) {
+                this.lastLaserWhip = this.time.now;
+                this.weaponSys.fireLaserWhip(this.player, this.enemies, this.pd.damage * 4);
+            }
+        }
+
+        if (this.pd.hasVoidVortex) {
+            if (!this.lastVortex || this.time.now > this.lastVortex + 6000) {
+                this.lastVortex = this.time.now;
+                const dist = 250;
+                this.weaponSys.triggerVoidVortex(
+                    this.player.x + Phaser.Math.Between(-dist, dist),
+                    this.player.y + Phaser.Math.Between(-dist, dist),
+                    this.pd.damage * 3, this.enemies
+                );
+            }
+        }
+    }
+
+    /**
+     * @description Spawns a player projectile from the object pool with given coordinates and trajectory.
+     * @param {number} x - Origin X coordinate.
+     * @param {number} y - Origin Y coordinate.
+     * @param {number} angle - Firing angle in radians.
+     */
+    fireBullet(x, y, angle, isLaserDrone = false) {
+        if (this.audioSys) this.audioSys.playShoot(this.weaponClass);
+
+        let tex = 'bullet_pulse';
+        if (this.weaponClass === 'scatter') tex = 'bullet_scatter';
+        if (this.weaponClass === 'railgun') tex = 'bullet_railgun';
+        if (isLaserDrone) tex = 'bullet_railgun';
+
+        const b = this.bullets.get(x, y, tex);
+        if (!b) return;
+        if (typeof b.setTexture === 'function') { b.setTexture(tex); } else { b.destroy(); return; }
+        if (isLaserDrone) b.setTint(0xff00ff); // Purple lasers
+
+        b.setActive(true).setVisible(true);
+        if (b.body) {
+            b.body.enable = true;
+            b.body.setSize(b.width, b.height);
+        }
+        b.setDepth(8).setRotation(angle + Math.PI / 2);
+        b.pierce = isLaserDrone ? (this.pd.pierce || 0) + 2 : this.pd.pierce;
+        b.hitEnemies = [];
+        const critChance = (this.pd.crit ? 0.2 : 0) + (this.pd.critBoost || 0);
+        b.isCrit = Math.random() < critChance;
+        b.damage = b.isCrit ? this.pd.damage * 3 : this.pd.damage;
+        b.body.reset(x, y);   // reset body position BEFORE setting velocity
+        b.spawnTime = this.time.now;
+        b.lifespan = this.pd.weaponLifespan;
+        b.setVelocity(Math.cos(angle) * 560, Math.sin(angle) * 560);
+    }
+
+    /**
+     * @description Locates the closest active enemy to the player.
+     * @returns {Phaser.Physics.Arcade.Sprite|null} The nearest enemy sprite or null if none exist.
+     */
+    findNearestEnemy() {
+        let best = null, bestDist = Infinity;
+        this.enemies.getChildren().forEach(e => {
+            if (!e.active || e.isHitZone || e.isDying) return;
+            const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y);
+            if (d < bestDist) { bestDist = d; best = e; }
+        });
+        return best;
+    }
+
+    /**
+     * @description Locates a specific number of nearest active enemies.
+     * @param {number} count - Maximum number of enemies to return.
+     * @returns {Array<Phaser.Physics.Arcade.Sprite>} Array of the nearest enemy sprites.
+     */
+    findNearestEnemies(count) {
+        const alive = this.enemies.getChildren().filter(e => e.active && !e.isHitZone && !e.isDying);
+        alive.sort((a, b) => {
+            return Phaser.Math.Distance.Between(this.player.x, this.player.y, a.x, a.y) - Phaser.Math.Distance.Between(this.player.x, this.player.y, b.x, b.y);
+        });
+        return alive.slice(0, count);
+    }
+
     /**
      * @description Spawns a player projectile from the object pool with given coordinates and trajectory.
      * @param {number} x - Origin X coordinate.
@@ -2105,182 +2479,6 @@ export default class GameScene extends Phaser.Scene {
             case 'sonic_wave': /* Handled in fireBullet via upgLevels */ break;
             case 'mines': /* Handled in update loop via upgLevels */ break;
         }
-    }
-
-    // ─────────────────────────────────────────────────────
-    // ACTIVE ABILITIES (SPACEBAR)
-    // ─────────────────────────────────────────────────────
-    /**
-     * @description Triggers the ship-specific active ability upon pressing SPACE, handling respective cooldowns.
-     */
-    activateNovaBomb() {
-        if (this.isGameOver) return;
-        
-        const now = this.time.now;
-        if (now < this.abilityCooldown) {
-            // Optional: Play a "cooldown" sound or shake UI
-            return;
-        }
-
-        let cooldownMs = 0;
-
-        if (this.shipClass === 'phantom') {
-            cooldownMs = 10000;
-            this.activatePhaseShift();
-        } else if (this.shipClass === 'bomber') {
-            cooldownMs = 12000;
-            this.activateCarpetBomb();
-        } else if (this.shipClass === 'dreadnought') {
-            cooldownMs = 15000;
-            this.activateAegisShield();
-        } else if (this.shipClass === 'interceptor') {
-            cooldownMs = 12000;
-            this.activateOverdrive();
-        } else if (this.shipClass === 'paladin') {
-            cooldownMs = 15000;
-            this.activateHolyNova();
-        } else {
-            // Standard ship uses the old Nova Bomb system (charges instead of cooldown)
-            this.activateNovaBomb();
-            cooldownMs = 500; // tiny cooldown to prevent spamming charges
-        }
-
-        if (cooldownMs > 0 && this.shipClass !== 'standard') {
-            this.abilityCooldown = now + cooldownMs;
-            this.abilityCooldownMax = cooldownMs;
-        }
-    }
-
-    /**
-     * @description Phantom class ability: Grants immense speed and intangibility.
-     */
-    activatePhaseShift() {
-        this.player.isInvulnerable = true;
-        this.player.setAlpha(0.4);
-        this.pd.speed *= 2.5; // Massive speed boost
-        
-        this.showBanner('PHASE SHIFT!', '#00ffff');
-        
-        this.time.delayedCall(1500, () => {
-            this.player.isInvulnerable = false;
-            this.player.setAlpha(1);
-            this.pd.speed /= 2.5;
-        });
-    }
-
-    /**
-     * @description Bomber class ability: Fires a heavy missile with a massive area of effect.
-     */
-    activateCarpetBomb() {
-        this.showBanner('CARPET BOMBING!', '#ff00ff');
-        
-        // Spawn the heavy missile
-        const angle = this.player.rotation - Math.PI/2;
-        const b = this.physics.add.sprite(this.player.x, this.player.y, 'missile_bomb').setDepth(8);
-        b.setScale(0.12);
-        b.rotation = angle + Math.PI/2;
-        const speed = 600;
-        b.setVelocity(Math.cos(angle)*speed, Math.sin(angle)*speed);
-        
-        // Custom missile explosion logic
-        const checkOverlap = this.time.addEvent({
-            delay: 50, loop: true,
-            callback: () => {
-                if (!b.active) return;
-                
-                // Explode if it goes off screen
-                if (b.x < -100 || b.x > this.cw+100 || b.y < -100 || b.y > this.ch+100) {
-                    b.destroy();
-                    checkOverlap.remove();
-                    return;
-                }
-
-                // Check overlap with enemies
-                let detonated = false;
-                this.enemies.getChildren().forEach(e => {
-                    if (detonated || !e.active || e.isDying) return;
-                    if (Phaser.Math.Distance.Between(b.x, b.y, e.x, e.y) < 60) {
-                        detonated = true;
-                    }
-                });
-                
-                if (detonated) {
-                    this.cameras.main.shake(300, 0.02);
-                    this.cameras.main.flash(200, 255, 100, 255);
-                    this.weaponSys.triggerSupernova(b.x, b.y, this.pd.damage * 10, this.enemies); // massive AoE
-                    b.destroy();
-                    checkOverlap.remove();
-                }
-            }
-        });
-    }
-
-    /**
-     * @description Dreadnought class ability: Forms a temporary absolute defense barrier.
-     */
-    activateAegisShield() {
-        this.showBanner('AEGIS SHIELD!', '#ffaa00');
-        
-        const g = this.add.graphics().setDepth(9);
-        g.lineStyle(6, 0xffaa00, 0.8);
-        g.fillStyle(0xffaa00, 0.2);
-        
-        this.player.hasAegis = true;
-        
-        const updateAegis = this.time.addEvent({
-            delay: 30, loop: true,
-            callback: () => {
-                if (!this.player.active) return;
-                g.clear();
-                g.lineStyle(6, 0xffaa00, 0.8 + Math.sin(this.time.now/100)*0.2);
-                g.fillStyle(0xffaa00, 0.2);
-                g.strokeCircle(this.player.x, this.player.y, 60);
-                g.fillCircle(this.player.x, this.player.y, 60);
-            }
-        });
-        
-        this.time.delayedCall(4000, () => {
-            this.player.hasAegis = false;
-            updateAegis.remove();
-            g.destroy();
-        });
-    }
-
-    /**
-     * @description Interceptor class ability: Substantially increases fire rate for a short burst.
-     */
-    activateOverdrive() {
-        this.showBanner('OVERDRIVE!', '#ff0000');
-        this.pd.fireDelay /= 2;
-        this.player.setTint(0xff5555);
-        this.time.delayedCall(3000, () => {
-            this.pd.fireDelay *= 2;
-            this.player.clearTint();
-        });
-    }
-
-    /**
-     * @description Paladin class ability: Casts a healing pulse that violently repels and damages enemies.
-     */
-    activateHolyNova() {
-        this.showBanner('HOLY NOVA!', '#ffff00');
-        this.cameras.main.flash(200, 255, 255, 200);
-        this.healPlayer(this.pd.maxHp * 0.3); // Heal 30%
-        
-        // Push away and damage enemies
-        const radius = 300;
-        this.enemies.getChildren().forEach(e => {
-            if (e.active && !e.isDying && !e.isHitZone) {
-                const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y);
-                if (dist < radius) {
-                    const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, e.x, e.y);
-                    const push = (radius - dist) * 2;
-                    e.x += Math.cos(angle) * push;
-                    e.y += Math.sin(angle) * push;
-                    if (e.hp) e.hp -= this.pd.damage * 5;
-                }
-            }
-        });
     }
 
     /**

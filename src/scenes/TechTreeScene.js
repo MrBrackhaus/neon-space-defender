@@ -27,14 +27,16 @@ export default class TechTreeScene extends Phaser.Scene {
         this.cam.setBounds(-2000, -2000, 4000, 4000);
         this.cam.setZoom(1);
 
-        // --- BACKGROUND ---
-        this.cam.setBackgroundColor(0x02020a);
+                // --- BACKGROUND ---
+        this.cam.setBackgroundColor(0x010105);
 
         // Cyberpunk Parallax Grid (Moves with camera but slower)
         this.gridGraphics = this.add.graphics();
-        this.gridGraphics.lineStyle(2, 0x00ffff, 0.05);
-        for (let i = -2000; i < 2000; i += 100) this.gridGraphics.moveTo(i, -2000).lineTo(i, 2000);
-        for (let j = -2000; j < 2000; j += 100) this.gridGraphics.moveTo(-2000, j).lineTo(2000, j);
+        this.gridGraphics.lineStyle(2, 0x00aaff, 0.08); // More subtle blue
+        for (let i = -3000; i < 3000; i += 150) {
+            this.gridGraphics.moveTo(i, -3000).lineTo(i, 3000);
+            this.gridGraphics.moveTo(-3000, i).lineTo(3000, i);
+        }
         this.gridGraphics.strokePath();
         
         // Deep Space Particles
@@ -53,45 +55,45 @@ export default class TechTreeScene extends Phaser.Scene {
         // --- DATA ---
         this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10) || 0;
 
-        this.skills = [
+                this.skills = [
             // ZENTRUM
             { id: 'dash', sheet: 'tech_defense', frame: 0, key: 'neon_tech_dash', name: 'Dash Modul', desc: 'Schaltet den Ausweich-Dash (Shift) frei. Der Ursprung deiner Reise.', cost: 50, x: 0, y: 0, req: null },
             
             // AST 1 (Links) - Überleben & Verteidigung
-            { id: 'shield', sheet: 'tech_defense', frame: 1, key: 'neon_tech_shield', name: 'Schild Matrix', desc: 'Erlaubt regenerative Schilde als Upgrade im Level-Up Pool.', cost: 100, x: -200, y: 150, req: 'dash' },
-            { id: 'revive', sheet: 'tech_defense', frame: 2, key: 'neon_tech_revive', name: 'Notfall-Reanimator', desc: 'Einmalige Wiederbelebung pro Lauf mit 30 HP.', cost: 400, x: -400, y: 150, req: 'shield' },
-            { id: 'mirror_shield', sheet: 'tech_defense', frame: 3, key: 'neon_tech_mirror_shield', name: 'Reflektor-Schild', desc: 'Ersetzt normales Schild: Feuert bei Bruch Rache-Kugeln ab!', cost: 350, x: -400, y: 0, req: 'shield' },
-            { id: 'aegis', sheet: 'tech_defense', frame: 4, key: 'neon_tech_aegis', name: 'Aegis-Rumpf', desc: '+50% maximale Gesundheit des Schiffs. Permanent.', cost: 300, x: -200, y: 350, req: 'shield' },
-            { id: 'cryo', sheet: 'tech_weapons', frame: 0, key: 'neon_tech_cryo', name: 'Cryo-Strahl', desc: 'Schaltet dauerhaft verlangsamende Frostwaffen frei.', cost: 250, x: -400, y: 350, req: 'aegis' },
+            { id: 'shield', sheet: 'tech_defense', frame: 1, key: 'neon_tech_shield', name: 'Schild Matrix', desc: 'Erlaubt regenerative Schilde als Upgrade im Level-Up Pool.', cost: 100, x: -250, y: 0, req: 'dash' },
+            { id: 'revive', sheet: 'tech_defense', frame: 2, key: 'neon_tech_revive', name: 'Notfall-Reanimator', desc: 'Einmalige Wiederbelebung pro Lauf mit 30 HP.', cost: 400, x: -500, y: -150, req: 'shield' },
+            { id: 'mirror_shield', sheet: 'tech_defense', frame: 3, key: 'neon_tech_mirror_shield', name: 'Reflektor-Schild', desc: 'Ersetzt normales Schild: Feuert bei Bruch Rache-Kugeln ab!', cost: 350, x: -500, y: 150, req: 'shield' },
+            { id: 'aegis', sheet: 'tech_defense', frame: 4, key: 'neon_tech_aegis', name: 'Aegis-Rumpf', desc: '+50% maximale Gesundheit des Schiffs. Permanent.', cost: 300, x: -250, y: -300, req: 'shield' },
+            { id: 'cryo', sheet: 'tech_weapons', frame: 0, key: 'neon_tech_cryo', name: 'Cryo-Strahl', desc: 'Schaltet dauerhaft verlangsamende Frostwaffen frei.', cost: 250, x: -500, y: -450, req: 'aegis' },
             
             // AST 2 (Oben) - Energie & Anomalie
-            { id: 'tesla', sheet: 'tech_weapons', frame: 1, key: 'neon_tech_tesla', name: 'Tesla Spule', desc: 'Ermöglicht Kettenblitz-Upgrades im Spiel.', cost: 150, x: 0, y: -200, req: 'dash' },
-            { id: 'singularity', sheet: 'tech_weapons', frame: 2, key: 'neon_tech_singularity', name: 'Singularität', desc: 'Schaltet Schwarze Löcher frei, die Gegner gnadenlos einsaugen.', cost: 350, x: 0, y: -400, req: 'tesla' },
-            { id: 'void_shield', sheet: 'tech_defense', frame: 5, key: 'neon_tech_void_shield', name: 'Void-Antiresonanz', desc: 'Reduziert den Schaden durch Void-Feinde passiv um 15%.', cost: 400, x: -200, y: -550, req: 'singularity' },
-            { id: 'fusion', sheet: 'tech_weapons', frame: 3, key: 'neon_tech_fusion', name: 'Fusion Core', desc: 'Schaltet extrem mächtige Waffen-Evolutionen beim Level-Up frei!', cost: 600, x: 200, y: -550, req: 'singularity' },
-            { id: 'doom_beam', sheet: 'tech_weapons', frame: 4, key: 'neon_tech_doom_beam', name: 'Void-Giga-Laser', desc: 'Massiver, konstanter Laserstrahl direkt nach vorne.', cost: 750, x: 0, y: -700, req: ['void_shield', 'fusion'] },
+            { id: 'tesla', sheet: 'tech_weapons', frame: 1, key: 'neon_tech_tesla', name: 'Tesla Spule', desc: 'Ermöglicht Kettenblitz-Upgrades im Spiel.', cost: 150, x: 0, y: -250, req: 'dash' },
+            { id: 'singularity', sheet: 'tech_weapons', frame: 2, key: 'neon_tech_singularity', name: 'Singularität', desc: 'Schaltet Schwarze Löcher frei, die Gegner gnadenlos einsaugen.', cost: 350, x: 0, y: -500, req: 'tesla' },
+            { id: 'void_shield', sheet: 'tech_defense', frame: 5, key: 'neon_tech_void_shield', name: 'Void-Antiresonanz', desc: 'Reduziert den Schaden durch Void-Feinde passiv um 15%.', cost: 400, x: -250, y: -750, req: 'singularity' },
+            { id: 'fusion', sheet: 'tech_weapons', frame: 3, key: 'neon_tech_fusion', name: 'Fusion Core', desc: 'Schaltet extrem mächtige Waffen-Evolutionen beim Level-Up frei!', cost: 600, x: 250, y: -750, req: 'singularity' },
+            { id: 'doom_beam', sheet: 'tech_weapons', frame: 4, key: 'neon_tech_doom_beam', name: 'Void-Giga-Laser', desc: 'Massiver, konstanter Laserstrahl direkt nach vorne.', cost: 750, x: 0, y: -1000, req: ['void_shield', 'fusion'] },
             
             // AST 3 (Rechts) - Artillerie & Helfer
-            { id: 'drones', sheet: 'tech_weapons', frame: 5, key: 'neon_tech_drones', name: 'Kampfdrohnen', desc: 'Schaltet begleitende Angriffs-Drohnen frei.', cost: 150, x: 200, y: 150, req: 'dash' },
-            { id: 'sonic_wave', sheet: 'tech_weapons', frame: 6, key: 'neon_tech_sonic_wave', name: 'Schall-Blaster', desc: 'Fügt eine extrem breite Druckwelle mit Knockback in den Pool ein.', cost: 300, x: 200, y: 0, req: 'drones' },
-            { id: 'mines', sheet: 'tech_weapons', frame: 7, key: 'neon_tech_mines', name: 'Nova-Minenleger', desc: 'Droppt schwebende Neon-Minen hinter dir, die massiven Flächenschaden verursachen.', cost: 350, x: 400, y: 0, req: 'sonic_wave' },
-            { id: 'laser_drones', sheet: 'tech_weapons', frame: 8, key: 'neon_tech_laser_drones', name: 'Laser-Drohnen', desc: 'Deine Kampfdrohnen feuern nun durchschlagende Laser statt normaler Projektile.', cost: 300, x: 400, y: 150, req: 'drones' },
-            { id: 'orbitals', sheet: 'tech_weapons', frame: 9, key: 'neon_tech_orbitals', name: 'Plasma Orbitals', desc: 'Ermöglicht rotierende Nahkampf-Sägen um dein Schiff.', cost: 250, x: 200, y: 350, req: 'drones' },
-            { id: 'pierce_start', sheet: 'tech_weapons', frame: 10, key: 'neon_tech_pierce_start', name: 'Durchdringer', desc: 'Startet JEDEN Lauf direkt mit einem Pierce-Buff.', cost: 350, x: 400, y: 350, req: 'orbitals' },
-            { id: 'scatter', sheet: 'tech_weapons', frame: 11, key: 'neon_tech_scatter', name: 'Scatter Schiff', desc: 'Schaltet das Streuschuss-Schiff zur Auswahl frei.', cost: 500, x: 600, y: 200, req: 'pierce_start' },
-            { id: 'railgun', sheet: 'tech_weapons', frame: 12, key: 'neon_tech_railgun', name: 'Railgun Schiff', desc: 'Schaltet das durchschlagende Scharfschützen-Schiff frei.', cost: 500, x: 600, y: 500, req: 'pierce_start' },
-
+            { id: 'drones', sheet: 'tech_weapons', frame: 5, key: 'neon_tech_drones', name: 'Kampfdrohnen', desc: 'Schaltet begleitende Angriffs-Drohnen frei.', cost: 150, x: 250, y: 0, req: 'dash' },
+            { id: 'sonic_wave', sheet: 'tech_weapons', frame: 6, key: 'neon_tech_sonic_wave', name: 'Schall-Blaster', desc: 'Fügt eine extrem breite Druckwelle mit Knockback in den Pool ein.', cost: 300, x: 500, y: -150, req: 'drones' },
+            { id: 'mines', sheet: 'tech_weapons', frame: 7, key: 'neon_tech_mines', name: 'Nova-Minenleger', desc: 'Droppt schwebende Neon-Minen hinter dir, die massiven Flächenschaden verursachen.', cost: 350, x: 750, y: -150, req: 'sonic_wave' },
+            { id: 'laser_drones', sheet: 'tech_weapons', frame: 8, key: 'neon_tech_laser_drones', name: 'Laser-Drohnen', desc: 'Deine Kampfdrohnen feuern nun durchschlagende Laser statt normaler Projektile.', cost: 300, x: 500, y: 150, req: 'drones' },
+            { id: 'orbitals', sheet: 'tech_weapons', frame: 9, key: 'neon_tech_orbitals', name: 'Plasma Orbitals', desc: 'Ermöglicht rotierende Nahkampf-Sägen um dein Schiff.', cost: 250, x: 250, y: 300, req: 'drones' },
+            { id: 'pierce_start', sheet: 'tech_weapons', frame: 10, key: 'neon_tech_pierce_start', name: 'Durchdringer', desc: 'Startet JEDEN Lauf direkt mit einem Pierce-Buff.', cost: 350, x: 500, y: 450, req: 'orbitals' },
+            { id: 'scatter', sheet: 'tech_weapons', frame: 11, key: 'neon_tech_scatter', name: 'Scatter Schiff', desc: 'Schaltet das Streuschuss-Schiff zur Auswahl frei.', cost: 500, x: 750, y: 300, req: 'pierce_start' },
+            { id: 'railgun', sheet: 'tech_weapons', frame: 12, key: 'neon_tech_railgun', name: 'Railgun Schiff', desc: 'Schaltet das durchschlagende Scharfschützen-Schiff frei.', cost: 500, x: 750, y: 600, req: 'pierce_start' },
+            
             // AST 4 (Rechts-Oben) - Klingen & Strahlen
-            { id: 'sawblades', sheet: 'tech_weapons', frame: 13, key: 'neon_tech_sawblades', name: 'Neon-Sägeblätter', desc: 'Wirbelnde Laserklingen, die Gegner bei Kontakt zerfetzen.', cost: 200, x: 400, y: -200, req: 'drones' },
-            { id: 'focus_laser', sheet: 'tech_weapons', frame: 14, key: 'neon_tech_focus_laser', name: 'Fokus-Laser', desc: 'Gebündelter Dauerstrahl. Schmilzt alles auf einer Linie.', cost: 450, x: 600, y: -200, req: 'sawblades' },
-
+            { id: 'sawblades', sheet: 'tech_weapons', frame: 13, key: 'neon_tech_sawblades', name: 'Neon-Sägeblätter', desc: 'Wirbelnde Laserklingen, die Gegner bei Kontakt zerfetzen.', cost: 200, x: 500, y: -450, req: 'drones' },
+            { id: 'focus_laser', sheet: 'tech_weapons', frame: 14, key: 'neon_tech_focus_laser', name: 'Fokus-Laser', desc: 'Gebündelter Dauerstrahl. Schmilzt alles auf einer Linie.', cost: 450, x: 750, y: -600, req: 'sawblades' },
+            
             // AST 5 (Unten) - Schwere Waffen & Aura
-            { id: 'heavy_cannon', sheet: 'tech_weapons', frame: 15, key: 'neon_tech_heavy_cannon', name: 'Schiffskanone', desc: 'Feuert massige Neon-Kugeln ab. Langsam aber absolut brutal.', cost: 300, x: 0, y: 200, req: 'dash' },
-            { id: 'damage_aura', sheet: 'tech_weapons', frame: 16, key: 'neon_tech_damage_aura', name: 'Schadensaura', desc: 'Permanenter Schadensring um dein Schiff. Vernichtet Nahkämpfer.', cost: 350, x: 0, y: 400, req: 'heavy_cannon' },
-
-            // AST 6 (Links-Oben) - Ressourcen & Magneten
-            { id: 'scrap_magnet', sheet: 'tech_defense', frame: 6, key: 'neon_tech_scrap_magnet', name: 'Schrott-Magnet', desc: 'Zieht Schrott und Glitzer-Cubes aus doppelter Entfernung an.', cost: 150, x: -200, y: -200, req: 'dash' },
-            { id: 'cube_booster', sheet: 'tech_defense', frame: 7, key: 'neon_tech_cube_booster', name: 'Glitzer-Booster', desc: '+50% Chance auf Bonus-Cubes bei jedem Kill.', cost: 250, x: -400, y: -200, req: 'scrap_magnet' }
+            { id: 'heavy_cannon', sheet: 'tech_weapons', frame: 15, key: 'neon_tech_heavy_cannon', name: 'Schiffskanone', desc: 'Feuert massige Neon-Kugeln ab. Langsam aber absolut brutal.', cost: 300, x: 0, y: 250, req: 'dash' },
+            { id: 'damage_aura', sheet: 'tech_weapons', frame: 16, key: 'neon_tech_damage_aura', name: 'Schadensaura', desc: 'Permanenter Schadensring um dein Schiff. Vernichtet Nahkämpfer.', cost: 350, x: 0, y: 500, req: 'heavy_cannon' },
+            
+            // AST 6 (Links-Unten) - Ressourcen & Magneten
+            { id: 'scrap_magnet', sheet: 'tech_defense', frame: 6, key: 'neon_tech_scrap_magnet', name: 'Schrott-Magnet', desc: 'Zieht Schrott und Glitzer-Cubes aus doppelter Entfernung an.', cost: 150, x: -250, y: 300, req: 'dash' },
+            { id: 'cube_booster', sheet: 'tech_defense', frame: 7, key: 'neon_tech_cube_booster', name: 'Glitzer-Booster', desc: '+50% Chance auf Bonus-Cubes bei jedem Kill.', cost: 250, x: -500, y: 450, req: 'scrap_magnet' }
         ];
 
         this.skills.forEach(skill => {
@@ -160,16 +162,21 @@ export default class TechTreeScene extends Phaser.Scene {
         this.cam.centerOn(0, 0);
     }
 
-    buildFixedUI(width, height) {
+        buildFixedUI(width, height) {
+        // --- HEADER BAR ---
+        const headerBg = this.add.rectangle(0, 0, width, 120, 0x020205, 0.85).setOrigin(0, 0).setScrollFactor(0);
+        headerBg.setStrokeStyle(2, 0x00ffff, 0.3);
+        const headerGlow = this.add.rectangle(0, 120, width, 2, 0x00ffff, 0.5).setOrigin(0, 0).setScrollFactor(0);
+        
         // Title
-        const title = this.add.text(40, 40, 'TECH TREE', {
-            fontFamily: 'Orbitron', fontSize: '42px', color: '#00ffff', fontStyle: 'bold', letterSpacing: 4
+        const title = this.add.text(40, 20, 'NEON TECH NETWORK', {
+            fontFamily: 'Orbitron', fontSize: '36px', color: '#00ffff', fontStyle: 'bold', letterSpacing: 6
         }).setOrigin(0, 0).setScrollFactor(0);
-        title.setShadow(0, 0, '#00ffff', 20, true, true);
+        title.setShadow(0, 0, '#00ffff', 15, true, true);
 
         // Back Button
-        const backBtn = this.add.text(40, 100, '◄ MAIN MENU', {
-            fontFamily: 'Orbitron', fontSize: '20px', color: '#ff0055', fontStyle: 'bold'
+        const backBtn = this.add.text(40, 75, '◄ RETURN TO BASE', {
+            fontFamily: 'Orbitron', fontSize: '18px', color: '#ff0055', fontStyle: 'bold', letterSpacing: 2
         }).setInteractive({ useHandCursor: true }).setScrollFactor(0);
         
         backBtn.on('pointerover', () => backBtn.setColor('#ffffff').setShadow(0,0,'#ff0055', 10, true, true));
@@ -177,8 +184,10 @@ export default class TechTreeScene extends Phaser.Scene {
         backBtn.on('pointerdown', () => this.scene.start('MenuScene'));
 
         // Scrap Display
-        this.scrapText = this.add.text(40, height - 60, `SCHROTT: ${this.scrap}`, {
-            fontFamily: 'Orbitron', fontSize: '28px', color: '#ffaa00', fontStyle: 'bold'
+        const scrapBg = this.add.rectangle(40, height - 80, 300, 60, 0x050510, 0.8).setOrigin(0, 0).setScrollFactor(0);
+        scrapBg.setStrokeStyle(2, 0xffaa00, 0.5);
+        this.scrapText = this.add.text(60, height - 65, `AVAILABLE SCRAP: ${this.scrap}`, {
+            fontFamily: 'Orbitron', fontSize: '20px', color: '#ffaa00', fontStyle: 'bold'
         }).setOrigin(0, 0).setScrollFactor(0);
         this.scrapText.setShadow(0, 0, '#ffaa00', 10, true, true);
 
@@ -225,14 +234,14 @@ export default class TechTreeScene extends Phaser.Scene {
 
         // --- CAMERA CULLING ---
         // Main camera ignores UI elements
-        this.cam.ignore([title, backBtn, this.scrapText, this.sidePanel]);
+        this.cam.ignore([headerBg, headerGlow, title, backBtn, scrapBg, this.scrapText, this.sidePanel]);
         // UI camera ignores game elements
         if (this.uiCam) {
             this.uiCam.ignore([this.gridGraphics, this.nodeGraphics, this.particles]);
         }
     }
 
-    drawConnections() {
+        drawConnections() {
         this.nodeGraphics.clear();
         this.skills.forEach(skill => {
             if (skill.req) {
@@ -243,27 +252,40 @@ export default class TechTreeScene extends Phaser.Scene {
                         const isUnlocked = skill.unlocked;
                         const isAvailable = parent.unlocked && !skill.unlocked;
                         
-                        let lineColor = 0x333344;
-                        let lineAlpha = 0.4;
-                        let lineThickness = 3;
-
+                        let baseColor = 0x222233;
+                        let baseAlpha = 0.5;
+                        let baseThickness = 4;
+                        
+                        let glowColor = null;
+                        
                         if (isUnlocked) {
-                            lineColor = 0x00ffff;
-                            lineAlpha = 1;
-                            lineThickness = 6;
+                            baseColor = 0x00ffff;
+                            baseAlpha = 1;
+                            baseThickness = 4;
+                            glowColor = 0x00aaff;
                         } else if (isAvailable) {
-                            lineColor = 0xff00ff;
-                            lineAlpha = 0.8;
-                            lineThickness = 4;
+                            baseColor = 0xff00ff;
+                            baseAlpha = 0.8;
+                            baseThickness = 3;
+                            glowColor = 0xaa00aa;
                         }
 
-                        this.nodeGraphics.lineStyle(lineThickness, lineColor, lineAlpha);
+                        // Draw background glow if available
+                        if (glowColor) {
+                            this.nodeGraphics.lineStyle(baseThickness + 6, glowColor, 0.2);
+                            this.nodeGraphics.beginPath();
+                            this.nodeGraphics.moveTo(parent.x, parent.y);
+                            this.nodeGraphics.lineTo(skill.x, skill.y);
+                            this.nodeGraphics.strokePath();
+                        }
+
+                        // Draw main line
+                        this.nodeGraphics.lineStyle(baseThickness, baseColor, baseAlpha);
                         this.nodeGraphics.beginPath();
                         this.nodeGraphics.moveTo(parent.x, parent.y);
                         this.nodeGraphics.lineTo(skill.x, skill.y);
                         this.nodeGraphics.strokePath();
 
-                        // Draw moving energy dots on unlocked paths
                         if (isUnlocked) {
                             this.drawEnergyFlow(parent, skill);
                         }
@@ -293,7 +315,7 @@ export default class TechTreeScene extends Phaser.Scene {
         });
     }
 
-    createNode(skill) {
+        createNode(skill) {
         let reqsMet = true;
         if (skill.req) {
             const reqs = Array.isArray(skill.req) ? skill.req : [skill.req];
@@ -306,81 +328,81 @@ export default class TechTreeScene extends Phaser.Scene {
         const isUnlocked = skill.unlocked;
         const isAvailable = !isUnlocked && reqsMet;
 
-        let strokeColor = 0x333344;
-        let fillColor = 0x0a0a1a;
-        let textColor = '#555566';
+        let strokeColor = 0x222233;
+        let fillColor = 0x05050a;
         let glow = false;
 
         if (isUnlocked) {
-            strokeColor = 0x00ffff;
-            fillColor = 0x003344;
-            textColor = '#ffffff';
+            strokeColor = 0x00ffff; // Cyan neon
+            fillColor = 0x001122; // Dark cyan tint
             glow = true;
         } else if (isAvailable) {
-            strokeColor = 0xff00ff;
-            fillColor = 0x330033;
-            textColor = '#ffffff';
+            strokeColor = 0xff00ff; // Magenta neon
+            fillColor = 0x220022; // Dark magenta tint
         }
 
         const container = this.add.container(skill.x, skill.y).setDepth(10);
         
-        // AAA Hexagon instead of simple rotated square
-        const hex = this.add.polygon(0, 0, this.getHexPoints(45), fillColor)
-            .setStrokeStyle(4, strokeColor)
+        // Glassmorphism inner hex
+        const hexBg = this.add.polygon(0, 0, this.getHexPoints(45), fillColor, 0.85)
+            .setStrokeStyle(4, strokeColor, 1)
             .setInteractive(new Phaser.Geom.Polygon(this.getHexPoints(45)), Phaser.Geom.Polygon.Contains, { useHandCursor: true });
         
-        if (glow) {
-            const glowHex = this.add.polygon(0, 0, this.getHexPoints(50), 0x00ffff, 0.3);
-            container.add(glowHex);
+        // Glow effect behind the hex for unlocked/available
+        if (glow || isAvailable) {
+            const outerGlow = this.add.polygon(0, 0, this.getHexPoints(52), strokeColor, 0.15);
+            container.add(outerGlow);
             
-            // Subtle pulse
-            this.tweens.add({
-                targets: glowHex,
-                scale: 1.1,
-                alpha: 0.1,
-                duration: 1000,
-                yoyo: true,
-                repeat: -1
-            });
+            if (glow) {
+                // Breathing glow animation
+                this.tweens.add({
+                    targets: outerGlow,
+                    scale: 1.08,
+                    alpha: 0.25,
+                    duration: 1500,
+                    ease: 'Sine.easeInOut',
+                    yoyo: true,
+                    repeat: -1
+                });
+            }
         }
 
         const iconKey = (skill.sheet || 'tech_defense') + '_' + (skill.frame || 0);
         const iconSprite = this.add.sprite(0, 0, iconKey);
-        iconSprite.setOrigin(0.5, 0.5); // Explicitly center the sprite
-        iconSprite.setScale(0.45); // Reduced scale so they fit comfortably inside the hexagon
+        iconSprite.setOrigin(0.5, 0.5);
+        iconSprite.setScale(0.45);
 
         if (!isUnlocked) {
-            iconSprite.setTint(0x666677);
-            iconSprite.setAlpha(0.5);
+            iconSprite.setTint(0x444455);
+            iconSprite.setAlpha(0.4);
         } else {
             iconSprite.setTint(0xffffff);
             iconSprite.setAlpha(1.0);
         }
 
-        container.add([hex, iconSprite]);
-
+        container.add([hexBg, iconSprite]);
         if (this.uiCam) this.uiCam.ignore(container);
 
-        hex.on('pointerover', () => {
+        // Hover effects
+        hexBg.on('pointerover', () => {
             if(this.game && this.game.audioSys) this.game.audioSys.playHover();
             if (!this.isDragging) {
-                hex.setStrokeStyle(5, 0xffffff);
-                this.tweens.add({ targets: container, scale: 1.1, duration: 150 });
+                hexBg.setStrokeStyle(6, 0xffffff, 1);
+                this.tweens.add({ targets: container, scale: 1.15, duration: 200, ease: 'Back.out' });
             }
         });
 
-        hex.on('pointerout', () => {
-            hex.setStrokeStyle(4, strokeColor);
-            this.tweens.add({ targets: container, scale: 1.0, duration: 150 });
+        hexBg.on('pointerout', () => {
+            hexBg.setStrokeStyle(4, strokeColor, 1);
+            this.tweens.add({ targets: container, scale: 1.0, duration: 200, ease: 'Cubic.out' });
         });
 
-        hex.on('pointerdown', (pointer) => {
+        hexBg.on('pointerdown', (pointer) => {
             if(this.game && this.game.audioSys) this.game.audioSys.playClick();
-            // Distinguish click from drag
             this.time.delayedCall(150, () => {
                 if (!this.isDragging) {
                     this.showSidePanel(skill, isUnlocked, isAvailable);
-                    this.cam.pan(skill.x, skill.y, 500, 'Cubic.easeOut');
+                    this.cam.pan(skill.x, skill.y, 600, 'Cubic.easeOut');
                 }
             });
         });

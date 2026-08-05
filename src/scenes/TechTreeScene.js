@@ -344,9 +344,10 @@ export default class TechTreeScene extends Phaser.Scene {
             });
         }
 
-        const iconSprite = this.add.sprite(0, 0, skill.sheet || 'tech_defense', skill.frame || 0);
+        const iconKey = (skill.sheet || 'tech_defense') + '_' + (skill.frame || 0);
+        const iconSprite = this.add.sprite(0, 0, iconKey);
         iconSprite.setOrigin(0.5, 0.5); // Explicitly center the sprite
-        iconSprite.setScale(0.32); // Scaled for 172x192 dimensions so it fits inside the hexagon
+        iconSprite.setScale(0.7); // Scale nicely to fill the hexagon
 
         if (!isUnlocked) {
             iconSprite.setTint(0x666677);
@@ -392,8 +393,10 @@ export default class TechTreeScene extends Phaser.Scene {
         for (let i = 0; i < 6; i++) {
             const angle_deg = 60 * i - 30;
             const angle_rad = Math.PI / 180 * angle_deg;
-            points.push(size * Math.cos(angle_rad));
-            points.push(size * Math.sin(angle_rad));
+            // Shift points so min is 0,0 instead of -size,-size
+            // This prevents Phaser from doing weird origin offset math
+            points.push(size + size * Math.cos(angle_rad));
+            points.push(size + size * Math.sin(angle_rad));
         }
         return points;
     }

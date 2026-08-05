@@ -122,10 +122,11 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('scrap_gear',   'scrap_gear.png?v=6');
         this.load.image('datacube',     'datacube.png?v=6');
         
-        // --- SPRITESHEETS ---
-        this.load.spritesheet('tech_icons', 'tech_icons_sheet.jpg', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('tech_weapons', 'tech_weapons.jpg', { frameWidth: 172, frameHeight: 192 });
-        this.load.spritesheet('tech_defense', 'tech_defense.jpg', { frameWidth: 172, frameHeight: 192 });
+        // --- TECH ICONS ---
+        for (let i = 0; i < 32; i++) {
+            this.load.image('tech_weapons_' + i, 'icons/weapon_' + i + '.png');
+            this.load.image('tech_defense_' + i, 'icons/defense_' + i + '.png');
+        }
         
         // VFX Images for weapons and projectiles
         this.load.image('enemy_projectile', 'enemy_projectile.png?v=6');

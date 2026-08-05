@@ -328,7 +328,7 @@ export default class TechTreeScene extends Phaser.Scene {
         });
     }
 
-        createNode(skill) {
+            createNode(skill) {
         let reqsMet = true;
         if (skill.req) {
             const reqs = Array.isArray(skill.req) ? skill.req : [skill.req];
@@ -356,19 +356,41 @@ export default class TechTreeScene extends Phaser.Scene {
 
         const container = this.add.container(skill.x, skill.y).setDepth(10);
         
-        // Glassmorphism inner hex
-        const hexBg = this.add.polygon(0, 0, this.getHexPoints(45), fillColor, 0.85)
-            .setOrigin(0.5, 0.5)
-            .setStrokeStyle(4, strokeColor, 1)
-            .setInteractive(new Phaser.Geom.Polygon(this.getHexPoints(45)), Phaser.Geom.Polygon.Contains, { useHandCursor: true });
+        // Use Graphics for perfect mathematical placement (bypasses Phaser's Shape origin quirks)
+        const hexBg = this.add.graphics();
+        hexBg.fillStyle(fillColor, 0.85);
+        hexBg.lineStyle(4, strokeColor, 1);
+        
+        const pts = this.getHexPoints(45);
+        hexBg.beginPath();
+        hexBg.moveTo(pts[0], pts[1]);
+        for(let i=2; i<pts.length; i+=2) {
+            hexBg.lineTo(pts[i], pts[i+1]);
+        }
+        hexBg.closePath();
+        hexBg.fillPath();
+        hexBg.strokePath();
+
+        // Make it interactive
+        hexBg.setInteractive(new Phaser.Geom.Polygon(pts), Phaser.Geom.Polygon.Contains, { useHandCursor: true });
         
         // Glow effect behind the hex for unlocked/available
         if (glow || isAvailable) {
-            const outerGlow = this.add.polygon(0, 0, this.getHexPoints(52), strokeColor, 0.15).setOrigin(0.5, 0.5);
+            const outerGlow = this.add.graphics();
+            outerGlow.fillStyle(strokeColor, 0.15);
+            
+            const gPts = this.getHexPoints(52);
+            outerGlow.beginPath();
+            outerGlow.moveTo(gPts[0], gPts[1]);
+            for(let i=2; i<gPts.length; i+=2) {
+                outerGlow.lineTo(gPts[i], gPts[i+1]);
+            }
+            outerGlow.closePath();
+            outerGlow.fillPath();
+            
             container.add(outerGlow);
             
             if (glow) {
-                // Breathing glow animation
                 this.tweens.add({
                     targets: outerGlow,
                     scale: 1.08,
@@ -401,13 +423,31 @@ export default class TechTreeScene extends Phaser.Scene {
         hexBg.on('pointerover', () => {
             if(this.game && this.game.audioSys) this.game.audioSys.playHover();
             if (!this.isDragging) {
-                hexBg.setStrokeStyle(6, 0xffffff, 1);
+                hexBg.clear();
+                hexBg.fillStyle(fillColor, 0.85);
+                hexBg.lineStyle(6, 0xffffff, 1);
+                hexBg.beginPath();
+                hexBg.moveTo(pts[0], pts[1]);
+                for(let i=2; i<pts.length; i+=2) hexBg.lineTo(pts[i], pts[i+1]);
+                hexBg.closePath();
+                hexBg.fillPath();
+                hexBg.strokePath();
+
                 this.tweens.add({ targets: container, scale: 1.15, duration: 200, ease: 'Back.out' });
             }
         });
 
         hexBg.on('pointerout', () => {
-            hexBg.setStrokeStyle(4, strokeColor, 1);
+            hexBg.clear();
+            hexBg.fillStyle(fillColor, 0.85);
+            hexBg.lineStyle(4, strokeColor, 1);
+            hexBg.beginPath();
+            hexBg.moveTo(pts[0], pts[1]);
+            for(let i=2; i<pts.length; i+=2) hexBg.lineTo(pts[i], pts[i+1]);
+            hexBg.closePath();
+            hexBg.fillPath();
+            hexBg.strokePath();
+
             this.tweens.add({ targets: container, scale: 1.0, duration: 200, ease: 'Cubic.out' });
         });
 

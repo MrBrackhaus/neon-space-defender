@@ -25,13 +25,14 @@ export default class TechTreeScene extends Phaser.Scene {
         this.cam.fadeIn(500, 0, 0, 0);
         // The virtual world size for the tech tree
         this.cam.setBounds(-2000, -2000, 4000, 4000);
-        this.cam.setZoom(1);
+        this.cam.setZoom(0.6);
 
                 // --- BACKGROUND ---
         this.cam.setBackgroundColor(0x010105);
 
         // Cyberpunk Parallax Grid (Moves with camera but slower)
         this.gridGraphics = this.add.graphics();
+        this.gridGraphics.setScrollFactor(0.2);
         this.gridGraphics.lineStyle(2, 0x00aaff, 0.08); // More subtle blue
         for (let i = -3000; i < 3000; i += 150) {
             this.gridGraphics.moveTo(i, -3000).lineTo(i, 3000);
@@ -141,9 +142,9 @@ export default class TechTreeScene extends Phaser.Scene {
                 this.dragStartX = pointer.x;
                 this.dragStartY = pointer.y;
                 
-                // Parallax effect on grid
-                this.gridGraphics.x = this.cam.scrollX * 0.2;
-                this.gridGraphics.y = this.cam.scrollY * 0.2;
+                
+                
+                
             }
         });
 
@@ -298,6 +299,7 @@ export default class TechTreeScene extends Phaser.Scene {
     drawEnergyFlow(parent, skill) {
         // Simple visual polish: draw a small glowing circle moving from parent to skill
         const dot = this.add.circle(parent.x, parent.y, 4, 0xffffff).setDepth(5);
+        if (this.uiCam) this.uiCam.ignore(dot);
         
         // Calculate distance to adjust duration so speed is constant
         const dist = Phaser.Math.Distance.Between(parent.x, parent.y, skill.x, skill.y);

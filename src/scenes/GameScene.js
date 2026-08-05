@@ -2157,7 +2157,7 @@ export default class GameScene extends Phaser.Scene {
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
                 c.setAlpha(0.6);
             }
-            if (dist < 18) {
+            if (dist < 60) {
                 this.addXP(c.xpVal);
                 c.destroy();
             }
@@ -2171,6 +2171,12 @@ export default class GameScene extends Phaser.Scene {
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
             }
+            if (dist < 60) {
+                this.pd.scrap += c.scrapVal;
+                this.eventSys.triggerWrenchComment('scrap_pickup');
+                this.audioSys.playMenuHover();
+                c.destroy();
+            }
         });
 
         this.cubesGroup.getChildren().forEach(c => {
@@ -2181,6 +2187,11 @@ export default class GameScene extends Phaser.Scene {
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
                 c.setAlpha(0.6);
+            }
+            if (dist < 60) {
+                this.pd.cubes += 1;
+                this.audioSys.playMenuHover();
+                c.destroy();
             }
         });
         

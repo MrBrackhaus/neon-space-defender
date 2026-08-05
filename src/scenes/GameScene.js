@@ -202,7 +202,7 @@ export default class GameScene extends Phaser.Scene {
             unlockScrapMagnet: parseInt(localStorage.getItem('neon_tech_scrap_magnet')||'0') > 0,
             unlockCubeBooster: parseInt(localStorage.getItem('neon_tech_cube_booster')||'0') > 0,
             upgLevels: {},
-            scrap: parseInt(localStorage.getItem('neon_scrap') || '0', 10),
+            scrap: parseInt(localStorage.getItem('neon_scrap') || '0', 10) || 0,
             cubes: 0,
         };
 
@@ -274,6 +274,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.envSys.create(); // Creates the parallax deep-space background
         this.generateTextures();
+        this.initDOMCache(); // Initialize cached DOM elements for HUD
         
         if (this.audioSys) {
             this.audioSys.playMusic(0);
@@ -298,6 +299,25 @@ export default class GameScene extends Phaser.Scene {
             this.time.delayedCall(10, () => this.updateOrbitals());
         }
         this.weaponUpgradesGroup = this.physics.add.group();
+
+        // Object Pools for Performance Optimizations
+        this.dmgTexts = this.add.group({ classType: Phaser.GameObjects.Text, maxSize: 80, runChildUpdate: false });
+        
+        this.poolGlowFX = [];
+        this.poolDebrisFX = [];
+        for (let i = 0; i < 20; i++) {
+            this.poolGlowFX.push(this.add.particles(0, 0, 'p_glow', {
+                speed: { min: 50, max: 200 }, scale: { start: 0.5, end: 0 },
+                alpha: { start: 1, end: 0 }, blendMode: 'ADD', lifespan: 550, emitting: false
+            }).setDepth(12));
+            
+            this.poolDebrisFX.push(this.add.particles(0, 0, 'p_debris', {
+                speed: { min: 100, max: 300 }, scale: { start: 0.8, end: 0.2 },
+                alpha: { start: 1, end: 0 }, rotate: { start: 0, end: 360 },
+                gravityY: 0, friction: 0.05, lifespan: 800, emitting: false
+            }).setDepth(11));
+        }
+        this.fxIndex = 0;
 
         let shipScale = 0.088;
         let shipTint = 0xffffff;
@@ -393,7 +413,7 @@ export default class GameScene extends Phaser.Scene {
                     this.bullets.killAndHide(b);
                     b.body.enable = false;
                 }
-                handleAsteroidHit(a, this.pd.damage * this.pd.damageMod);
+                handleAsteroidHit(a, this.pd.damage);
             });
 
             this.physics.add.overlap(this.eBullets, this.hazardSys.asteroids, (b, a) => {
@@ -708,26 +728,64 @@ export default class GameScene extends Phaser.Scene {
     /**
      * @description Refreshes HUD text and bar sizes based on current player statistics.
      */
-        updateHUD() {
-        const { pd, score, waveNum } = this;
+    initDOMCache() {
+        const getEl = (id) => document.getElementById(id);
+        this.domCache = {
+            hpVal: { el: getEl('hud-hp-val'), val: '' },
+            hpBar: { el: getEl('hud-hp-bar'), val: '' },
+            shieldBar: { el: getEl('hud-shield-bar'), val: '' },
+            wave: { el: getEl('hud-wave'), val: '' },
+            score: { el: getEl('hud-score'), val: '' },
+            scrap: { el: getEl('hud-scrap'), val: '' },
+            cubes: { el: getEl('hud-cubes'), val: '' },
+            nova: { el: getEl('hud-nova'), val: '' },
+            lvl: { el: getEl('hud-lvl'), val: '' },
+            xpBar: { el: getEl('hud-xp-bar'), val: '' },
+            abText: { el: getEl('hud-ability'), val: '' },
+            abCd: { el: getEl('hud-ability-cd'), val: '' }
+        };
+    }
 
-        // HTML HUD Elements
-        const el = (id) => document.getElementById(id);
+    updateHUD() {
+        const { pd, score, waveNum } = this;
         
-        if (el('hud-hp-val')) el('hud-hp-val').textContent = Math.ceil(pd.hp) + '/' + pd.maxHp;
-        if (el('hud-hp-bar')) el('hud-hp-bar').style.width = Math.max(0, (pd.hp / pd.maxHp) * 100) + '%';
-        if (el('hud-shield-bar')) el('hud-shield-bar').style.width = Math.min(100, (pd.shield / 3) * 100) + '%';
+        if (!this.domCache) return;
+
+        const updateText = (key, text) => {
+            const cache = this.domCache[key];
+            if (cache && cache.el && cache.val !== text) {
+                cache.el.textContent = text;
+                cache.val = text;
+            }
+        };
+        const updateWidth = (key, widthStr) => {
+            const cache = this.domCache[key];
+            if (cache && cache.el && cache.val !== widthStr) {
+                cache.el.style.width = widthStr;
+                cache.val = widthStr;
+            }
+        };
+        const updateColor = (key, colorStr) => {
+            const cache = this.domCache[key];
+            if (cache && cache.el && cache.color !== colorStr) {
+                cache.el.style.color = colorStr;
+                cache.color = colorStr;
+            }
+        };
+
+        updateText('hpVal', Math.ceil(pd.hp) + '/' + pd.maxHp);
+        updateWidth('hpBar', Math.max(0, (pd.hp / pd.maxHp) * 100) + '%');
+        updateWidth('shieldBar', Math.min(100, (pd.shield / 3) * 100) + '%');
         
-        if (el('hud-wave')) el('hud-wave').textContent = 'WAVE ' + waveNum;
-        if (el('hud-score')) el('hud-score').textContent = 'SCORE: ' + score.toLocaleString();
+        updateText('wave', 'WAVE ' + waveNum);
+        updateText('score', 'SCORE: ' + score.toLocaleString());
         
-        if (el('hud-scrap')) el('hud-scrap').textContent = 'SCRAP: ' + pd.scrap;
-        if (el('hud-cubes')) el('hud-cubes').textContent = 'CUBES: ' + (pd.cubes||0);
-        
-        if (el('hud-nova')) el('hud-nova').textContent = pd.nova;
-        
-        if (el('hud-lvl')) el('hud-lvl').textContent = 'LVL ' + pd.level;
-        if (el('hud-xp-bar')) el('hud-xp-bar').style.width = Math.min(100, (pd.xp / pd.xpToNext) * 100) + '%';
+        // Fix NaN display if scrap is NaN
+        updateText('scrap', 'SCRAP: ' + (isNaN(pd.scrap) ? 0 : pd.scrap));
+        updateText('cubes', 'CUBES: ' + (pd.cubes || 0));
+        updateText('nova', pd.nova);
+        updateText('lvl', 'LVL ' + pd.level);
+        updateWidth('xpBar', Math.min(100, (pd.xp / pd.xpToNext) * 100) + '%');
 
         // Ability Cooldown
         if (this.abilitySys) {
@@ -736,22 +794,19 @@ export default class GameScene extends Phaser.Scene {
             const last = this.abilitySys.lastUsedTime;
             const remaining = Math.max(0, (last + cd) - time);
             
-            const abText = el('hud-ability');
-            const abCd = el('hud-ability-cd');
-            
             if (remaining > 0) {
-                abText.textContent = (remaining / 1000).toFixed(1) + 's';
-                abText.style.color = '#ff4444';
-                if (abCd) abCd.style.width = (remaining / cd) * 100 + '%';
+                updateText('abText', (remaining / 1000).toFixed(1) + 's');
+                updateColor('abText', '#ff4444');
+                updateWidth('abCd', (remaining / cd) * 100 + '%');
             } else {
-                abText.textContent = 'READY';
-                abText.style.color = '#fff';
-                if (abCd) abCd.style.width = '0%';
+                updateText('abText', 'READY');
+                updateColor('abText', '#fff');
+                updateWidth('abCd', '0%');
             }
         }
 
         // Active Upgrades List
-        const upgList = el('hud-upgrades-list');
+        const upgList = document.getElementById('hud-upgrades-list');
         if (upgList) {
             const keys = Object.keys(pd.upgLevels);
             if (keys.length === 0) {
@@ -2652,6 +2707,8 @@ export default class GameScene extends Phaser.Scene {
             if (this.merchant.isOpened) return;
             this.merchant.isOpened = true;
             this.scene.pause();
+            const htmlHud = document.getElementById('html-hud');
+            if (htmlHud) htmlHud.style.display = 'none';
             this.scene.launch('InGameShopScene', { cubes: this.pd.cubes, upgLevels: this.pd.upgLevels, flags: this.pd });
         });
         

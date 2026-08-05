@@ -58,10 +58,10 @@ export default class HazardSystem {
 
         const texKey = isOre ? 'asteroid_2' : (Math.random() > 0.5 ? 'asteroid_1' : 'asteroid_3');
         const asteroidVisual = this.scene.physics.add.sprite(x, y, texKey);
-        asteroidVisual.setScale((radius * 2) / 512);
+        asteroidVisual.setScale((radius * 2) / 1024);
         
         this.asteroids.add(asteroidVisual);
-        asteroidVisual.body.setCircle(190, 66, 66);
+        asteroidVisual.body.setCircle(450, 62, 62);
         asteroidVisual.setBounce(1, 1);
         asteroidVisual.body.setMass(sizeTier * 10);
         

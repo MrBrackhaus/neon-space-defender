@@ -299,7 +299,7 @@ export default class EventSystem {
         const panelWidth = 420;
         const panelHeight = 110;
         const startX = width + panelWidth / 2;
-        const targetX = width - panelWidth / 2 - 220; // 220 offset to avoid HTML HUD Upgrade list
+        const targetX = width - panelWidth / 2 - 360; // 220 offset to avoid HTML HUD Upgrade list
         const startY = height / 4; 
 
         const container = this.scene.add.container(startX, startY).setDepth(900).setScrollFactor(0);

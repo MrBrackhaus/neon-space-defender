@@ -224,12 +224,12 @@ export default class BootScene extends Phaser.Scene {
         });
         this.anims.create({
             key: 'anim_charger',
-            frames: this.anims.generateFrameNumbers('enemy_charger_sheet', { start: 0, end: 3 }),
+            frames: this.anims.generateFrameNumbers('enemy_charger_sheet', { start: 0, end: 0 }),
             frameRate: 8, repeat: -1
         });
         this.anims.create({
             key: 'anim_protector',
-            frames: this.anims.generateFrameNumbers('enemy_protector_sheet', { start: 0, end: 3 }),
+            frames: this.anims.generateFrameNumbers('enemy_protector_sheet', { start: 0, end: 0 }),
             frameRate: 6, repeat: -1
         });
 

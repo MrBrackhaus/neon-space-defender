@@ -797,7 +797,66 @@
     </script>
 
     <script type="module" src="/src/main.js"></script>
+      <div id="html-hud" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; display: none; padding: 20px; box-sizing: border-box; font-family: 'Orbitron', sans-serif;">
+      
+      <!-- Top Left: HP and Shield -->
+      <div style="position: absolute; top: 20px; left: 20px; width: 300px;">
+        <div style="color: #fff; font-size: 14px; margin-bottom: 5px; text-shadow: 0 0 5px #00ffff;">HP <span id="hud-hp-val">100/100</span></div>
+        <div style="background: rgba(0,0,0,0.5); border: 2px solid #00ffff; border-radius: 4px; width: 100%; height: 16px; margin-bottom: 10px; box-shadow: 0 0 10px #00ffff55;">
+          <div id="hud-hp-bar" style="background: linear-gradient(90deg, #00ffff, #00ffaa); width: 100%; height: 100%; transition: width 0.2s;"></div>
+        </div>
+        <div style="color: #fff; font-size: 14px; margin-bottom: 5px; text-shadow: 0 0 5px #ff00ff;">SHIELD</div>
+        <div style="background: rgba(0,0,0,0.5); border: 2px solid #ff00ff; border-radius: 4px; width: 100%; height: 10px; box-shadow: 0 0 10px #ff00ff55;">
+          <div id="hud-shield-bar" style="background: linear-gradient(90deg, #ff00ff, #aa00ff); width: 100%; height: 100%; transition: width 0.2s;"></div>
+        </div>
+      </div>
+
+      <!-- Top Center: Wave and Score -->
+      <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
+        <div id="hud-wave" style="font-size: 24px; color: #ff00ff; font-weight: bold; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff; margin-bottom: 5px;">WAVE 1</div>
+        <div id="hud-score" style="font-size: 18px; color: #00ffff; text-shadow: 0 0 8px #00ffff;">SCORE: 0</div>
+      </div>
+
+      <!-- Top Right: Resources -->
+      <div style="position: absolute; top: 20px; right: 20px; text-align: right;">
+        <div id="hud-scrap" style="font-size: 18px; color: #ffaa00; font-weight: bold; text-shadow: 0 0 8px #ffaa00; margin-bottom: 8px;">SCRAP: 0</div>
+        <div id="hud-cubes" style="font-size: 18px; color: #ffff00; font-weight: bold; text-shadow: 0 0 8px #ffff00;">CUBES: 0</div>
+      </div>
+
+      <!-- Bottom Center: XP Bar and Abilities -->
+      <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 600px; display: flex; flex-direction: column; align-items: center;">
+        
+        <div style="display: flex; gap: 30px; margin-bottom: 15px;">
+          <!-- Nova Bomb (Q) -->
+          <div style="background: rgba(255,0,255,0.1); border: 2px solid #ff00ff; border-radius: 8px; padding: 10px 20px; text-align: center; box-shadow: 0 0 15px #ff00ff55;">
+            <div style="font-size: 12px; color: #ff00ff; margin-bottom: 5px;">NOVA BOMB [Q]</div>
+            <div id="hud-nova" style="font-size: 20px; color: #fff; font-weight: bold;">0</div>
+          </div>
+          <!-- Ship Ability (E) -->
+          <div style="background: rgba(0,255,255,0.1); border: 2px solid #00ffff; border-radius: 8px; padding: 10px 20px; text-align: center; box-shadow: 0 0 15px #00ffff55; position: relative; overflow: hidden;">
+            <div style="font-size: 12px; color: #00ffff; margin-bottom: 5px;">ABILITY [E]</div>
+            <div id="hud-ability" style="font-size: 20px; color: #fff; font-weight: bold;">READY</div>
+            <div id="hud-ability-cd" style="position: absolute; bottom: 0; left: 0; height: 100%; width: 0%; background: rgba(0,255,255,0.3); z-index: -1;"></div>
+          </div>
+        </div>
+
+        <div id="hud-lvl" style="font-size: 16px; color: #00ff55; font-weight: bold; text-shadow: 0 0 8px #00ff55; margin-bottom: 5px;">LVL 1</div>
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #00ff55; border-radius: 4px; width: 100%; height: 8px; box-shadow: 0 0 8px #00ff5555;">
+          <div id="hud-xp-bar" style="background: #00ff55; width: 0%; height: 100%; transition: width 0.2s;"></div>
+        </div>
+      </div>
+
+      <!-- Right Side: Upgrades List -->
+      <div style="position: absolute; top: 100px; right: 20px; width: 250px; background: rgba(0,10,20,0.7); border-left: 2px solid #00ffff; padding: 15px; border-radius: 8px 0 0 8px; backdrop-filter: blur(5px);">
+        <div style="color: #00ffff; font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #00ffff55; padding-bottom: 5px;">ACTIVE UPGRADES</div>
+        <div id="hud-upgrades-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Upgrades injected here -->
+        </div>
+      </div>
+
+    </div>
   <div id="scanline-overlay"></div>
   </body>
 </html>
+
 

@@ -249,8 +249,8 @@ export default class GameScene extends Phaser.Scene {
         const go = document.getElementById('gameover-overlay');
         if (go) go.style.display = 'none';
 
-        this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,SHIFT,ESC,F6');
-        this.keys.SPACE.on('down', () => this.activateAbility());
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,Q,E,SPACE,SHIFT,ESC,F6');
+        this.keys.Q.on('down', () => this.activateNovaBomb());
         this.keys.ESC.on('down', () => {
             this.scene.pause();
             this.scene.launch('PauseScene');
@@ -681,48 +681,24 @@ export default class GameScene extends Phaser.Scene {
     /**
      * @description Initializes all HUD elements (HP, Shield, XP, Boss bar, etc.) and sets them above the game layers.
      */
-    createHUD() {
+        createHUD() {
+        // Show HTML HUD
+        const htmlHud = document.getElementById('html-hud');
+        if (htmlHud) htmlHud.style.display = 'block';
+        
+        // We still keep the Wave Banner and Combo Text in Phaser because they appear in the center of the world/screen
         const { cw, ch } = this;
-        const D = 300;
+        const D = 1000;
         this.hud = {};
-
-        // HP bar
-        this.add.text(18, 16, 'HP', { fontFamily:'Orbitron',fontSize:'11px',color:'#ff4444' }).setDepth(D);
-        this.add.rectangle(220, 22, 200, 14, 0x330000).setOrigin(1,0.5).setDepth(D);
-        this.hud.hpBar = this.add.rectangle(22, 22, 196, 12, 0xff2244).setOrigin(0,0.5).setDepth(D);
-        this.hud.hpText = this.add.text(228, 22, '', { fontFamily:'Orbitron',fontSize:'9px',color:'#ff9999' }).setOrigin(0,0.5).setDepth(D);
-
-        // Shield bar (slim, above hp bar)
-        this.add.rectangle(22, 10, 196, 4, 0x111133).setOrigin(0,0.5).setDepth(D);
-        this.hud.shieldBar = this.add.rectangle(22, 10, 0, 4, 0x4499ff).setOrigin(0,0.5).setDepth(D);
-
-        // XP bar (bottom)
-        const xpY = ch - 12;
-        this.add.rectangle(cw/2, xpY, cw*0.65, 10, 0x111122).setDepth(D);
-        this.hud.xpBar = this.add.rectangle(cw/2 - cw*0.325, xpY, 0, 8, 0x00ff55).setOrigin(0,0.5).setDepth(D);
-        this.hud.lvlText = this.add.text(cw/2, xpY-16, 'LVL 1', { fontFamily:'Orbitron',fontSize:'12px',color:'#00ff66',fontStyle:'bold' }).setOrigin(0.5).setDepth(D);
-
-        // Score + Wave + Scrap + Cubes
-        this.hud.scoreText = this.add.text(cw-20, 16, 'SCORE: 0', { fontFamily:'Orbitron',fontSize:'14px',color:'#00ffff',fontStyle:'bold' }).setOrigin(1,0).setDepth(D);
-        this.hud.scrapText = this.add.text(cw-20, 36, 'SCRAP: 0', { fontFamily:'Orbitron',fontSize:'12px',color:'#ffaa00',fontStyle:'bold' }).setOrigin(1,0).setDepth(D);
-        this.hud.cubesText = this.add.text(cw-20, 56, 'CUBES: 0', { fontFamily:'Orbitron',fontSize:'12px',color:'#ffff00',fontStyle:'bold' }).setOrigin(1,0).setDepth(D);
-        this.hud.waveText  = this.add.text(cw/2, 16, 'WAVE 1', { fontFamily:'Orbitron',fontSize:'13px',color:'#ff00ff',fontStyle:'bold' }).setOrigin(0.5,0).setDepth(D);
-
-        // Nova bombs
-        this.hud.novaText = this.add.text(18, ch-34, '💣 0  [SPACE]', { fontFamily:'Orbitron',fontSize:'11px',color:'#ff00ff' }).setDepth(D);
-
-        // Wave banner (center)
         this.hud.waveBanner = this.add.text(cw/2, ch*0.4, '', {
             fontFamily:'Orbitron',fontSize:'56px',fontStyle:'bold',
             color:'#ffffff',stroke:'#ff00ff',strokeThickness:5
         }).setOrigin(0.5).setDepth(D+10).setAlpha(0);
 
-        // Boss bar (top center)
-        this.hud.bossBg   = this.add.rectangle(cw/2, 58, 520, 20, 0x220000).setDepth(D).setVisible(false);
-        this.hud.bossBar  = this.add.rectangle(cw/2-260, 58, 520, 16, 0xff2200).setOrigin(0,0.5).setDepth(D).setVisible(false);
-        this.hud.bossName = this.add.text(cw/2, 58, 'VOID OVERLORD', { fontFamily:'Orbitron',fontSize:'11px',color:'#fff',fontStyle:'bold' }).setOrigin(0.5).setDepth(D).setVisible(false);
+        this.hud.bossBg   = this.add.rectangle(cw/2, 120, 520, 20, 0x220000).setDepth(D).setVisible(false);
+        this.hud.bossBar  = this.add.rectangle(cw/2-260, 120, 520, 16, 0xff2200).setOrigin(0,0.5).setDepth(D).setVisible(false);
+        this.hud.bossName = this.add.text(cw/2, 120, 'VOID OVERLORD', { fontFamily:'Orbitron',fontSize:'11px',color:'#fff',fontStyle:'bold' }).setOrigin(0.5).setDepth(D).setVisible(false);
 
-        // Combo text
         this.hud.comboText = this.add.text(cw/2, ch*0.28, '', {
             fontFamily:'Orbitron',fontSize:'30px',fontStyle:'bold',
             color:'#ffff00',stroke:'#ff8800',strokeThickness:4
@@ -732,340 +708,72 @@ export default class GameScene extends Phaser.Scene {
     /**
      * @description Refreshes HUD text and bar sizes based on current player statistics.
      */
-    updateHUD() {
-        const { pd, score, waveNum, cw, ch } = this;
+        updateHUD() {
+        const { pd, score, waveNum } = this;
 
-        const hpPct = Math.max(0, pd.hp / pd.maxHp);
-        this.hud.hpBar.setSize(196 * hpPct, 12);
-        this.hud.hpText.setText(`${Math.ceil(pd.hp)} / ${pd.maxHp}`);
-
-        const shPct = Math.min(1, pd.shield / 3);
-        this.hud.shieldBar.setSize(196 * shPct, 4);
-
-        const xpPct = pd.xp / pd.xpToNext;
-        this.hud.xpBar.setSize(cw * 0.65 * xpPct, 8);
-        this.hud.lvlText.setText(`LVL ${pd.level}`);
-
-        this.hud.scoreText.setText(`SCORE: ${score.toLocaleString()}`);
-        this.hud.scrapText.setText(`SCRAP: ${pd.scrap}`);
-        this.hud.cubesText.setText(`CUBES: ${pd.cubes}`);
-        this.hud.waveText.setText(`WAVE ${waveNum}`);
-        this.hud.novaText.setText(`💣 ${pd.nova}  [SPACE]`);
-
-        if (this.bossRef && this.bossRef.active) {
-            const bp = Math.max(0, this.bossRef.hp / this.bossRef.maxHp);
-            this.hud.bossBar.setSize(520 * bp, 16);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────
-    // PLAYER MOVEMENT
-    // ─────────────────────────────────────────────────────
-    /**
-     * @description Processes player input (Keyboard, Gamepad, Mouse) and applies velocity and rotation to the ship.
-     */
-    handleMovement() {
-        const { keys, player, pd } = this;
+        // HTML HUD Elements
+        const el = (id) => document.getElementById(id);
         
-        if (pd.isDashing) return; // Lock controls during dash
-
-        let vx = 0, vy = 0;
-
-        // 1. Keyboard
-        if (keys.A.isDown || keys.LEFT.isDown)  vx -= 1;
-        if (keys.D.isDown || keys.RIGHT.isDown) vx += 1;
-        if (keys.W.isDown || keys.UP.isDown)    vy -= 1;
-        if (keys.S.isDown || keys.DOWN.isDown)  vy += 1;
-
-        // 2. Gamepad (Phaser Native Cross-Browser Support for Xbox/PS)
-        const pad = this.input.gamepad ? this.input.gamepad.pad1 : null;
-        if (pad) {
-            // Movement (Left Stick & D-Pad)
-            let lx = 0, ly = 0;
-            if (pad.leftStick) { lx = pad.leftStick.x; ly = pad.leftStick.y; }
-            if (Math.abs(lx) > 0.2) vx = lx;
-            if (Math.abs(ly) > 0.2) vy = ly;
-
-            if (pad.left) vx -= 1;
-            if (pad.right) vx += 1;
-            if (pad.up) vy -= 1;
-            if (pad.down) vy += 1;
-
-            // Gamepad Nova Bomb (Trigger R2 or Button A / Cross)
-            if (pad.A || pad.R2) {
-                if (!pd.novaCooldown || this.time.now > pd.novaCooldown) {
-                    if (this.triggerNova()) pd.novaCooldown = this.time.now + 1000;
-                }
-            }
-        }
-
-        // 3. Mouse/Touch movement (fallback)
-        if (vx === 0 && vy === 0 && this.input.activePointer.isDown) {
-            const dx = this.input.activePointer.x - player.x;
-            const dy = this.input.activePointer.y - player.y;
-            const d = Math.hypot(dx, dy);
-            if (d > 15) { vx = dx / d; vy = dy / d; }
-        }
-
-        // Normalize vector if using keyboard/mouse
-        const len = Math.hypot(vx, vy);
-        if (len > 1) {
-            vx /= len; vy /= len;
-        }
+        if (el('hud-hp-val')) el('hud-hp-val').textContent = Math.ceil(pd.hp) + '/' + pd.maxHp;
+        if (el('hud-hp-bar')) el('hud-hp-bar').style.width = Math.max(0, (pd.hp / pd.maxHp) * 100) + '%';
+        if (el('hud-shield-bar')) el('hud-shield-bar').style.width = Math.min(100, (pd.shield / 3) * 100) + '%';
         
-        // Dash activation (SHIFT or Gamepad B/Circle/L1/R1)
-        let dashPressed = Phaser.Input.Keyboard.JustDown(keys.SHIFT);
-        if (pad && (pad.B || pad.L1 || pad.R1)) {
-            dashPressed = true;
-        }
+        if (el('hud-wave')) el('hud-wave').textContent = 'WAVE ' + waveNum;
+        if (el('hud-score')) el('hud-score').textContent = 'SCORE: ' + score.toLocaleString();
+        
+        if (el('hud-scrap')) el('hud-scrap').textContent = 'SCRAP: ' + pd.scrap;
+        if (el('hud-cubes')) el('hud-cubes').textContent = 'CUBES: ' + (pd.cubes||0);
+        
+        if (el('hud-nova')) el('hud-nova').textContent = pd.nova;
+        
+        if (el('hud-lvl')) el('hud-lvl').textContent = 'LVL ' + pd.level;
+        if (el('hud-xp-bar')) el('hud-xp-bar').style.width = Math.min(100, (pd.xp / pd.xpToNext) * 100) + '%';
 
-        if (pd.unlockDash && dashPressed && this.time.now > (pd.dashCooldown || 0) && (vx !== 0 || vy !== 0)) {
-            pd.isDashing = true;
-            this.playerInvincible = true;
-            player.setVelocity(vx * pd.speed * 3.5, vy * pd.speed * 3.5);
+        // Ability Cooldown
+        if (this.abilitySys) {
+            const time = this.time.now;
+            const cd = this.abilitySys.cooldown;
+            const last = this.abilitySys.lastUsedTime;
+            const remaining = Math.max(0, (last + cd) - time);
             
-            // Visual after-image effect
-            this.time.addEvent({
-                delay: 40, repeat: 5,
-                callback: () => {
-                    if (!player || !player.active) return;
-                    const ghost = this.add.sprite(player.x, player.y, player.texture.key).setScale(player.scale).setDepth(8).setTint(0x00ffff).setAlpha(0.6);
-                    if (player.anims && player.anims.currentAnim) ghost.play(player.anims.currentAnim.key);
-                    this.tweens.add({ targets: ghost, alpha: 0, scale: player.scale * 1.33, duration: 300, onComplete: () => ghost.destroy() });
-                }
-            });
-
-            this.time.delayedCall(250, () => {
-                pd.isDashing = false;
-                this.playerInvincible = false;
-                pd.dashCooldown = this.time.now + 1200; // 1.2s cooldown
-            });
-            return;
-        }
-
-        player.setVelocity(vx * pd.speed, vy * pd.speed);
-        
-        pd.isMoving = (vx !== 0 || vy !== 0);
-        
-        // Smooth tilt without 360 degree spin wrapping bugs
-        const targetAngle = this.playerBaseAngle + vx * 8;
-        let diff = targetAngle - player.angle;
-        diff = ((diff + 540) % 360) - 180; // Normalize between -180 and +180
-        player.angle += diff * 0.15;
-    }
-
-    // ─────────────────────────────────────────────────────
-    // AUTO SHOOT
-    // ─────────────────────────────────────────────────────
-    /**
-     * @description Determines target angles and triggers weapon firing logic based on current weapon class and level.
-     */
-    autoShoot() {
-        if (this.isGameOver || this.betweenWaves) return;
-        
-        // INTERCEPTOR Momentum Passive
-        if (this.shipClass === 'interceptor') {
-            if (this.pd.isMoving) {
-                this.pd.moveTime = (this.pd.moveTime || 0) + this.game.loop.delta;
+            const abText = el('hud-ability');
+            const abCd = el('hud-ability-cd');
+            
+            if (remaining > 0) {
+                abText.textContent = (remaining / 1000).toFixed(1) + 's';
+                abText.style.color = '#ff4444';
+                if (abCd) abCd.style.width = (remaining / cd) * 100 + '%';
             } else {
-                this.pd.moveTime = 0;
-            }
-            const speedup = Math.min(1.0, (this.pd.moveTime || 0) / 3000);
-            this.shootTimer.delay = this.pd.fireDelay * (1 - (speedup * 0.5));
-        }
-        
-        let targetAngle = null;
-        let targetAngle2 = null; // for Phantom dual aim
-        const dronesLvl = this.pd.upgLevels['drones'] || 0;
-        
-        // Twin-Stick Aiming (Cross-Browser Gamepad API)
-        const pad = this.input.gamepad ? this.input.gamepad.pad1 : null;
-        if (pad && pad.rightStick) {
-            const rx = pad.rightStick.x;
-            const ry = pad.rightStick.y;
-            if (Math.abs(rx) > 0.2 || Math.abs(ry) > 0.2) {
-                targetAngle = Math.atan2(ry, rx);
-                if (this.pd.autoTargetCount > 1) {
-                    targetAngle2 = targetAngle + 0.3; // simple spread when twin sticking
-                }
+                abText.textContent = 'READY';
+                abText.style.color = '#fff';
+                if (abCd) abCd.style.width = '0%';
             }
         }
-        
-        // Fallback to nearest enemy if no stick input
-        if (targetAngle === null) {
-            const limit = this.pd.autoTargetCount || 1;
-            const searchLimit = dronesLvl > 0 ? Math.max(limit, 3) : limit;
-            
-            const targets = this.findNearestEnemies(searchLimit);
-            if (targets.length === 0) return;
-            
-            targetAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, targets[0].x, targets[0].y);
-            if (targets.length > 1 && limit > 1) {
-                targetAngle2 = Phaser.Math.Angle.Between(this.player.x, this.player.y, targets[1].x, targets[1].y);
+
+        // Active Upgrades List
+        const upgList = el('hud-upgrades-list');
+        if (upgList) {
+            const keys = Object.keys(pd.upgLevels);
+            if (keys.length === 0) {
+                upgList.innerHTML = '<div style="color:#aaa; font-size:12px;">No active upgrades</div>';
             } else {
-                targetAngle2 = targetAngle;
-            }
-            
-            // Store targets temporarily for drone usage later
-            this._lastTargets = targets;
-        }
-
-        const angle = targetAngle;
-        
-        // Apply Weapon Level Bonus
-        const baseShots = this.pd.shots;
-        let finalShots = baseShots;
-        if (this.weaponClass === 'scatter' && this.pd.weaponLevel > 1) finalShots += (this.pd.weaponLevel - 1) * 2;
-        else if (this.pd.weaponLevel > 1) finalShots += (this.pd.weaponLevel - 1);
-        
-        const spread = finalShots > 1 ? 0.16 : 0;
-
-        const targetAngles = [angle];
-        if (targetAngle2 !== angle && this.pd.autoTargetCount > 1) {
-            targetAngles.push(targetAngle2);
-        }
-
-        let shotsForTarget = [finalShots];
-        if (this.shipClass === 'phantom' && targetAngles.length > 1) {
-            shotsForTarget[0] = Math.ceil(finalShots / 2);
-            shotsForTarget[1] = finalShots - shotsForTarget[0];
-        } else if (targetAngles.length > 1) {
-            shotsForTarget[1] = finalShots;
-        }
-
-        targetAngles.forEach((ang, index) => {
-            const shots = shotsForTarget[index];
-            if (shots <= 0) return;
-
-            const pAngle = ang + Math.PI / 2;
-            const ox = Math.cos(pAngle);
-            const oy = Math.sin(pAngle);
-            
-            if (shots === 1) {
-                this.fireSide = (this.fireSide === 1) ? -1 : 1;
-                this.fireBullet(this.player.x + (ox * 16 * this.fireSide), this.player.y + (oy * 16 * this.fireSide), ang);
-            } else {
-                for (let i = 0; i < shots; i++) {
-                    const a = ang + (i - (shots - 1) / 2) * spread;
-                    this.fireBullet(this.player.x, this.player.y, a);
-                }
-            }
-        });
-
-        // Fire Special Weapons
-        const lightningLvl = this.pd.upgLevels['chain_lightning'] || 0;
-        if (lightningLvl > 0 && Phaser.Math.Between(1, 100) <= 25) {
-            this.weaponSys.fireChainLightning(this.player, this.enemies, this.pd.damage, lightningLvl);
-        }
-
-        const blackHoleLvl = this.pd.upgLevels['black_hole'] || 0;
-        if (blackHoleLvl > 0) {
-            if (!this.lastBlackHole || this.time.now > this.lastBlackHole + 4000) {
-                this.lastBlackHole = this.time.now;
-                const bx = this.player.x + (Math.random()*100 - 50);
-                const by = this.player.y - 150 + (Math.random()*50);
-                this.weaponSys.fireBlackHole(bx, by, 3000, 180, this.pd.damage * 0.5, this.enemies, blackHoleLvl);
+                let html = '';
+                keys.forEach(k => {
+                    const lvl = pd.upgLevels[k];
+                    const name = k.split('_').map(w => w.toUpperCase()).join(' ');
+                    html += '<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">' +
+                            '<span style="color:#fff;">' + name + '</span>' +
+                            '<span style="color:#00ff55; font-weight:bold;">LVL ' + lvl + '</span>' +
+                            '</div>';
+                });
+                upgList.innerHTML = html;
             }
         }
 
-        if (this.pd.hasFrostAegis) {
-            if (!this.lastAegis || this.time.now > this.lastAegis + 8000) {
-                this.lastAegis = this.time.now;
-                this.weaponSys.triggerFrostAegis(this.player, this.enemies, this.pd.damage);
-            }
-        }
-
-        // ⚔️ NEW WEAPONS ⚔️
-        const sonicLvl = this.pd.upgLevels['sonic_wave'] || 0;
-        if (sonicLvl > 0) {
-            if (!this.lastSonicWave || this.time.now > this.lastSonicWave + 3000) {
-                this.lastSonicWave = this.time.now;
-                this.weaponSys.fireSonicWave(this.player, this.enemies, this.pd.damage, sonicLvl);
-            }
-        }
-
-        const minesLvl = this.pd.upgLevels['mines'] || 0;
-        if (minesLvl > 0) {
-            const mineInterval = Math.max(1000, (4000 - minesLvl * 500));
-            if (!this.lastMineDrop || this.time.now > this.lastMineDrop + mineInterval) {
-                this.lastMineDrop = this.time.now;
-                this.weaponSys.dropMine(this.player.x, this.player.y + 30, this.pd.damage, this.enemies, minesLvl);
-            }
-        }
-
-        if (this.pd.unlockDoomBeam) {
-            if (!this.lastDoomBeam || this.time.now > this.lastDoomBeam + 8000) {
-                this.lastDoomBeam = this.time.now;
-                this.weaponSys.fireDoomBeam(this.player, this.enemies, this.pd.damage);
-            }
-        }
-
-        const sawLvl = this.pd.upgLevels['sawblades'] || 0;
-        if (sawLvl > 0) {
-            if (!this.lastSawblades || this.time.now > this.lastSawblades + 6000) {
-                this.lastSawblades = this.time.now;
-                this.weaponSys.spawnSawblades(this.player, this.enemies, this.pd.damage, sawLvl);
-            }
-        }
-
-        const focusLvl = this.pd.upgLevels['focus_laser'] || 0;
-        if (focusLvl > 0) {
-            if (!this.lastFocusLaser || this.time.now > this.lastFocusLaser + 5000) {
-                this.lastFocusLaser = this.time.now;
-                this.weaponSys.fireFocusLaser(this.player, this.enemies, this.pd.damage, focusLvl);
-            }
-        }
-
-        const cannonLvl = this.pd.upgLevels['heavy_cannon'] || 0;
-        if (cannonLvl > 0) {
-            if (!this.lastHeavyCannon || this.time.now > this.lastHeavyCannon + 2500) {
-                this.lastHeavyCannon = this.time.now;
-                this.weaponSys.fireHeavyCannon(this.player, this.enemies, this.pd.damage, cannonLvl);
-            }
-        }
-
-        const auraLvl = this.pd.upgLevels['damage_aura'] || 0;
-        if (auraLvl > 0) {
-            this.weaponSys.updateDamageAura(this.player, this.enemies, this.pd.damage, auraLvl);
-        }
-
-        if (dronesLvl > 0) {
-            let droneAngle = angle;
-            if (this._lastTargets) {
-                let dt = this._lastTargets[0];
-                if (this._lastTargets.length > 2) dt = this._lastTargets[2];
-                else if (this._lastTargets.length > 1) dt = this._lastTargets[1];
-                if (dt) droneAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, dt.x, dt.y);
-            }
-            
-            for (let i = 0; i < dronesLvl; i++) {
-                const offsetA = (Math.PI * 2 / dronesLvl) * i;
-                this.fireBullet(
-                    this.player.x + Math.cos(offsetA) * 40,
-                    this.player.y + Math.sin(offsetA) * 40,
-                    droneAngle + Phaser.Math.FloatBetween(-0.1, 0.1),
-                    this.pd.unlockLaserDrones
-                );
-            }
-        }
-
-        if (this.pd.hasLaserWhip) {
-            if (!this.lastLaserWhip || this.time.now > this.lastLaserWhip + 800) {
-                this.lastLaserWhip = this.time.now;
-                this.weaponSys.fireLaserWhip(this.player, this.enemies, this.pd.damage * 4);
-            }
-        }
-
-        if (this.pd.hasVoidVortex) {
-            if (!this.lastVortex || this.time.now > this.lastVortex + 6000) {
-                this.lastVortex = this.time.now;
-                const dist = 250;
-                this.weaponSys.triggerVoidVortex(
-                    this.player.x + Phaser.Math.Between(-dist, dist),
-                    this.player.y + Phaser.Math.Between(-dist, dist),
-                    this.pd.damage * 3, this.enemies
-                );
-            }
+        // Boss Bar (Phaser)
+        if (this.bossRef && this.bossRef.active && this.bossRef.maxHp) {
+            const bpct = Math.max(0, this.bossRef.hp / this.bossRef.maxHp);
+            this.hud.bossBar.setSize(520 * bpct, 16);
         }
     }
 
@@ -2405,7 +2113,7 @@ export default class GameScene extends Phaser.Scene {
     /**
      * @description Triggers the ship-specific active ability upon pressing SPACE, handling respective cooldowns.
      */
-    activateAbility() {
+    activateNovaBomb() {
         if (this.isGameOver) return;
         
         const now = this.time.now;
@@ -2848,6 +2556,8 @@ export default class GameScene extends Phaser.Scene {
     gameOver() {
         if (this.isGameOver) return;
         this.isGameOver = true;
+        const htmlHud = document.getElementById('html-hud');
+        if (htmlHud) htmlHud.style.display = 'none';
         this.shootTimer.paused = true;
         this.cameras.main.shake(500, 0.02);
 
@@ -3108,6 +2818,9 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 }
+
+
+
 
 
 

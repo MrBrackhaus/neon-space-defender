@@ -1,0 +1,1 @@
+export default [{languageOptions: {globals: {window: true, document: true, Phaser: true, localStorage: true, console: true, Math: true, navigator: true, setTimeout: true, clearTimeout: true, setInterval: true, clearInterval: true}}, rules: {'no-undef': 'error', 'no-unused-vars': 'warn'}}];

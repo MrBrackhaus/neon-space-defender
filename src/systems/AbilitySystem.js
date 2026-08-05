@@ -24,7 +24,7 @@ export default class AbilitySystem {
         this.lastUsedTime = -15000; 
         
         /** @type {Phaser.Input.Keyboard.Key} Keyboard binding for the ability (SPACE) */
-        this.spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.abilityKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     }
 
     /**
@@ -34,7 +34,7 @@ export default class AbilitySystem {
      * @returns {void}
      */
     update(time, delta) {
-        let trigger = Phaser.Input.Keyboard.JustDown(this.spaceKey);
+        let trigger = Phaser.Input.Keyboard.JustDown(this.abilityKey);
         
         // Gamepad Support (Button X / Square or L2)
         const pad = this.scene.input.gamepad ? this.scene.input.gamepad.pad1 : null;
@@ -73,6 +73,12 @@ export default class AbilitySystem {
             this.triggerDreadnoughtUltimate();
         } else if (shipClass === 'phantom') {
             this.triggerPhantomUltimate();
+        } else if (shipClass === 'interceptor') {
+            this.triggerInterceptorUltimate();
+        } else if (shipClass === 'paladin') {
+            this.triggerPaladinUltimate();
+        } else {
+            this.triggerStandardUltimate();
         }
     }
 
@@ -157,4 +163,49 @@ export default class AbilitySystem {
             }
         });
     }
+    triggerStandardUltimate() {
+        this.scene.shootTimer.delay = this.scene.pd.fireDelay / 2;
+        this.scene.player.setTint(0xffaa00);
+        this.scene.time.delayedCall(4000, () => {
+            this.scene.shootTimer.delay = this.scene.pd.fireDelay;
+            if (this.scene.player && this.scene.player.active) this.scene.player.clearTint();
+        });
+    }
+
+    triggerInterceptorUltimate() {
+        const speed = 2500;
+        const angle = this.scene.player.rotation - Math.PI/2;
+        this.scene.player.body.setVelocity(Math.cos(angle)*speed, Math.sin(angle)*speed);
+        this.scene.playerInvincible = true;
+        this.scene.player.setAlpha(0.5);
+        this.scene.cameras.main.shake(200, 0.01);
+        
+        this.scene.time.delayedCall(300, () => {
+            this.scene.playerInvincible = false;
+            if (this.scene.player && this.scene.player.active) {
+                this.scene.player.setAlpha(1);
+                this.scene.player.body.setVelocity(0, 0);
+            }
+        });
+    }
+
+    triggerPaladinUltimate() {
+        this.scene.pd.shield = 3;
+        this.scene.healPlayer(50);
+        const aura = this.scene.add.circle(this.scene.player.x, this.scene.player.y, 10, 0x00ffff, 0.8);
+        this.scene.tweens.add({
+            targets: aura, radius: 400, alpha: 0, duration: 800,
+            onComplete: () => aura.destroy()
+        });
+        if (this.scene.enemies) {
+            this.scene.enemies.getChildren().forEach(e => {
+                if (e.active && Phaser.Math.Distance.Between(this.scene.player.x, this.scene.player.y, e.x, e.y) < 400) {
+                    e.hp -= 200;
+                    if (e.hp <= 0 && !e.isDying) this.scene.killEnemy(e);
+                }
+            });
+        }
+    }
 }
+
+

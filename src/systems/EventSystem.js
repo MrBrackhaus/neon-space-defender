@@ -308,17 +308,13 @@ export default class EventSystem {
         const bg = this.scene.add.rectangle(0, 0, panelWidth, panelHeight, 0x050510, 0.9)
             .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(config.color).color);
         
-        // Companion portrait: Generated graphics circle
-        const portraitBg = this.scene.add.graphics();
-        portraitBg.fillStyle(config.tint, 0.2);
-        portraitBg.fillCircle(-panelWidth/2 + 45, 0, 32);
-        portraitBg.lineStyle(2, config.tint, 0.8);
-        portraitBg.strokeCircle(-panelWidth/2 + 45, 0, 32);
-
-        // Use text emoji as portrait (always works, no texture needed)
-        const portraitEmoji = this.scene.add.text(-panelWidth/2 + 45, 0, config.emoji, {
-            fontSize: '32px'
-        }).setOrigin(0.5);
+        // Companion portrait: Animated Sprite
+        const portraitSprite = this.scene.add.sprite(-panelWidth/2 + 45, 0, `npc_${character}`);
+        // The frame is 344x768. Let's scale it so it fits nicely in the panel.
+        portraitSprite.setScale(100 / 768); 
+        
+        // Play the character's idle animation
+        portraitSprite.play(`anim_${character}`);
 
         const randIndex = Math.floor(Math.random() * messages.length);
         const message = messages[randIndex];
@@ -338,7 +334,7 @@ export default class EventSystem {
             lineSpacing: 4
         });
 
-        container.add([bg, portraitBg, portraitEmoji, titleText, msgText]);
+        container.add([bg, portraitSprite, titleText, msgText]);
 
         // Slide in
         this.scene.tweens.add({

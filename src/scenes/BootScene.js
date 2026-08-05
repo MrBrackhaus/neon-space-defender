@@ -101,6 +101,11 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('jergeric',     'jergeric.jpg?v=6');
         this.load.image('jergeric_cmd', 'jergeric_cmd.jpg?v=6');
         this.load.image('jergeric_sheet', 'jergeric_sheet.jpg?v=6');
+        
+        // NPC Spritesheets
+        this.load.spritesheet('npc_jergeric', 'npc_jergeric_sheet.jpg?v=6', { frameWidth: 344, frameHeight: 768 });
+        this.load.spritesheet('npc_sparkles', 'npc_sparkles_sheet.jpg?v=6', { frameWidth: 344, frameHeight: 768 });
+        this.load.spritesheet('npc_nyx', 'npc_nyx_sheet.jpg?v=6', { frameWidth: 344, frameHeight: 768 });
         this.load.image('cat',          'cat.jpg?v=6');
         this.load.image('nyx_merchant', 'nyx_merchant.png?v=6');
         this.load.image('scrap_merchant', 'scrap_merchant.png?v=6');
@@ -258,6 +263,11 @@ export default class BootScene extends Phaser.Scene {
             frames: this.anims.generateFrameNumbers('mascot_sheet', { start: 35, end: 41 }),
             frameRate: 10, repeat: -1
         });
+
+        // NPC Animations
+        this.anims.create({ key: 'anim_jergeric', frames: this.anims.generateFrameNumbers('npc_jergeric', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
+        this.anims.create({ key: 'anim_sparkles', frames: this.anims.generateFrameNumbers('npc_sparkles', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
+        this.anims.create({ key: 'anim_nyx', frames: this.anims.generateFrameNumbers('npc_nyx', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
 
         // ─────────────────── SCENE TRANSITION ───────────────────
 

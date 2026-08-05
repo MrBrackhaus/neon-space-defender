@@ -42,15 +42,15 @@ const SLIDES = [
         dialogue: '"Und dein alter Pizza-Roller ist derart mit Schmutz und altem Käse verkrustet, dass ihre Antimaterie-Strahlen an diesem gigantischen Fett-Schild abprallen!"'
     },
     {
-        img: 'intro_ship', tint: null, effect: 'zoom_in', caption: null,
+        img: 'intro_sparkles', tint: null, effect: 'zoom_in', caption: null,
         dialogue: '"Sparkles das Einhorn plündert die Trümmer meiner zerstörten Flotte und klebt sie mit Panzertape an leuchtenden Weltraum-Müll..."'
     },
     {
-        img: 'intro_ship', tint: null, effect: 'pan_right', caption: null,
+        img: 'intro_junk', tint: null, effect: 'pan_right', caption: null,
         dialogue: '"Daraus baut es absurde, aber tödliche neue Schiffe für dich! Fliegende Flamingos, Arcade-Automaten... alles, was das Void hassen wird!"'
     },
     {
-        img: 'intro_hero', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,
+        img: 'intro_nyx', kraken: true, tint: 0x00ffcc, effect: 'zoom_in', caption: null,
         dialogue: '"Und kraule Nyx, unsere vierdimensionale Kybernetik-Katze, niemals hinter den Ohren. Sonst implodiert das Raum-Zeit-Kontinuum. Los jetzt, halte das Void auf!"'
     }
 ];

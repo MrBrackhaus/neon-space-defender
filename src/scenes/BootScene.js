@@ -90,6 +90,9 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('intro_hero',  'intro_hero_anime.jpg?v=6');
         this.load.image('intro_fleet', 'intro_fleet_anime.jpg?v=6');
         this.load.image('intro_ship',  'intro_ship_anime.jpg?v=6');
+        this.load.image('intro_sparkles', 'intro_sparkles_anime.jpg?v=6');
+        this.load.image('intro_junk', 'intro_junk_anime.jpg?v=6');
+        this.load.image('intro_nyx', 'intro_nyx_anime.jpg?v=6');
 
         // Audio is now fully procedural (Web Audio API in AudioSystem.js). 
         // No external WAV files needed!

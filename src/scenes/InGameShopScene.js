@@ -179,7 +179,7 @@ export default class InGameShopScene extends Phaser.Scene {
         // Show Nyx's flavor text at the bottom
         this.dialogText = this.add.text(cw / 2, ch - 88, NYX_DIALOGS[0], {
             fontFamily: 'Orbitron', fontSize: '10px', color: '#00ffcc',
-            fontStyle: 'italic', align: 'center', wordWrap: { width: 860 }
+            fontStyle: 'italic', align: 'center', wordWrap: { width: Math.min(cw - 40, 860) }
         }).setOrigin(0.5).setDepth(5);
 
         // ── RESUME BUTTON ──
@@ -265,32 +265,36 @@ export default class InGameShopScene extends Phaser.Scene {
             const borderCol = isPurchased ? 0x00cc55 : (canAfford ? cfg.border : 0x333355);
 
             // Container for the item
-            const row = this.add.rectangle(cw / 2, y, Math.min(cw - 60, 940), itemH - 8, cfg.bg, 0.97)
+            const rowWidth = Math.min(cw - 60, 940);
+            const row = this.add.rectangle(cw / 2, y, rowWidth, itemH - 8, cfg.bg, 0.97)
                 .setStrokeStyle(isPurchased ? 2 : 1, borderCol)
                 .setInteractive({ useHandCursor: canAfford && !isPurchased });
 
+            const leftX = cw / 2 - rowWidth / 2 + 20;
+            const rightX = cw / 2 + rowWidth / 2 - 20;
+
             // Rarity label above item name
-            this.add.text(cw / 2 - 450, y - 32, cfg.label, {
+            this.add.text(leftX, y - 32, cfg.label, {
                 fontFamily: 'Orbitron', fontSize: '7px', color: item.rarity === 'rare' ? '#cc55ff' : item.rarity === 'uncommon' ? '#5577ee' : '#446677', fontStyle: 'bold'
             });
 
             // Item Icon and Name
-            this.add.text(cw / 2 - 450, y - 17, `${item.icon}  ${item.name}`, {
+            this.add.text(leftX, y - 17, `${item.icon}  ${item.name}`, {
                 fontFamily: 'Orbitron', fontSize: '15px', fontStyle: 'bold',
                 color: isPurchased ? '#00cc55' : (item.color || '#ffffff')
             });
 
             // Item Description
-            this.add.text(cw / 2 - 450, y + 12, item.desc, {
-                fontFamily: 'Orbitron', fontSize: '10px', color: '#8899aa', wordWrap: { width: 640 }
+            this.add.text(leftX, y + 12, item.desc, {
+                fontFamily: 'Orbitron', fontSize: '10px', color: '#8899aa', wordWrap: { width: Math.max(200, rowWidth - 140) }
             });
 
             // Cost indicator (or "Bought" text)
             const badge = isPurchased ? '✔ GEKAUFT' : `💎 ${item.cost}`;
             const badgeCol = isPurchased ? '#00cc55' : (canAfford ? '#ffaa00' : '#555566');
-            this.add.text(cw / 2 + 420, y, badge, {
+            this.add.text(rightX, y, badge, {
                 fontFamily: 'Orbitron', fontSize: '14px', fontStyle: 'bold', color: badgeCol
-            }).setOrigin(0.5);
+            }).setOrigin(1, 0.5);
 
             // Add purchase logic if the player has enough cubes
             if (canAfford) {
@@ -339,3 +343,4 @@ export default class InGameShopScene extends Phaser.Scene {
         }));
     }
 }
+

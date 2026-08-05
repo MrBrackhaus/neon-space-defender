@@ -363,21 +363,53 @@ export default class GameScene extends Phaser.Scene {
         
         // Hazard System collisions
         if (this.hazardSys && this.hazardSys.asteroids) {
+            
+            const handleAsteroidHit = (a, damage) => {
+                if (!a.active) return;
+                a.hp -= damage;
+                this.showDmgNum(a.x, a.y, damage, '#cccccc');
+                if (a.hp <= 0) {
+                    if (a.isOre) this.hazardSys.explodeAsteroid(a);
+                    else this.hazardSys.splitAsteroid(a);
+                }
+            };
+
+            this.physics.add.overlap(this.bullets, this.hazardSys.asteroids, (b, a) => {
+                if (!b.active || !a.active) return;
+                if (!b.pierce) {
+                    this.bullets.killAndHide(b);
+                    b.body.enable = false;
+                }
+                handleAsteroidHit(a, this.pd.damage * this.pd.damageMod);
+            });
+
+            this.physics.add.overlap(this.eBullets, this.hazardSys.asteroids, (b, a) => {
+                if (!b.active || !a.active) return;
+                this.eBullets.killAndHide(b);
+                b.body.enable = false;
+                handleAsteroidHit(a, 20);
+            });
+
             this.physics.add.overlap(this.player, this.hazardSys.asteroids, (p, a) => {
                 if (!p.active || !a.active) return;
-                this.damagePlayer(50);
-                this.spawnDeathFX(a.x, a.y, 0x888888);
-                if (this.audioSys) this.audioSys.playExplosion();
-                a.destroy();
+                if (a.isOre) {
+                    this.hazardSys.explodeAsteroid(a);
+                } else {
+                    this.damagePlayer(50);
+                    this.hazardSys.splitAsteroid(a);
+                }
             });
+
             this.physics.add.overlap(this.enemies, this.hazardSys.asteroids, (e, a) => {
-                if (!e.active || !a.active || e.isDying) return;
-                e.hp -= 200;
-                this.showDmgNum(e.x, e.y, 200);
-                if (e.hp <= 0) { this.killEnemy(e); }
-                this.spawnDeathFX(a.x, a.y, 0x888888);
-                if (this.audioSys) this.audioSys.playExplosion();
-                a.destroy();
+                if (!e.active || !a.active || e.isDying || e.isHitZone) return;
+                if (a.isOre) {
+                    this.hazardSys.explodeAsteroid(a);
+                } else {
+                    e.hp -= 200;
+                    this.showDmgNum(e.x, e.y, 200, '#ff0000');
+                    if (e.hp <= 0) this.killEnemy(e);
+                    this.hazardSys.splitAsteroid(a);
+                }
             });
         }
 
@@ -1263,6 +1295,27 @@ export default class GameScene extends Phaser.Scene {
                 return;
             }
             const angle = Phaser.Math.Angle.Between(e.x, e.y, player.x, player.y);
+            let moveAngle = angle;
+            
+            // Asteroid Avoidance Steering
+            if (this.hazardSys && this.hazardSys.asteroids) {
+                let avoidX = 0, avoidY = 0, avoids = 0;
+                this.hazardSys.asteroids.getChildren().forEach(a => {
+                    if (a.active) {
+                        const dist = Phaser.Math.Distance.Between(e.x, e.y, a.x, a.y);
+                        if (dist > 0 && dist < 200) {
+                            const repAngle = Phaser.Math.Angle.Between(a.x, a.y, e.x, e.y);
+                            const strength = 1 - (dist / 200);
+                            avoidX += Math.cos(repAngle) * strength;
+                            avoidY += Math.sin(repAngle) * strength;
+                            avoids++;
+                        }
+                    }
+                });
+                if (avoids > 0) {
+                    moveAngle = Math.atan2(Math.sin(angle) + avoidY * 2.5, Math.cos(angle) + avoidX * 2.5);
+                }
+            }
 
             // Hivemind split logic
             if (e.type === 'hivemind' && e.hp < e.maxHp * 0.5 && !e.hasSplit) {
@@ -1285,7 +1338,7 @@ export default class GameScene extends Phaser.Scene {
             }
 
             if (e.type === 'stealth') {
-                e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
                 const isStealth = (this.time.now % 4000) > 2000;
                 if (isStealth) {
                     e.setAlpha(0.05); e.body.enable = false;
@@ -1294,8 +1347,8 @@ export default class GameScene extends Phaser.Scene {
                 }
             } else if (e.type === 'carrier') {
                 const dist = Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y);
-                if (dist < 400) e.setVelocity(Math.cos(angle)*-e.speed, Math.sin(angle)*-e.speed);
-                else if (dist > 700) e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                if (dist < 400) e.setVelocity(Math.cos(moveAngle)*-e.speed, Math.sin(moveAngle)*-e.speed);
+                else if (dist > 700) e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
                 else e.setVelocity(0, 0);
                 
                 if (this.time.now - (e.lastShot||0) > 2500) {
@@ -1306,7 +1359,7 @@ export default class GameScene extends Phaser.Scene {
             } else if (e.type === 'laser') {
                 const dist = Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y);
                 if (dist > 300 && !e.isCharging) {
-                    e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                    e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
                 } else {
                     e.setVelocity(0, 0);
                     if (!e.isCharging && this.time.now - e.lastShot > 3000) {
@@ -1323,7 +1376,7 @@ export default class GameScene extends Phaser.Scene {
                     }
                 }
             } else if (e.type === 'destroyer') {
-                e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
                 if (this.time.now - e.lastShot > 2500) {
                     e.lastShot = this.time.now;
                     for (let i = 0; i < 12; i++) {
@@ -1334,8 +1387,8 @@ export default class GameScene extends Phaser.Scene {
             } else if (e.type === 'hivemind' || e.type === 'hivemind_clone') {
                 const t = this.time.now / 1000 + e.tOffset;
                 e.setVelocity(
-                    Math.cos(angle)*e.speed + Math.sin(t*3)*(e.type === 'hivemind' ? 60 : 120),
-                    Math.sin(angle)*e.speed + Math.cos(t*2)*(e.type === 'hivemind' ? 30 : 60)
+                    Math.cos(moveAngle)*e.speed + Math.sin(t*3)*(e.type === 'hivemind' ? 60 : 120),
+                    Math.sin(moveAngle)*e.speed + Math.cos(t*2)*(e.type === 'hivemind' ? 30 : 60)
                 );
                 const delay = e.type === 'hivemind' ? 1500 : 1000;
                 if (this.time.now - e.lastShot > delay) {
@@ -1351,7 +1404,7 @@ export default class GameScene extends Phaser.Scene {
                 if (!e.state) e.state = { mode: 'chase', timer: 0, telegraph: null };
                 
                 if (e.state.mode === 'chase') {
-                    e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                    e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
                     if (dist < 400 && this.time.now - (e.lastCharge||0) > 3000) {
                         e.state.mode = 'aim';
                         e.state.timer = this.time.now + 800;
@@ -1380,7 +1433,7 @@ export default class GameScene extends Phaser.Scene {
                     e.state.telegraph = null;
                 }
             } else if (e.type === 'protector') {
-                e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
                 if (!e.auraGraphics) {
                     e.auraGraphics = this.add.graphics();
                     e.auraGraphics.setDepth(3);
@@ -1406,9 +1459,9 @@ export default class GameScene extends Phaser.Scene {
             } else if (e.type === 'shooter') {
                 const dist = Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y);
                 if (dist > 450) {
-                    e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                    e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
                 } else {
-                    e.setVelocity(Math.cos(angle)*e.speed*0.3, Math.sin(angle)*e.speed*0.3);
+                    e.setVelocity(Math.cos(moveAngle)*e.speed*0.3, Math.sin(moveAngle)*e.speed*0.3);
                 }
 
                 if (dist < 800 && this.time.now - e.lastShot > 1800) {
@@ -1421,7 +1474,7 @@ export default class GameScene extends Phaser.Scene {
                 // Hitzones are positioned by their parent, do nothing here.
                 return;
             } else {
-                e.setVelocity(Math.cos(angle)*e.speed, Math.sin(angle)*e.speed);
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
             }
 
             let rotOffset = -Math.PI/2;

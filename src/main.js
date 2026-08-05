@@ -19,6 +19,7 @@ import ShipSelectScene from './scenes/ShipSelectScene.js';
 import InGameShopScene from './scenes/InGameShopScene.js';
 import AchievementScene from './scenes/AchievementScene.js';
 import HighscoreScene from './scenes/HighscoreScene.js';
+import TechTreeScene from './scenes/TechTreeScene.js';
 
 /**
  * @constant {Phaser.Types.Core.GameConfig} config
@@ -56,7 +57,8 @@ const config = {
         PauseScene, 
         SettingsScene, 
         CreditsScene, 
-        AchievementScene
+        AchievementScene,
+        TechTreeScene
     ]
 };
 

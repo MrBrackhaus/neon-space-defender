@@ -188,10 +188,37 @@ export default class GameScene extends Phaser.Scene {
             unlockPierceStart: parseInt(localStorage.getItem('neon_tech_pierce_start')||'0') > 0,
             unlockOrbitals: parseInt(localStorage.getItem('neon_tech_orbitals')||'0') > 0,
             unlockRevive: parseInt(localStorage.getItem('neon_tech_revive')||'0') > 0 || parseInt(localStorage.getItem('neon_upg_extra_life')||'0') > 0,
+            unlockAegis: parseInt(localStorage.getItem('neon_tech_aegis')||'0') > 0,
+            unlockVoidShield: parseInt(localStorage.getItem('neon_tech_void_shield')||'0') > 0,
+            unlockLaserDrones: parseInt(localStorage.getItem('neon_tech_laser_drones')||'0') > 0,
+            unlockMirrorShield: parseInt(localStorage.getItem('neon_tech_mirror_shield')||'0') > 0,
+            unlockDoomBeam: parseInt(localStorage.getItem('neon_tech_doom_beam')||'0') > 0,
+            unlockSonicWave: parseInt(localStorage.getItem('neon_tech_sonic_wave')||'0') > 0,
+            unlockMines: parseInt(localStorage.getItem('neon_tech_mines')||'0') > 0,
+            unlockSawblades: parseInt(localStorage.getItem('neon_tech_sawblades')||'0') > 0,
+            unlockFocusLaser: parseInt(localStorage.getItem('neon_tech_focus_laser')||'0') > 0,
+            unlockHeavyCannon: parseInt(localStorage.getItem('neon_tech_heavy_cannon')||'0') > 0,
+            unlockDamageAura: parseInt(localStorage.getItem('neon_tech_damage_aura')||'0') > 0,
+            unlockScrapMagnet: parseInt(localStorage.getItem('neon_tech_scrap_magnet')||'0') > 0,
+            unlockCubeBooster: parseInt(localStorage.getItem('neon_tech_cube_booster')||'0') > 0,
             upgLevels: {},
             scrap: parseInt(localStorage.getItem('neon_scrap') || '0', 10),
             cubes: 0,
         };
+
+        if (this.pd.unlockAegis) {
+            this.pd.maxHp = Math.floor(this.pd.maxHp * 1.5);
+            this.pd.hp = this.pd.maxHp;
+        }
+        
+        // Note: unlockVoidShield and unlockLaserDrones effects are applied dynamically 
+        // when damage is dealt or weapons are fired, so we just keep the boolean flag here.
+
+        // Schrott-Magnet: Permanent double magnet range
+        if (this.pd.unlockScrapMagnet) {
+            this.pd.magnetRange *= 2;
+        }
+
         this.score       = 0;
         this.waveNum     = 1;
         this.waveLeft    = 0;
@@ -896,6 +923,67 @@ export default class GameScene extends Phaser.Scene {
             }
         }
 
+        if (this.pd.hasFrostAegis) {
+            if (!this.lastAegis || this.time.now > this.lastAegis + 8000) {
+                this.lastAegis = this.time.now;
+                this.weaponSys.triggerFrostAegis(this.player, this.enemies, this.pd.damage);
+            }
+        }
+
+        // ⚔️ NEW WEAPONS ⚔️
+        const sonicLvl = this.pd.upgLevels['sonic_wave'] || 0;
+        if (sonicLvl > 0) {
+            if (!this.lastSonicWave || this.time.now > this.lastSonicWave + 3000) {
+                this.lastSonicWave = this.time.now;
+                this.weaponSys.fireSonicWave(this.player, this.enemies, this.pd.damage, sonicLvl);
+            }
+        }
+
+        const minesLvl = this.pd.upgLevels['mines'] || 0;
+        if (minesLvl > 0) {
+            const mineInterval = Math.max(1000, (4000 - minesLvl * 500));
+            if (!this.lastMineDrop || this.time.now > this.lastMineDrop + mineInterval) {
+                this.lastMineDrop = this.time.now;
+                this.weaponSys.dropMine(this.player.x, this.player.y + 30, this.pd.damage, this.enemies, minesLvl);
+            }
+        }
+
+        if (this.pd.unlockDoomBeam) {
+            if (!this.lastDoomBeam || this.time.now > this.lastDoomBeam + 8000) {
+                this.lastDoomBeam = this.time.now;
+                this.weaponSys.fireDoomBeam(this.player, this.enemies, this.pd.damage);
+            }
+        }
+
+        const sawLvl = this.pd.upgLevels['sawblades'] || 0;
+        if (sawLvl > 0) {
+            if (!this.lastSawblades || this.time.now > this.lastSawblades + 6000) {
+                this.lastSawblades = this.time.now;
+                this.weaponSys.spawnSawblades(this.player, this.enemies, this.pd.damage, sawLvl);
+            }
+        }
+
+        const focusLvl = this.pd.upgLevels['focus_laser'] || 0;
+        if (focusLvl > 0) {
+            if (!this.lastFocusLaser || this.time.now > this.lastFocusLaser + 5000) {
+                this.lastFocusLaser = this.time.now;
+                this.weaponSys.fireFocusLaser(this.player, this.enemies, this.pd.damage, focusLvl);
+            }
+        }
+
+        const cannonLvl = this.pd.upgLevels['heavy_cannon'] || 0;
+        if (cannonLvl > 0) {
+            if (!this.lastHeavyCannon || this.time.now > this.lastHeavyCannon + 2500) {
+                this.lastHeavyCannon = this.time.now;
+                this.weaponSys.fireHeavyCannon(this.player, this.enemies, this.pd.damage, cannonLvl);
+            }
+        }
+
+        const auraLvl = this.pd.upgLevels['damage_aura'] || 0;
+        if (auraLvl > 0) {
+            this.weaponSys.updateDamageAura(this.player, this.enemies, this.pd.damage, auraLvl);
+        }
+
         if (dronesLvl > 0) {
             let droneAngle = angle;
             if (this._lastTargets) {
@@ -907,7 +995,12 @@ export default class GameScene extends Phaser.Scene {
             
             for (let i = 0; i < dronesLvl; i++) {
                 const offsetA = (Math.PI * 2 / dronesLvl) * i;
-                this.fireBullet(this.player.x + Math.cos(offsetA)*40, this.player.y + Math.sin(offsetA)*40, droneAngle + Phaser.Math.FloatBetween(-0.1, 0.1));
+                this.fireBullet(
+                    this.player.x + Math.cos(offsetA) * 40,
+                    this.player.y + Math.sin(offsetA) * 40,
+                    droneAngle + Phaser.Math.FloatBetween(-0.1, 0.1),
+                    this.pd.unlockLaserDrones
+                );
             }
         }
 
@@ -929,13 +1022,6 @@ export default class GameScene extends Phaser.Scene {
                 );
             }
         }
-
-        if (this.pd.hasFrostAegis) {
-            if (!this.lastAegis || this.time.now > this.lastAegis + 8000) {
-                this.lastAegis = this.time.now;
-                this.weaponSys.triggerFrostAegis(this.player, this.enemies, this.pd.damage);
-            }
-        }
     }
 
     /**
@@ -944,23 +1030,26 @@ export default class GameScene extends Phaser.Scene {
      * @param {number} y - Origin Y coordinate.
      * @param {number} angle - Firing angle in radians.
      */
-    fireBullet(x, y, angle) {
+    fireBullet(x, y, angle, isLaserDrone = false) {
         if (this.audioSys) this.audioSys.playShoot(this.weaponClass);
 
         let tex = 'bullet_pulse';
         if (this.weaponClass === 'scatter') tex = 'bullet_scatter';
         if (this.weaponClass === 'railgun') tex = 'bullet_railgun';
+        if (isLaserDrone) tex = 'bullet_railgun';
 
         const b = this.bullets.get(x, y, tex);
         if (!b) return;
         b.setTexture(tex);
+        if (isLaserDrone) b.setTint(0xff00ff); // Purple lasers
+
         b.setActive(true).setVisible(true);
         if (b.body) {
             b.body.enable = true;
             b.body.setSize(b.width, b.height);
         }
         b.setDepth(8).setRotation(angle + Math.PI / 2);
-        b.pierce = this.pd.pierce;
+        b.pierce = isLaserDrone ? (this.pd.pierce || 0) + 2 : this.pd.pierce;
         b.hitEnemies = [];
         const critChance = (this.pd.crit ? 0.2 : 0) + (this.pd.critBoost || 0);
         b.isCrit = Math.random() < critChance;
@@ -1699,7 +1788,8 @@ export default class GameScene extends Phaser.Scene {
             this.spawnScrap(enemy.x, enemy.y);
         }
 
-        if (Math.random() < 0.20) {
+        const cubeChance = this.pd.unlockCubeBooster ? 0.30 : 0.20;
+        if (Math.random() < cubeChance) {
             this.spawnCube(enemy.x, enemy.y);
         }
         
@@ -1879,10 +1969,20 @@ export default class GameScene extends Phaser.Scene {
             this.pd.shield--;
             this.cameras.main.shake(50, 0.003);
             this.tweens.add({ targets: this.player, tint: 0x4499ff, duration: 80, yoyo: true, onComplete: () => this.player.clearTint() });
+            
+            // Reflektor-Schild: Fire revenge projectiles on shield break
+            if (this.pd.unlockMirrorShield) {
+                this.weaponSys.fireMirrorShieldProjectiles(this.player, this.enemies, this.pd.damage);
+            }
             return;
         }
 
         if (this.audioSys) this.audioSys.playHit();
+        
+        if (this.pd.unlockVoidShield) {
+            amount *= 0.85; // 15% damage reduction
+        }
+        
         this.pd.hp -= amount;
         this.playerInvincible = true;
         this.time.delayedCall(550, () => { this.playerInvincible = false; });
@@ -2045,7 +2145,7 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.flash(200, 0, 255, 100);
         if (this.audioSys) this.audioSys.playLevelUp();
 
-        const MAX_LEVELS = { multi_shot: 5, chain_lightning: 5, black_hole: 5, drones: 5, cryo_ray: 5, orbital: 6, shield: 3, area: 1, crit: 1, damage: 5, fire_rate: 5, speed: 5, magnet: 5 };
+        const MAX_LEVELS = { multi_shot: 5, chain_lightning: 5, black_hole: 5, drones: 5, cryo_ray: 5, orbital: 6, shield: 3, area: 1, crit: 1, damage: 5, fire_rate: 5, speed: 5, magnet: 5, sonic_wave: 3, mines: 5, sawblades: 5, focus_laser: 3, heavy_cannon: 5, damage_aura: 5 };
         let available = UPGRADES.filter(u => (this.pd.upgLevels[u.id] || 0) < (MAX_LEVELS[u.id] || 99));
 
         // Dynamically add Tech-Tree-unlocked items to the pool
@@ -2067,6 +2167,24 @@ export default class GameScene extends Phaser.Scene {
         if (this.pd.unlockOrbitals && (this.pd.upgLevels['orbital'] || 0) < 6) {
             available.push({ id: 'orbital', name: 'PLASMA ORBITALS', desc: '+1 kreisende Plasma-Klinge', color: '#ff0055' });
         }
+        if (this.pd.unlockSonicWave && (this.pd.upgLevels['sonic_wave'] || 0) < 3) {
+            available.push({ id: 'sonic_wave', name: 'SCHALL-BLASTER', desc: 'Erzeugt abstoßende Druckwellen', color: '#00ccff' });
+        }
+        if (this.pd.unlockMines && (this.pd.upgLevels['mines'] || 0) < 5) {
+            available.push({ id: 'mines', name: 'NOVA-MINEN', desc: 'Legt automatisch Sprengfallen ab', color: '#ff5500' });
+        }
+        if (this.pd.unlockSawblades && (this.pd.upgLevels['sawblades'] || 0) < 5) {
+            available.push({ id: 'sawblades', name: 'NEON-SÄGEBLÄTTER', desc: 'Wirbelnde Klingen um dein Schiff', color: '#ff0088' });
+        }
+        if (this.pd.unlockFocusLaser && (this.pd.upgLevels['focus_laser'] || 0) < 3) {
+            available.push({ id: 'focus_laser', name: 'FOKUS-LASER', desc: 'Gebündelter Dauerstrahl voraus', color: '#ff2200' });
+        }
+        if (this.pd.unlockHeavyCannon && (this.pd.upgLevels['heavy_cannon'] || 0) < 5) {
+            available.push({ id: 'heavy_cannon', name: 'SCHIFFSKANONE', desc: 'Massive Neon-Kugeln mit Durchschlag', color: '#ffcc00' });
+        }
+        if (this.pd.unlockDamageAura && (this.pd.upgLevels['damage_aura'] || 0) < 5) {
+            available.push({ id: 'damage_aura', name: 'SCHADENSAURA', desc: 'Permanenter Schadensring', color: '#ff4400' });
+        }
 
         // Evolutions only available with Fusion Core unlocked
         if (this.pd.unlockFusion) {
@@ -2087,7 +2205,7 @@ export default class GameScene extends Phaser.Scene {
         Phaser.Utils.Array.Shuffle(available);
         
         // Priority system: Ensure at least 1 tech/evo item appears if available
-        const techItems = available.filter(u => ['shield', 'chain_lightning', 'black_hole', 'cryo_ray', 'drones', 'orbital', 'evo_supernova', 'evo_laser_whip', 'evo_void_vortex', 'evo_frost_aegis'].includes(u.id));
+        const techItems = available.filter(u => ['shield', 'chain_lightning', 'black_hole', 'cryo_ray', 'drones', 'orbital', 'sonic_wave', 'mines', 'sawblades', 'focus_laser', 'heavy_cannon', 'damage_aura', 'evo_supernova', 'evo_laser_whip', 'evo_void_vortex', 'evo_frost_aegis'].includes(u.id));
         const basicItems = available.filter(u => !techItems.includes(u));
         
         let choices = [];
@@ -2135,6 +2253,12 @@ export default class GameScene extends Phaser.Scene {
                 case 'cryo_ray': dynamicDesc = 'Frost-Dauer: ' + (2 + nextLevel * 0.5) + 's (Verstärkter Verlangsamungs-Effekt)'; break;
                 case 'orbital': dynamicDesc = '+1 Plasma-Klinge (Du erhältst Klinge Nr. ' + nextLevel + ')'; break;
                 case 'shield': dynamicDesc = 'Schild-Aufladezeit sinkt auf ' + (nextLevel === 1 ? '8s' : nextLevel === 2 ? '6s' : '4.5s'); break;
+                case 'sonic_wave': dynamicDesc = 'Schallwelle stößt Feinde ' + (20 + nextLevel * 10) + '% weiter zurück'; break;
+                case 'mines': dynamicDesc = 'Mine alle ' + Math.max(1, (4 - nextLevel * 0.5)) + 's (Max: ' + (nextLevel * 2) + ' Stück)'; break;
+                case 'sawblades': dynamicDesc = 'Klingen: ' + (1 + nextLevel) + ' Stück (Schaden +' + (nextLevel * 15) + '%)'; break;
+                case 'focus_laser': dynamicDesc = 'Laser-Stärke: ' + (nextLevel * 100) + '% (Breite +' + (nextLevel * 2) + 'px)'; break;
+                case 'heavy_cannon': dynamicDesc = 'Kugelgröße: ' + (10 + nextLevel * 5) + 'px (Schaden x' + (1 + nextLevel * 0.5) + ')'; break;
+                case 'damage_aura': dynamicDesc = 'Aura-Radius: ' + (60 + nextLevel * 20) + 'px (DPS: ' + (nextLevel * 10) + ')'; break;
             }
 
             const card = document.createElement('button');
@@ -2189,6 +2313,12 @@ export default class GameScene extends Phaser.Scene {
             case 'evo_laser_whip': pd.hasLaserWhip = true; break;
             case 'evo_void_vortex': pd.hasVoidVortex = true; break;
             case 'evo_frost_aegis': pd.hasFrostAegis = true; break;
+            case 'sawblades': /* Handled in fireBullet via upgLevels */ break;
+            case 'focus_laser': /* Handled in fireBullet via upgLevels */ break;
+            case 'heavy_cannon': /* Handled in fireBullet via upgLevels */ break;
+            case 'damage_aura': /* Handled in update loop via upgLevels */ break;
+            case 'sonic_wave': /* Handled in fireBullet via upgLevels */ break;
+            case 'mines': /* Handled in update loop via upgLevels */ break;
         }
     }
 

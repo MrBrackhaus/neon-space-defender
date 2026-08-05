@@ -393,4 +393,340 @@ export default class WeaponSystem {
       });
     });
   }
+
+  // ⚔️ SONIC WAVE ⚔️
+  fireSonicWave(player, enemiesGroup, damage, level = 1) {
+    if (!player || !player.active) return;
+    const waveWidth = 300 + level * 50;
+    const pushForce = 200 + level * 100;
+    const gfx = this.scene.add.graphics();
+    gfx.fillStyle(0x00ccff, 0.4);
+    gfx.fillRect(player.x - waveWidth / 2, player.y - 60, waveWidth, 20);
+    gfx.setDepth(10);
+
+    this.scene.tweens.add({
+      targets: gfx, y: -400, alpha: 0, scaleX: 1.5, scaleY: 3,
+      duration: 600, ease: 'Cubic.easeOut',
+      onComplete: () => gfx.destroy()
+    });
+
+    const enemies = enemiesGroup.getChildren();
+    enemies.forEach(enemy => {
+      if (enemy && enemy.active) {
+        const dx = Math.abs(enemy.x - player.x);
+        if (dx <= waveWidth / 2 && enemy.y < player.y) {
+          enemy.hp -= damage * (1 + level * 0.3);
+          enemy.body.velocity.y = -pushForce;
+          enemy.setTint(0x00ccff);
+          this.scene.time.delayedCall(300, () => { if (enemy.active) enemy.clearTint(); });
+        }
+      }
+    });
+  }
+
+  // 💣 PROXIMITY MINES 💣
+  dropMine(x, y, damage, enemiesGroup, level = 1) {
+    const mineRadius = 80 + level * 15;
+    const mineDmg = damage * (2 + level * 0.5);
+    const mine = this.scene.add.graphics();
+    mine.fillStyle(0xff5500, 1);
+    mine.fillCircle(0, 0, 8);
+    mine.lineStyle(2, 0xff8800, 0.8);
+    mine.strokeCircle(0, 0, 15);
+    mine.setPosition(x, y).setDepth(3);
+
+    this.scene.tweens.add({
+      targets: mine, scaleX: 1.2, scaleY: 1.2,
+      yoyo: true, repeat: -1, duration: 400
+    });
+
+    const checkTimer = this.scene.time.addEvent({
+      delay: 100,
+      callback: () => {
+        if (!mine.active) return;
+        const enemies = enemiesGroup.getChildren();
+        for (const enemy of enemies) {
+          if (enemy && enemy.active) {
+            const dist = Phaser.Math.Distance.Between(mine.x, mine.y, enemy.x, enemy.y);
+            if (dist <= 50) {
+              checkTimer.remove();
+              this.triggerMineExplosion(mine.x, mine.y, mineDmg, mineRadius, enemiesGroup);
+              mine.destroy();
+              return;
+            }
+          }
+        }
+      },
+      loop: true
+    });
+
+    this.scene.time.delayedCall(15000, () => {
+      if (mine.active) {
+        checkTimer.remove();
+        this.triggerMineExplosion(mine.x, mine.y, mineDmg, mineRadius, enemiesGroup);
+        mine.destroy();
+      }
+    });
+  }
+
+  triggerMineExplosion(x, y, damage, radius, enemiesGroup) {
+    const gfx = this.scene.add.graphics();
+    gfx.fillStyle(0xff5500, 0.8);
+    gfx.fillCircle(x, y, 10);
+    gfx.setDepth(15);
+
+    this.scene.tweens.add({
+      targets: gfx, scaleX: radius / 10, scaleY: radius / 10, alpha: 0,
+      duration: 400, ease: 'Cubic.easeOut',
+      onComplete: () => gfx.destroy()
+    });
+
+    const particles = this.scene.add.particles(x, y, 'p_glow', {
+      speed: { min: 150, max: 350 }, scale: { start: 1.2, end: 0 },
+      alpha: { start: 1, end: 0 }, tint: [0xff2200, 0xff8800, 0xffcc00],
+      blendMode: 'ADD', lifespan: 400, quantity: 20
+    }).setDepth(15);
+    this.scene.time.delayedCall(400, () => particles.destroy());
+
+    this.scene.cameras.main.shake(100, 0.012);
+
+    const enemies = enemiesGroup.getChildren();
+    enemies.forEach(enemy => {
+      if (enemy && enemy.active) {
+        const dist = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
+        if (dist <= radius) {
+          if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage);
+          else if (enemy.hp !== undefined) enemy.hp -= damage;
+        }
+      }
+    });
+  }
+
+  // 💥 DOOM BEAM 💥
+  fireDoomBeam(player, enemiesGroup, damage) {
+    if (!player || !player.active) return;
+    const beamWidth = 30;
+    const gfx = this.scene.add.graphics();
+    gfx.fillStyle(0x8800ff, 0.9);
+    gfx.fillRect(player.x - beamWidth / 2, 0, beamWidth, player.y);
+    gfx.setDepth(10);
+
+    const core = this.scene.add.graphics();
+    core.fillStyle(0xffffff, 0.6);
+    core.fillRect(player.x - 4, 0, 8, player.y);
+    core.setDepth(11);
+
+    const enemies = enemiesGroup.getChildren();
+    enemies.forEach(enemy => {
+      if (enemy && enemy.active) {
+        if (Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
+          if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 5);
+          else if (enemy.hp !== undefined) enemy.hp -= damage * 5;
+        }
+      }
+    });
+
+    this.scene.cameras.main.shake(200, 0.015);
+    this.scene.tweens.add({
+      targets: [gfx, core], alpha: 0,
+      duration: 500, onComplete: () => { gfx.destroy(); core.destroy(); }
+    });
+  }
+
+  // 🛡️ MIRROR SHIELD 🛡️
+  fireMirrorShieldProjectiles(player, enemiesGroup, damage) {
+    if (!player || !player.active) return;
+    const numProjectiles = 8;
+
+    for (let i = 0; i < numProjectiles; i++) {
+      const angle = (Math.PI * 2 / numProjectiles) * i;
+      const gfx = this.scene.add.graphics();
+      gfx.fillStyle(0x00ccff, 1);
+      gfx.fillCircle(0, 0, 6);
+      gfx.setPosition(player.x, player.y).setDepth(10);
+
+      const speed = 300;
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+
+      this.scene.tweens.add({
+        targets: gfx, x: gfx.x + vx, y: gfx.y + vy,
+        duration: 800, ease: 'Cubic.easeOut',
+        onUpdate: () => {
+          const enemies = enemiesGroup.getChildren();
+          enemies.forEach(enemy => {
+            if (enemy && enemy.active && gfx.active) {
+              const dist = Phaser.Math.Distance.Between(gfx.x, gfx.y, enemy.x, enemy.y);
+              if (dist < 30) {
+                if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 2);
+                else if (enemy.hp !== undefined) enemy.hp -= damage * 2;
+              }
+            }
+          });
+        },
+        onComplete: () => gfx.destroy()
+      });
+    }
+  }
+
+  // 🔴 NEON SAWBLADES 🔴
+  spawnSawblades(player, enemiesGroup, damage, level = 1) {
+    const numBlades = 1 + level;
+    const orbitRadius = 70;
+    const bladeGraphics = [];
+
+    for (let i = 0; i < numBlades; i++) {
+      const gfx = this.scene.add.graphics();
+      gfx.lineStyle(3, 0xff0088, 1);
+      for (let t = 0; t < 8; t++) {
+        const a = (Math.PI * 2 / 8) * t;
+        gfx.moveTo(0, 0);
+        gfx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14);
+      }
+      gfx.strokePath();
+      gfx.fillStyle(0xff0088, 0.8);
+      gfx.fillCircle(0, 0, 6);
+      gfx.setDepth(10);
+      bladeGraphics.push({ gfx, offset: (Math.PI * 2 / numBlades) * i });
+    }
+
+    let elapsed = 0;
+    const duration = 5000 + level * 1000;
+    const hitCooldowns = new Map();
+
+    const updateTimer = this.scene.time.addEvent({
+      delay: 16,
+      callback: () => {
+        elapsed += 16;
+        if (!player.active || elapsed >= duration) {
+          updateTimer.remove();
+          bladeGraphics.forEach(b => {
+            this.scene.tweens.add({ targets: b.gfx, alpha: 0, scale: 0, duration: 200, onComplete: () => b.gfx.destroy() });
+          });
+          return;
+        }
+
+        const speed = 3 + level * 0.5;
+        bladeGraphics.forEach(b => {
+          const angle = (elapsed / 1000) * speed + b.offset;
+          b.gfx.x = player.x + Math.cos(angle) * orbitRadius;
+          b.gfx.y = player.y + Math.sin(angle) * orbitRadius;
+          b.gfx.angle += 10;
+
+          const enemies = enemiesGroup.getChildren();
+          enemies.forEach(enemy => {
+            if (enemy && enemy.active) {
+              const dist = Phaser.Math.Distance.Between(b.gfx.x, b.gfx.y, enemy.x, enemy.y);
+              if (dist < 30) {
+                const key = enemy.x + '_' + enemy.y;
+                const lastHit = hitCooldowns.get(key) || 0;
+                if (elapsed - lastHit > 300) {
+                  hitCooldowns.set(key, elapsed);
+                  if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * (1 + level * 0.15));
+                  else if (enemy.hp !== undefined) enemy.hp -= damage * (1 + level * 0.15);
+                }
+              }
+            }
+          });
+        });
+      },
+      loop: true
+    });
+  }
+
+  // 🔴 FOKUS-LASER 🔴
+  fireFocusLaser(player, enemiesGroup, damage, level = 1) {
+    if (!player || !player.active) return;
+    const beamWidth = 6 + level * 2;
+    const beamDuration = 1500 + level * 500;
+    let elapsed = 0;
+
+    const gfx = this.scene.add.graphics().setDepth(10);
+
+    const timer = this.scene.time.addEvent({
+      delay: 50,
+      callback: () => {
+        elapsed += 50;
+        if (!player.active || elapsed >= beamDuration) {
+          timer.remove();
+          this.scene.tweens.add({ targets: gfx, alpha: 0, duration: 200, onComplete: () => gfx.destroy() });
+          return;
+        }
+
+        gfx.clear();
+        gfx.fillStyle(0xff2200, 0.5);
+        gfx.fillRect(player.x - beamWidth, 0, beamWidth * 2, player.y);
+        gfx.fillStyle(0xffffff, 0.8);
+        gfx.fillRect(player.x - 2, 0, 4, player.y);
+
+        const enemies = enemiesGroup.getChildren();
+        enemies.forEach(enemy => {
+          if (enemy && enemy.active && Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
+            const tickDmg = damage * (0.5 + level * 0.3);
+            if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
+            else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
+          }
+        });
+      },
+      loop: true
+    });
+  }
+
+  // 💛 HEAVY CANNON 💛
+  fireHeavyCannon(player, enemiesGroup, damage, level = 1) {
+    if (!player || !player.active) return;
+    const size = 10 + level * 5;
+    const cannonDmg = damage * (2 + level * 0.5);
+    const gfx = this.scene.add.graphics();
+    gfx.fillStyle(0xffcc00, 0.4);
+    gfx.fillCircle(0, 0, size + 6);
+    gfx.fillStyle(0xffaa00, 1);
+    gfx.fillCircle(0, 0, size);
+    gfx.fillStyle(0xffffff, 0.7);
+    gfx.fillCircle(0, 0, size * 0.4);
+    gfx.setPosition(player.x, player.y - 20).setDepth(10);
+
+    const startY = player.y - 20;
+    const hitEnemies = new Set();
+
+    this.scene.tweens.add({
+      targets: gfx, y: -50,
+      duration: 1200, ease: 'Linear',
+      onUpdate: () => {
+        if (!gfx.active) return;
+        const enemies = enemiesGroup.getChildren();
+        enemies.forEach(enemy => {
+          if (enemy && enemy.active && !hitEnemies.has(enemy)) {
+            const dist = Phaser.Math.Distance.Between(gfx.x, gfx.y, enemy.x, enemy.y);
+            if (dist <= size + 15) {
+              hitEnemies.add(enemy);
+              if (typeof enemy.takeDamage === 'function') enemy.takeDamage(cannonDmg);
+              else if (enemy.hp !== undefined) enemy.hp -= cannonDmg;
+              this.scene.cameras.main.shake(80, 0.008);
+            }
+          }
+        });
+      },
+      onComplete: () => gfx.destroy()
+    });
+  }
+
+  // 🔥 DAMAGE AURA 🔥
+  updateDamageAura(player, enemiesGroup, damage, level = 1) {
+    const radius = 60 + level * 20;
+    const tickDmg = damage * (0.3 + level * 0.15);
+
+    const enemies = enemiesGroup.getChildren();
+    enemies.forEach(enemy => {
+      if (enemy && enemy.active) {
+        const dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+        if (dist <= radius) {
+          if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
+          else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
+          enemy.setTint(0xff4400);
+          this.scene.time.delayedCall(200, () => { if (enemy.active) enemy.clearTint(); });
+        }
+      }
+    });
+  }
 }

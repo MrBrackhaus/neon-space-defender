@@ -1,26 +1,7 @@
 import Phaser from 'phaser';
 import EventSystem from '../systems/EventSystem';
 
-/**
- * @file TechTreeScene.js
- * @description Implements the game's Tech Tree scene. Here, players use Scrap to unlock
- * permanent, paradigm-shifting abilities (e.g., Dash, Shields) and advanced weapon evolutions.
- * Unlike the ShopScene (which provides stat boosts), this scene manages categorical system unlocks.
- * @module scenes/TechTreeScene
- */
-
-/**
- * @class TechTreeScene
- * @extends Phaser.Scene
- * @description Handles the visualization, layout, and logic for unlocking tech tree nodes.
- * Validates dependencies between nodes and updates local storage upon successful purchase.
- */
 export default class TechTreeScene extends Phaser.Scene {
-    
-    /**
-     * @constructor
-     * @description Initializes the scene with the key 'TechTreeScene'.
-     */
     constructor() {
         super('TechTreeScene');
     }
@@ -29,229 +10,279 @@ export default class TechTreeScene extends Phaser.Scene {
         this.boughtTech = data?.boughtTech || false;
     }
 
-    // ─────────────────── LIFECYCLE METHODS ───────────────────
-
-    /**
-     * @method create
-     * @description Sets up the tech tree scene, including the background grid,
-     * UI text elements, the node configurations, the connection lines, and the tooltip container.
-     */
     create() {
         const { width, height } = this.scale;
-        
         this.eventSys = new EventSystem(this);
         
         if (this.boughtTech) {
             this.eventSys.triggerCompanionComment('unlock_tech');
         }
-        
+
+        // --- CAMERA SETTINGS ---
+        this.cam = this.cameras.main;
+        this.cam.fadeIn(500, 0, 0, 0);
+        // The virtual world size for the tech tree
+        this.cam.setBounds(-2000, -2000, 4000, 4000);
+        this.cam.setZoom(1);
+
         // --- BACKGROUND ---
-        // Render a dark base background
-        this.add.rectangle(0, 0, width, height, 0x05050f).setOrigin(0, 0);
-        
-        // Draw a cyberpunk-style grid overlay to reinforce the tech theme
-        const grid = this.add.graphics();
-        grid.lineStyle(1, 0x00ffff, 0.07);
-        for (let i = 0; i < width; i += 60) grid.moveTo(i, 0).lineTo(i, height);
-        for (let j = 0; j < height; j += 60) grid.moveTo(0, j).lineTo(width, j);
-        grid.strokePath();
+        this.add.rectangle(-2000, -2000, 4000, 4000, 0x02020a).setOrigin(0, 0);
 
-        // --- TITLE ---
-        // Main scene title at the top
-        const title = this.add.text(width / 2, 60, 'TECH TREE', {
-            fontFamily: '"Orbitron", sans-serif',
-            fontSize: '52px',
-            color: '#00ffff',
-            fontStyle: 'bold',
-            letterSpacing: 4
-        }).setOrigin(0.5);
-        title.setShadow(0, 0, '#00ffff', 25, true, true);
-
-        // --- BACK BUTTON ---
-        // Interactive button to return to the main menu
-        const backBtn = this.add.text(40, 40, '◄ BACK', {
-            fontFamily: '"Orbitron", sans-serif',
-            fontSize: '24px',
-            color: '#ff0055',
-            fontStyle: 'bold'
-        }).setInteractive({ useHandCursor: true });
+        // Cyberpunk Parallax Grid (Moves with camera but slower)
+        this.gridGraphics = this.add.graphics();
+        this.gridGraphics.lineStyle(2, 0x00ffff, 0.05);
+        for (let i = -2000; i < 2000; i += 100) this.gridGraphics.moveTo(i, -2000).lineTo(i, 2000);
+        for (let j = -2000; j < 2000; j += 100) this.gridGraphics.moveTo(-2000, j).lineTo(2000, j);
+        this.gridGraphics.strokePath();
         
-        backBtn.on('pointerover', () => {
-            backBtn.setColor('#ffffff');
-            backBtn.setShadow(0, 0, '#ff0055', 15, true, true);
-        });
-        backBtn.on('pointerout', () => {
-            backBtn.setColor('#ff0055');
-            backBtn.setShadow(0, 0, '#000000', 0, false, false);
-        });
-        backBtn.on('pointerdown', () => {
-            this.scene.start('MenuScene');
+        // Deep Space Particles
+        this.add.particles(0, 0, 'p_glow', {
+            x: { min: -2000, max: 2000 },
+            y: { min: -2000, max: 2000 },
+            lifespan: { min: 4000, max: 10000 },
+            speedX: { min: -10, max: 10 },
+            speedY: { min: -10, max: 10 },
+            scale: { start: 0.5, end: 0 },
+            alpha: { start: 0.3, end: 0 },
+            blendMode: 'ADD',
+            quantity: 2
         });
 
         // --- DATA ---
-        /**
-         * @property {number} scrap
-         * @description The player's available scrap currency, retrieved from local storage.
-         */
-        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10); 
+        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10);
 
-        /**
-         * @property {Array<Object>} skills
-         * @description The definition array for all tech tree nodes. Contains IDs, local storage keys,
-         * coordinates (x,y) for placement, and requirements (req) linking to parent node IDs.
-         */
         this.skills = [
-            { id: 'dash', key: 'neon_tech_dash', name: 'Dash Modul', desc: 'Schaltet den Ausweich-Dash (Shift) frei.', cost: 200, x: width/2, y: 150, req: null },
+            // ZENTRUM
+            { id: 'dash', key: 'neon_tech_dash', name: 'Dash Modul', desc: 'Schaltet den Ausweich-Dash (Shift) frei. Der Ursprung deiner Reise.', cost: 50, x: 0, y: 0, req: null },
             
-            { id: 'shield', key: 'neon_tech_shield', name: 'Schild Matrix', desc: 'Erlaubt regenerative Schilde als Upgrade.', cost: 400, x: width/2 - 250, y: 270, req: 'dash' },
-            { id: 'cryo', key: 'neon_tech_cryo', name: 'Cryo-Strahl', desc: 'Schaltet dauerhaft verlangsamende Frostwaffen frei.', cost: 600, x: width/2 - 350, y: 390, req: 'shield' },
-            { id: 'tesla', key: 'neon_tech_tesla', name: 'Tesla Spule', desc: 'Ermöglicht Kettenblitz-Upgrades im Spiel.', cost: 600, x: width/2 - 150, y: 390, req: 'shield' },
-            { id: 'singularity', key: 'neon_tech_singularity', name: 'Singularität', desc: 'Schaltet Schwarze Löcher frei, die Gegner einsaugen.', cost: 1000, x: width/2 - 250, y: 510, req: 'tesla' },
+            // AST 1 (Links) - Überleben & Verteidigung
+            { id: 'shield', key: 'neon_tech_shield', name: 'Schild Matrix', desc: 'Erlaubt regenerative Schilde als Upgrade im Level-Up Pool.', cost: 100, x: -200, y: 150, req: 'dash' },
+            { id: 'revive', key: 'neon_tech_revive', name: 'Notfall-Reanimator', desc: 'Einmalige Wiederbelebung pro Lauf mit 30 HP.', cost: 400, x: -400, y: 150, req: 'shield' },
+            { id: 'mirror_shield', key: 'neon_tech_mirror_shield', name: 'Reflektor-Schild', desc: 'Ersetzt normales Schild: Feuert bei Bruch Rache-Kugeln ab!', cost: 350, x: -400, y: 0, req: 'shield' },
+            { id: 'aegis', key: 'neon_tech_aegis', name: 'Aegis-Rumpf', desc: '+50% maximale Gesundheit des Schiffs. Permanent.', cost: 300, x: -200, y: 350, req: 'shield' },
+            { id: 'cryo', key: 'neon_tech_cryo', name: 'Cryo-Strahl', desc: 'Schaltet dauerhaft verlangsamende Frostwaffen frei.', cost: 250, x: -400, y: 350, req: 'aegis' },
             
-            { id: 'drones', key: 'neon_tech_drones', name: 'Kampfdrohnen', desc: 'Schaltet begleitende Angriffs-Drohnen frei.', cost: 400, x: width/2 + 250, y: 270, req: 'dash' },
-            { id: 'orbitals', key: 'neon_tech_orbitals', name: 'Plasma Orbitals', desc: 'Ermöglicht rotierende Nahkampf-Sägen.', cost: 600, x: width/2 + 250, y: 390, req: 'drones' },
-            { id: 'scatter', key: 'neon_tech_scatter', name: 'Scatter Schiff', desc: 'Schaltet das Streuschuss-Schiff zur Auswahl frei.', cost: 800, x: width/2 + 150, y: 510, req: 'orbitals' },
-            { id: 'railgun', key: 'neon_tech_railgun', name: 'Railgun Schiff', desc: 'Schaltet das durchschlagende Scharfschützen-Schiff frei.', cost: 800, x: width/2 + 350, y: 510, req: 'orbitals' },
+            // AST 2 (Oben) - Energie & Anomalie
+            { id: 'tesla', key: 'neon_tech_tesla', name: 'Tesla Spule', desc: 'Ermöglicht Kettenblitz-Upgrades im Spiel.', cost: 150, x: 0, y: -200, req: 'dash' },
+            { id: 'singularity', key: 'neon_tech_singularity', name: 'Singularität', desc: 'Schaltet Schwarze Löcher frei, die Gegner gnadenlos einsaugen.', cost: 350, x: 0, y: -400, req: 'tesla' },
+            { id: 'void_shield', key: 'neon_tech_void_shield', name: 'Void-Antiresonanz', desc: 'Reduziert den Schaden durch Void-Feinde passiv um 15%.', cost: 400, x: -200, y: -550, req: 'singularity' },
+            { id: 'fusion', key: 'neon_tech_fusion', name: 'Fusion Core', desc: 'Schaltet extrem mächtige Waffen-Evolutionen beim Level-Up frei!', cost: 600, x: 200, y: -550, req: 'singularity' },
+            { id: 'doom_beam', key: 'neon_tech_doom_beam', name: 'Void-Giga-Laser', desc: 'Massiver, konstanter Laserstrahl direkt nach vorne.', cost: 750, x: 0, y: -700, req: ['void_shield', 'fusion'] },
             
-            { id: 'fusion', key: 'neon_tech_fusion', name: 'Fusion Core', desc: 'Schaltet extrem mächtige Waffen-Evolutionen frei!', cost: 2000, x: width/2, y: 630, req: ['singularity', 'scatter'] }
+            // AST 3 (Rechts) - Artillerie & Helfer
+            { id: 'drones', key: 'neon_tech_drones', name: 'Kampfdrohnen', desc: 'Schaltet begleitende Angriffs-Drohnen frei.', cost: 150, x: 200, y: 150, req: 'dash' },
+            { id: 'sonic_wave', key: 'neon_tech_sonic_wave', name: 'Schall-Blaster', desc: 'Fügt eine extrem breite Druckwelle mit Knockback in den Pool ein.', cost: 300, x: 200, y: 0, req: 'drones' },
+            { id: 'mines', key: 'neon_tech_mines', name: 'Nova-Minenleger', desc: 'Droppt schwebende Neon-Minen hinter dir, die massiven Flächenschaden verursachen.', cost: 350, x: 400, y: 0, req: 'sonic_wave' },
+            { id: 'laser_drones', key: 'neon_tech_laser_drones', name: 'Laser-Drohnen', desc: 'Deine Kampfdrohnen feuern nun durchschlagende Laser statt normaler Projektile.', cost: 300, x: 400, y: 150, req: 'drones' },
+            { id: 'orbitals', key: 'neon_tech_orbitals', name: 'Plasma Orbitals', desc: 'Ermöglicht rotierende Nahkampf-Sägen um dein Schiff.', cost: 250, x: 200, y: 350, req: 'drones' },
+            { id: 'pierce_start', key: 'neon_tech_pierce_start', name: 'Durchdringer', desc: 'Startet JEDEN Lauf direkt mit einem Pierce-Buff.', cost: 350, x: 400, y: 350, req: 'orbitals' },
+            { id: 'scatter', key: 'neon_tech_scatter', name: 'Scatter Schiff', desc: 'Schaltet das Streuschuss-Schiff zur Auswahl frei.', cost: 500, x: 600, y: 200, req: 'pierce_start' },
+            { id: 'railgun', key: 'neon_tech_railgun', name: 'Railgun Schiff', desc: 'Schaltet das durchschlagende Scharfschützen-Schiff frei.', cost: 500, x: 600, y: 500, req: 'pierce_start' },
+
+            // AST 4 (Rechts-Oben) - Klingen & Strahlen
+            { id: 'sawblades', key: 'neon_tech_sawblades', name: 'Neon-Sägeblätter', desc: 'Wirbelnde Laserklingen, die Gegner bei Kontakt zerfetzen.', cost: 200, x: 400, y: -200, req: 'drones' },
+            { id: 'focus_laser', key: 'neon_tech_focus_laser', name: 'Fokus-Laser', desc: 'Gebündelter Dauerstrahl. Schmilzt alles auf einer Linie.', cost: 450, x: 600, y: -200, req: 'sawblades' },
+
+            // AST 5 (Unten) - Schwere Waffen & Aura
+            { id: 'heavy_cannon', key: 'neon_tech_heavy_cannon', name: 'Schiffskanone', desc: 'Feuert massige Neon-Kugeln ab. Langsam aber absolut brutal.', cost: 300, x: 0, y: 200, req: 'dash' },
+            { id: 'damage_aura', key: 'neon_tech_damage_aura', name: 'Schadensaura', desc: 'Permanenter Schadensring um dein Schiff. Vernichtet Nahkämpfer.', cost: 350, x: 0, y: 400, req: 'heavy_cannon' },
+
+            // AST 6 (Links-Oben) - Ressourcen & Magneten
+            { id: 'scrap_magnet', key: 'neon_tech_scrap_magnet', name: 'Schrott-Magnet', desc: 'Zieht Schrott und Glitzer-Cubes aus doppelter Entfernung an.', cost: 150, x: -200, y: -200, req: 'dash' },
+            { id: 'cube_booster', key: 'neon_tech_cube_booster', name: 'Glitzer-Booster', desc: '+50% Chance auf Bonus-Cubes bei jedem Kill.', cost: 250, x: -400, y: -200, req: 'scrap_magnet' }
         ];
 
-        // Evaluate and apply unlocked status based on local storage
         this.skills.forEach(skill => {
             skill.unlocked = parseInt(localStorage.getItem(skill.key) || '0', 10) > 0;
         });
 
-        // --- CONNECTIONS ---
-        /**
-         * @property {Phaser.GameObjects.Graphics} nodeGraphics
-         * @description Graphics context for drawing the connecting lines between tech nodes.
-         */
+        // --- CONNECTIONS LAYER ---
         this.nodeGraphics = this.add.graphics();
         this.drawConnections();
 
-        // --- TOOLTIP ---
-        this.createTooltip();
-
-        // --- NODES ---
+        // --- NODES LAYER ---
         this.nodes = {};
-        
-        // Build interactive nodes for each skill
-        this.skills.forEach(skill => {
-            this.createNode(skill);
+        this.skills.forEach(skill => this.createNode(skill));
+
+        // --- UI LAYER (Fixed to Screen) ---
+        this.uiScene = this.scene.manager.getScene('TechTreeScene'); // same scene, but we use scrollFactor = 0
+        this.buildFixedUI(width, height);
+
+        // --- CAMERA CONTROLS ---
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+
+        this.input.on('pointerdown', (pointer) => {
+            if (pointer.x > width - 320 && this.sidePanel.visible) return; // Prevent drag on UI
+            this.isDragging = true;
+            this.dragStartX = pointer.x;
+            this.dragStartY = pointer.y;
         });
 
-        // --- CREDITS DISPLAY ---
-        // Render current scrap amount in the top right corner
-        this.creditsText = this.add.text(width - 40, 40, `SCHROTT: ${this.scrap}`, {
-            fontFamily: '"Orbitron", sans-serif',
-            fontSize: '24px',
-            color: '#ffff00',
-            fontStyle: 'bold'
-        }).setOrigin(1, 0);
-        this.creditsText.setShadow(0, 0, '#ffff00', 10, true, true);
+        this.input.on('pointerup', () => {
+            this.isDragging = false;
+        });
+
+        this.input.on('pointermove', (pointer) => {
+            if (this.isDragging) {
+                const dx = this.dragStartX - pointer.x;
+                const dy = this.dragStartY - pointer.y;
+                
+                // Adjust drag amount by zoom level so dragging feels consistent
+                this.cam.scrollX += dx / this.cam.zoom;
+                this.cam.scrollY += dy / this.cam.zoom;
+                
+                this.dragStartX = pointer.x;
+                this.dragStartY = pointer.y;
+                
+                // Parallax effect on grid
+                this.gridGraphics.x = this.cam.scrollX * 0.2;
+                this.gridGraphics.y = this.cam.scrollY * 0.2;
+            }
+        });
+
+        this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+            // Zoom in or out based on deltaY
+            let targetZoom = this.cam.zoom - (deltaY * 0.001);
+            
+            // Clamp zoom level
+            targetZoom = Phaser.Math.Clamp(targetZoom, 0.4, 1.5);
+            
+            // Apply zoom
+            this.cam.setZoom(targetZoom);
+        });
+
+        // Center camera on start
+        this.cam.centerOn(0, 0);
     }
 
-    // ─────────────────── CORE LOGIC METHODS ───────────────────
+    buildFixedUI(width, height) {
+        // Title
+        const title = this.add.text(40, 40, 'TECH TREE', {
+            fontFamily: 'Orbitron', fontSize: '42px', color: '#00ffff', fontStyle: 'bold', letterSpacing: 4
+        }).setOrigin(0, 0).setScrollFactor(0);
+        title.setShadow(0, 0, '#00ffff', 20, true, true);
 
-    /**
-     * @method drawConnections
-     * @description Iterates through all skills and draws lines mapping to their prerequisites.
-     * Line styling changes dynamically depending on unlock states (Locked vs. Available vs. Unlocked).
-     */
+        // Back Button
+        const backBtn = this.add.text(40, 100, '◄ MAIN MENU', {
+            fontFamily: 'Orbitron', fontSize: '20px', color: '#ff0055', fontStyle: 'bold'
+        }).setInteractive({ useHandCursor: true }).setScrollFactor(0);
+        
+        backBtn.on('pointerover', () => backBtn.setColor('#ffffff').setShadow(0,0,'#ff0055', 10, true, true));
+        backBtn.on('pointerout', () => backBtn.setColor('#ff0055').setShadow(0,0,'#000', 0));
+        backBtn.on('pointerdown', () => this.scene.start('MenuScene'));
+
+        // Scrap Display
+        this.scrapText = this.add.text(40, height - 60, `SCHROTT: ${this.scrap}`, {
+            fontFamily: 'Orbitron', fontSize: '28px', color: '#ffaa00', fontStyle: 'bold'
+        }).setOrigin(0, 0).setScrollFactor(0);
+        this.scrapText.setShadow(0, 0, '#ffaa00', 10, true, true);
+
+        // --- SIDE PANEL ---
+        this.sidePanel = this.add.container(width, 0).setScrollFactor(0).setDepth(100);
+        
+        // Panel Background (Glassmorphism style)
+        const panelBg = this.add.rectangle(0, 0, 350, height, 0x050510, 0.95).setOrigin(0, 0);
+        panelBg.setStrokeStyle(4, 0x00ffff);
+        panelBg.setInteractive(); // Block clicks through panel
+
+        // Title
+        this.spTitle = this.add.text(30, 80, 'SKILL NAME', {
+            fontFamily: 'Orbitron', fontSize: '28px', color: '#ffffff', fontStyle: 'bold', wordWrap: { width: 290 }
+        });
+
+        // Desc
+        this.spDesc = this.add.text(30, 160, 'Description of the skill goes here.', {
+            fontFamily: 'Share Tech Mono', fontSize: '16px', color: '#cccccc', wordWrap: { width: 290 }, lineSpacing: 6
+        });
+
+        // Cost
+        this.spCost = this.add.text(30, height - 200, 'COST: 100 SCRAP', {
+            fontFamily: 'Orbitron', fontSize: '20px', color: '#ffaa00', fontStyle: 'bold'
+        });
+
+        // Unlock Button
+        this.spBtnBg = this.add.rectangle(175, height - 100, 290, 60, 0x334455).setInteractive({ useHandCursor: true });
+        this.spBtnText = this.add.text(175, height - 100, 'UNLOCK', {
+            fontFamily: 'Orbitron', fontSize: '22px', color: '#ffffff', fontStyle: 'bold', letterSpacing: 2
+        }).setOrigin(0.5);
+
+        // Close Panel Button
+        const closeBtn = this.add.text(310, 20, '✖', { fontSize: '30px', color: '#ff0055' })
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.hideSidePanel());
+
+        this.sidePanel.add([panelBg, this.spTitle, this.spDesc, this.spCost, this.spBtnBg, this.spBtnText, closeBtn]);
+        
+        this.spBtnBg.on('pointerdown', () => this.attemptUnlock());
+
+        this.sidePanel.x = width + 400; // Hidden initially
+        this.selectedSkill = null;
+    }
+
     drawConnections() {
         this.nodeGraphics.clear();
-        
         this.skills.forEach(skill => {
             if (skill.req) {
-                // Ensure requirements are treated as an array for iteration (handles single or multiple requirements)
                 const reqs = Array.isArray(skill.req) ? skill.req : [skill.req];
-                
                 reqs.forEach(reqId => {
                     const parent = this.skills.find(s => s.id === reqId);
                     if (parent) {
                         const isUnlocked = skill.unlocked;
                         const isAvailable = parent.unlocked && !skill.unlocked;
                         
-                        // Default line style (Locked or inaccessible)
                         let lineColor = 0x333344;
-                        let lineAlpha = 0.5;
-                        let lineThickness = 2;
+                        let lineAlpha = 0.4;
+                        let lineThickness = 3;
 
                         if (isUnlocked) {
-                            // Bright cyan line connecting fully unlocked nodes
                             lineColor = 0x00ffff;
                             lineAlpha = 1;
-                            lineThickness = 4;
+                            lineThickness = 6;
                         } else if (isAvailable) {
-                            // Pulsing magenta line indicating an available purchase path
                             lineColor = 0xff00ff;
                             lineAlpha = 0.8;
-                            lineThickness = 2;
+                            lineThickness = 4;
                         }
 
-                        // Execute path drawing
                         this.nodeGraphics.lineStyle(lineThickness, lineColor, lineAlpha);
                         this.nodeGraphics.beginPath();
                         this.nodeGraphics.moveTo(parent.x, parent.y);
                         this.nodeGraphics.lineTo(skill.x, skill.y);
                         this.nodeGraphics.strokePath();
+
+                        // Draw moving energy dots on unlocked paths
+                        if (isUnlocked) {
+                            this.drawEnergyFlow(parent, skill);
+                        }
                     }
                 });
             }
         });
     }
 
-    /**
-     * @method createTooltip
-     * @description Instantiates a reusable container with text elements intended for displaying
-     * node details (Name, Description, Cost, State). Initially hidden.
-     */
-    createTooltip() {
-        this.tooltip = this.add.container(0, 0).setDepth(100).setVisible(false);
+    drawEnergyFlow(parent, skill) {
+        // Simple visual polish: draw a small glowing circle moving from parent to skill
+        const dot = this.add.circle(parent.x, parent.y, 4, 0xffffff).setDepth(5);
         
-        // Tooltip background
-        const tooltipBg = this.add.rectangle(0, 0, 280, 130, 0x0a0a1a, 0.95)
-            .setStrokeStyle(2, 0x00ffff)
-            .setOrigin(0, 0);
-            
-        // Neon corner accents for visual flair
-        const tl = this.add.rectangle(0, 0, 10, 10, 0x00ffff).setOrigin(0, 0);
-        const br = this.add.rectangle(280, 130, 10, 10, 0x00ffff).setOrigin(1, 1);
+        // Calculate distance to adjust duration so speed is constant
+        const dist = Phaser.Math.Distance.Between(parent.x, parent.y, skill.x, skill.y);
         
-        const tooltipTitle = this.add.text(15, 15, 'Skill Name', { 
-            fontFamily: '"Orbitron", sans-serif', 
-            fontSize: '20px', 
-            color: '#ffffff',
-            fontStyle: 'bold'
+        this.tweens.add({
+            targets: dot,
+            x: skill.x,
+            y: skill.y,
+            duration: dist * 8, // speed factor
+            repeat: -1,
+            ease: 'Linear',
+            onUpdate: (tween, target) => {
+                target.alpha = Math.max(0, 1 - tween.progress);
+            }
         });
-        
-        const tooltipDesc = this.add.text(15, 45, 'Description goes here and wraps properly.', { 
-            fontFamily: '"Inter", "Arial", sans-serif', 
-            fontSize: '14px', 
-            color: '#cccccc', 
-            wordWrap: { width: 250 },
-            lineSpacing: 4
-        });
-        
-        const tooltipCost = this.add.text(15, 100, 'Cost: 100', { 
-            fontFamily: '"Orbitron", sans-serif', 
-            fontSize: '16px', 
-            color: '#ffff00',
-            fontStyle: 'bold'
-        });
-        
-        // Group everything into the tooltip container
-        this.tooltip.add([tooltipBg, tl, br, tooltipTitle, tooltipDesc, tooltipCost]);
     }
 
-    /**
-     * @method createNode
-     * @description Calculates readiness status for a specific skill node, then constructs its
-     * visual representation (a diamond-shaped box), applies interactivity, and manages hover/click events.
-     * @param {Object} skill - The skill configuration object.
-     */
     createNode(skill) {
-        // Validate if all prerequisites are fulfilled
         let reqsMet = true;
         if (skill.req) {
             const reqs = Array.isArray(skill.req) ? skill.req : [skill.req];
@@ -264,7 +295,6 @@ export default class TechTreeScene extends Phaser.Scene {
         const isUnlocked = skill.unlocked;
         const isAvailable = !isUnlocked && reqsMet;
 
-        // Base color palettes mapped to node statuses
         let strokeColor = 0x333344;
         let fillColor = 0x0a0a1a;
         let textColor = '#555566';
@@ -272,123 +302,167 @@ export default class TechTreeScene extends Phaser.Scene {
 
         if (isUnlocked) {
             strokeColor = 0x00ffff;
-            fillColor = 0x002233;
-            textColor = '#00ffff';
+            fillColor = 0x003344;
+            textColor = '#ffffff';
             glow = true;
         } else if (isAvailable) {
             strokeColor = 0xff00ff;
-            fillColor = 0x220022;
+            fillColor = 0x330033;
             textColor = '#ffffff';
         }
 
-        const container = this.add.container(skill.x, skill.y);
+        const container = this.add.container(skill.x, skill.y).setDepth(10);
         
-        // Base rectangle rotated by 45 degrees to form a diamond
-        const rect = this.add.rectangle(0, 0, 70, 70, fillColor)
-            .setStrokeStyle(3, strokeColor)
-            .setInteractive({ useHandCursor: isAvailable });
-        rect.setAngle(45);
-
-        // Append a faint outer glow for unlocked nodes
-        if (glow && isUnlocked) {
-            rect.isStroked = true;
-            const glowRect = this.add.rectangle(0, 0, 74, 74, 0x00ffff, 0.2).setAngle(45);
-            container.add(glowRect);
+        // AAA Hexagon instead of simple rotated square
+        const hex = this.add.polygon(0, 0, this.getHexPoints(45), fillColor)
+            .setStrokeStyle(4, strokeColor)
+            .setInteractive(new Phaser.Geom.Polygon(this.getHexPoints(45)), Phaser.Geom.Polygon.Contains, { useHandCursor: true });
+        
+        if (glow) {
+            const glowHex = this.add.polygon(0, 0, this.getHexPoints(50), 0x00ffff, 0.3);
+            container.add(glowHex);
+            
+            // Subtle pulse
+            this.tweens.add({
+                targets: glowHex,
+                scale: 1.1,
+                alpha: 0.1,
+                duration: 1000,
+                yoyo: true,
+                repeat: -1
+            });
         }
 
-        // Generate dynamic node initials (e.g., "Dash Modul" -> "DM")
-        const initials = skill.name.split(' ').map(n => n[0]).join('').substring(0,2);
+        const initials = skill.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
         const iconText = this.add.text(0, 0, initials, {
-            fontFamily: '"Orbitron", sans-serif',
-            fontSize: '28px',
-            color: textColor,
-            fontStyle: 'bold'
+            fontFamily: 'Orbitron', fontSize: '30px', color: textColor, fontStyle: 'bold'
         }).setOrigin(0.5);
-        
-        if (glow) iconText.setShadow(0, 0, textColor, 10, true, true);
+        if (glow) iconText.setShadow(0, 0, '#00ffff', 10, true, true);
 
-        container.add([rect, iconText]);
+        container.add([hex, iconText]);
 
-        // Interactivity: Pointer Over (Hover)
-        rect.on('pointerover', () => {
-            rect.setStrokeStyle(4, 0xffffff);
-            
-            // Adapt fill tint based on availability
-            if (isAvailable) rect.fillColor = 0x440044;
-            else if (isUnlocked) rect.fillColor = 0x004466;
-
-            // Populate the tooltip container with current node data
-            const [bg, tl, br, tTitle, tDesc, tCost] = this.tooltip.list;
-            tTitle.setText(skill.name);
-            tTitle.setColor(isUnlocked ? '#00ffff' : (isAvailable ? '#ff00ff' : '#888899'));
-            tDesc.setText(skill.desc);
-            
-            if (isUnlocked) {
-                tCost.setText('STATUS: ACQUIRED');
-                tCost.setColor('#00ff00');
-            } else {
-                tCost.setText(isAvailable ? `KOSTEN: ${skill.cost} SCHROTT` : 'STATUS: LOCKED');
-                tCost.setColor(isAvailable ? '#ffff00' : '#ff0000');
+        hex.on('pointerover', () => {
+            if (!this.isDragging) {
+                hex.setStrokeStyle(5, 0xffffff);
+                this.tweens.add({ targets: container, scale: 1.1, duration: 150 });
             }
-
-            // Reposition tooltip intelligently to prevent off-screen clipping
-            let tx = skill.x + 50;
-            let ty = skill.y - 65;
-            if (tx + 280 > this.scale.width) tx = skill.x - 330;
-            
-            this.tooltip.setPosition(tx, ty);
-            this.tooltip.setVisible(true);
         });
 
-        // Interactivity: Pointer Out (Leave Hover)
-        rect.on('pointerout', () => {
-            rect.setStrokeStyle(3, strokeColor);
-            rect.fillColor = fillColor;
-            this.tooltip.setVisible(false);
+        hex.on('pointerout', () => {
+            hex.setStrokeStyle(4, strokeColor);
+            this.tweens.add({ targets: container, scale: 1.0, duration: 150 });
         });
 
-        // Interactivity: Pointer Down (Click to Purchase)
-        rect.on('pointerdown', () => {
-            if (isAvailable) {
-                if (this.scrap >= skill.cost) {
-                    // Successful purchase transaction
-                    this.scrap -= skill.cost;
-                    skill.unlocked = true;
-                    
-                    localStorage.setItem('neon_scrap', this.scrap);
-                    localStorage.setItem(skill.key, '1');
-                    
-                    // Flash effect to confirm acquisition
-                    const flash = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0xffffff, 0.3).setOrigin(0,0);
-                    this.tweens.add({
-                        targets: flash,
-                        alpha: 0,
-                        duration: 300,
-                        onComplete: () => { 
-                            flash.destroy(); 
-                            this.scene.restart({ boughtTech: true }); // Restart to re-evaluate lines and node states fully
-                        }
-                    });
-                } else {
-                    // Handle insufficient funds
-                    this.cameras.main.shake(200, 0.01);
-                    const errorText = this.add.text(skill.x, skill.y - 80, 'NICHT GENUG SCHROTT', {
-                        fontFamily: '"Orbitron", sans-serif', fontSize: '16px', color: '#ff0000', fontStyle: 'bold'
-                    }).setOrigin(0.5);
-                    
-                    // Float up and fade out error text
-                    this.tweens.add({
-                        targets: errorText, y: skill.y - 120, alpha: 0, duration: 1000,
-                        onComplete: () => errorText.destroy()
-                    });
+        hex.on('pointerdown', (pointer) => {
+            // Distinguish click from drag
+            this.time.delayedCall(150, () => {
+                if (!this.isDragging) {
+                    this.showSidePanel(skill, isUnlocked, isAvailable);
+                    this.cam.pan(skill.x, skill.y, 500, 'Cubic.easeOut');
                 }
-            } else if (!isUnlocked) {
-                // Deny click if requirements are not met
-                this.cameras.main.shake(150, 0.005);
-            }
+            });
         });
 
-        // Save reference for potential future interactions
         this.nodes[skill.id] = container;
+    }
+
+    getHexPoints(size) {
+        const points = [];
+        for (let i = 0; i < 6; i++) {
+            const angle_deg = 60 * i - 30;
+            const angle_rad = Math.PI / 180 * angle_deg;
+            points.push(size * Math.cos(angle_rad));
+            points.push(size * Math.sin(angle_rad));
+        }
+        return points;
+    }
+
+    showSidePanel(skill, isUnlocked, isAvailable) {
+        this.selectedSkill = { skill, isUnlocked, isAvailable };
+        
+        this.spTitle.setText(skill.name);
+        this.spDesc.setText(skill.desc);
+        
+        if (isUnlocked) {
+            this.spTitle.setColor('#00ffff');
+            this.spCost.setText('STATUS: ACQUIRED');
+            this.spCost.setColor('#00ff00');
+            this.spBtnBg.setFillStyle(0x334455);
+            this.spBtnText.setText('UNLOCKED').setColor('#888899');
+        } else {
+            this.spTitle.setColor(isAvailable ? '#ff00ff' : '#aaaaaa');
+            this.spCost.setText(isAvailable ? `COST: ${skill.cost} SCHROTT` : 'STATUS: LOCKED');
+            this.spCost.setColor(isAvailable ? '#ffaa00' : '#ff0000');
+            
+            if (isAvailable && this.scrap >= skill.cost) {
+                this.spBtnBg.setFillStyle(0xff00ff);
+                this.spBtnText.setText('UNLOCK').setColor('#ffffff');
+            } else if (isAvailable) {
+                this.spBtnBg.setFillStyle(0x440000);
+                this.spBtnText.setText('INSUFFICIENT FUNDS').setColor('#ffaaaa');
+            } else {
+                this.spBtnBg.setFillStyle(0x222222);
+                this.spBtnText.setText('LOCKED').setColor('#555555');
+            }
+        }
+
+        // Slide in
+        if (this.sidePanel.x > this.scale.width - 350) {
+            this.tweens.add({
+                targets: this.sidePanel,
+                x: this.scale.width - 350,
+                duration: 400,
+                ease: 'Cubic.out'
+            });
+        }
+    }
+
+    hideSidePanel() {
+        this.tweens.add({
+            targets: this.sidePanel,
+            x: this.scale.width + 400,
+            duration: 300,
+            ease: 'Cubic.in'
+        });
+    }
+
+    attemptUnlock() {
+        if (!this.selectedSkill) return;
+        const { skill, isUnlocked, isAvailable } = this.selectedSkill;
+        
+        if (isAvailable && this.scrap >= skill.cost) {
+            // Execute Purchase
+            this.scrap -= skill.cost;
+            localStorage.setItem('neon_scrap', this.scrap);
+            localStorage.setItem(skill.key, '1');
+            
+            this.hideSidePanel();
+            
+            // Particle Burst on node
+            const emitter = this.add.particles(skill.x, skill.y, 'p_glow', {
+                speed: { min: 50, max: 200 },
+                scale: { start: 0.5, end: 0 },
+                lifespan: 1000,
+                blendMode: 'ADD',
+                quantity: 30
+            });
+            emitter.setDepth(20);
+            emitter.explode();
+
+            // Flash Screen
+            const flash = this.add.rectangle(this.cam.scrollX, this.cam.scrollY, 4000, 4000, 0xffffff, 0.4).setOrigin(0,0).setDepth(200);
+            this.tweens.add({
+                targets: flash,
+                alpha: 0,
+                duration: 400,
+                onComplete: () => { 
+                    flash.destroy();
+                    this.scene.restart({ boughtTech: true }); 
+                }
+            });
+        } else if (isAvailable && this.scrap < skill.cost) {
+            // Shake UI
+            this.cameras.main.shake(200, 0.005);
+        }
     }
 }

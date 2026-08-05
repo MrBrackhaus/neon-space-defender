@@ -178,6 +178,7 @@ export default class MenuScene extends Phaser.Scene {
     _wireBtns(menuLayer) {
         const buttons = [
             { id: 'btn-newgame', scene: 'ShipSelectScene' },
+            { id: 'btn-techtree', scene: 'TechTreeScene' },
             { id: 'btn-shop', scene: 'ShopScene' },
             { id: 'btn-achievements', scene: 'AchievementScene' },
             { id: 'btn-highscores', scene: 'HighscoreScene' },
@@ -207,23 +208,5 @@ export default class MenuScene extends Phaser.Scene {
                 });
             }
         });
-
-        // 2. Custom Logic Button (Tech Tree)
-        const btnTechTree = document.getElementById('btn-techtree');
-        if (btnTechTree) {
-            const freshTT = btnTechTree.cloneNode(true);
-            btnTechTree.parentNode.replaceChild(freshTT, btnTechTree);
-            
-            freshTT.addEventListener('mouseenter', () => {
-                if (this.game.audioSys) this.game.audioSys.playHover();
-            });
-            
-            freshTT.addEventListener('click', () => {
-                if (this.game.audioSys) this.game.audioSys.playClick();
-                if (window.openTechTree) {
-                    window.openTechTree();
-                }
-            });
-        }
     }
 }

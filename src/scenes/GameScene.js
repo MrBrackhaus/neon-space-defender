@@ -47,55 +47,6 @@ const ENEMY_DEFS = {
     carrier: { hp: 400, speed: 20,  score: 100, xp: 80, color: 0x00ffaa, shoots: false },
     laser:   { hp: 60,  speed: 35,  score: 60, xp: 40, color: 0xff0000, shoots: true },
     boss:      { hp: 800, speed: 25, score: 1000, xp: 500, color: 0xff0000, shoots: true },
-/**
- * @file GameScene.js
- * @description Main gameplay scene for Neon Space Defender. Manages core loop, player movement, enemy spawning, 
- * collision detection, wave progression, and integrates all major game systems.
- * @module GameScene
- */
-import Phaser from 'phaser';
-import AudioSystem from '../systems/AudioSystem.js';
-import EnvironmentSystem from '../systems/EnvironmentSystem.js';
-import WeaponSystem from '../systems/WeaponSystem.js';
-import EventSystem from '../systems/EventSystem.js';
-import JuiceSystem from '../systems/JuiceSystem.js';
-import AchievementSystem from '../systems/AchievementSystem.js';
-import BossSystem from '../systems/BossSystem.js';
-import AbilitySystem from '../systems/AbilitySystem.js';
-import HazardSystem from '../systems/HazardSystem.js';
-import { getMetaStats } from '../systems/MetaUpgrades.js';
-
-// ═══════════════════════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════════════════════
-
-// Global list of in-run upgrades accessible during level up.
-const UPGRADES = [
-    { id: 'multi_shot', name: 'DOUBLE BARREL',   desc: '+1 Schuss gleichzeitig (max 6)',     color: '#00ffff' },
-    { id: 'speed',      name: 'HYPERDRIVE',       desc: '+20% Bewegungsgeschwindigkeit',       color: '#ffff00' },
-    { id: 'damage',     name: 'HEAVY ROUNDS',     desc: '+40% Schaden pro Treffer',           color: '#ff6600' },
-    { id: 'fire_rate',  name: 'RAPID FIRE',       desc: '-20% Feuer-Verzögerung',             color: '#ff3300' },
-    { id: 'nova',       name: 'NOVA BOMBE',       desc: '+1 Nova-Bombe (Taste Q zünden)',     color: '#ff00ff' },
-    { id: 'magnet',     name: 'XP-MAGNET',        desc: '+80px XP-Anziehungsradius',          color: '#aa00ff' },
-    { id: 'regen',      name: 'NANO-REPARATUR',   desc: '+3 HP pro Sekunde Regeneration',     color: '#00ff66' },
-    { id: 'area',       name: 'SCHOCKWELLE',      desc: 'AoE-Explosion beim Töten',           color: '#ffffff' },
-    { id: 'maxhp',      name: 'PANZER-HULL',      desc: '+30 maximale HP + volle Heilung',    color: '#ff4444' },
-    { id: 'crit',       name: 'KRITISCHE SYSTEME',desc: '20% Chance auf 3x Schaden',          color: '#ffdd00' }
-];
-
-// Base stats, xp yields, and behavioral flags for all enemy types.
-const ENEMY_DEFS = {
-    basic:   { hp: 30,  speed: 80,  score: 10, xp: 8,  color: 0xff2244, shoots: false },
-    fast:    { hp: 15,  speed: 165, score: 15, xp: 10, color: 0xff8800, shoots: false },
-    tank:    { hp: 180, speed: 45,  score: 35, xp: 28, color: 0x9900ff, shoots: false },
-    shooter: { hp: 50,  speed: 55,  score: 30, xp: 20, color: 0xddcc00, shoots: true  },
-    elite:   { hp: 90,  speed: 115, score: 60, xp: 45, color: 0xff00cc, shoots: false },
-    swarmer: { hp: 5,   speed: 130, score: 5,  xp: 4,  color: 0x44ff44, shoots: false },
-    phantom: { hp: 45,  speed: 95,  score: 40, xp: 30, color: 0x4444ff, shoots: false },
-    stealth: { hp: 70,  speed: 140, score: 50, xp: 35, color: 0x222222, shoots: false },
-    carrier: { hp: 400, speed: 20,  score: 100, xp: 80, color: 0x00ffaa, shoots: false },
-    laser:   { hp: 60,  speed: 35,  score: 60, xp: 40, color: 0xff0000, shoots: true },
-    boss:      { hp: 800, speed: 25, score: 1000, xp: 500, color: 0xff0000, shoots: true },
     mothership:{ hp: 4500, speed: 30, score: 1500, xp: 800, color: 0xff00ff, shoots: true },
     hivemind:  { hp: 6000, speed: 40, score: 2000, xp: 1000, color: 0x00ff00, shoots: true },
     hivemind_clone: { hp: 1500, speed: 110, score: 400, xp: 200, color: 0x55ff55, shoots: true },
@@ -110,9 +61,6 @@ const ENEMY_DEFS = {
  * @returns {Object} Dictionary of enemy types and quantities.
  */
 function getWaveComp(wave) {
-    if (wave === 5) return { boss: 1 };
-    if (wave === 10) return { mothership: 1 };
-    if (wave === 15) return { hivemind: 1 };
     if (wave % 20 === 0) return { destroyer: 1 };
     if (wave % 15 === 0) return { hivemind: 1 };
     if (wave % 10 === 0) return { mothership: 1 };
@@ -1261,6 +1209,69 @@ export default class GameScene extends Phaser.Scene {
         return alive.slice(0, count);
     }
 
+    /**
+     * @description Spawns a player projectile from the object pool with given coordinates and trajectory.
+     * @param {number} x - Origin X coordinate.
+     * @param {number} y - Origin Y coordinate.
+     * @param {number} angle - Firing angle in radians.
+     */
+    fireBullet(x, y, angle, isLaserDrone = false) {
+        if (this.audioSys) this.audioSys.playShoot(this.weaponClass);
+
+        let tex = 'bullet_pulse';
+        if (this.weaponClass === 'scatter') tex = 'bullet_scatter';
+        if (this.weaponClass === 'railgun') tex = 'bullet_railgun';
+        if (isLaserDrone) tex = 'bullet_railgun';
+
+        const b = this.bullets.get(x, y, tex);
+        if (!b) return;
+        if (typeof b.setTexture === 'function') { b.setTexture(tex); } else { b.destroy(); return; }
+        if (isLaserDrone) b.setTint(0xff00ff); // Purple lasers
+
+        b.setActive(true).setVisible(true);
+        if (b.body) {
+            b.body.enable = true;
+            b.body.setSize(b.width, b.height);
+        }
+        b.setDepth(8).setRotation(angle + Math.PI / 2);
+        b.pierce = isLaserDrone ? (this.pd.pierce || 0) + 2 : this.pd.pierce;
+        b.hitEnemies = [];
+        const critChance = (this.pd.crit ? 0.2 : 0) + (this.pd.critBoost || 0);
+        b.isCrit = Math.random() < critChance;
+        b.damage = b.isCrit ? this.pd.damage * 3 : this.pd.damage;
+        b.body.reset(x, y);   // reset body position BEFORE setting velocity
+        b.spawnTime = this.time.now;
+        b.lifespan = this.pd.weaponLifespan;
+        b.setVelocity(Math.cos(angle) * 560, Math.sin(angle) * 560);
+    }
+
+    /**
+     * @description Locates the closest active enemy to the player.
+     * @returns {Phaser.Physics.Arcade.Sprite|null} The nearest enemy sprite or null if none exist.
+     */
+    findNearestEnemy() {
+        let best = null, bestDist = Infinity;
+        this.enemies.getChildren().forEach(e => {
+            if (!e.active || e.isHitZone || e.isDying) return;
+            const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y);
+            if (d < bestDist) { bestDist = d; best = e; }
+        });
+        return best;
+    }
+
+    /**
+     * @description Locates a specific number of nearest active enemies.
+     * @param {number} count - Maximum number of enemies to return.
+     * @returns {Array<Phaser.Physics.Arcade.Sprite>} Array of the nearest enemy sprites.
+     */
+    findNearestEnemies(count) {
+        const alive = this.enemies.getChildren().filter(e => e.active && !e.isHitZone && !e.isDying);
+        alive.sort((a, b) => {
+            return Phaser.Math.Distance.Between(this.player.x, this.player.y, a.x, a.y) - Phaser.Math.Distance.Between(this.player.x, this.player.y, b.x, b.y);
+        });
+        return alive.slice(0, count);
+    }
+
     // ─────────────────────────────────────────────────────
     // ENEMY SPAWNING & AI
     // ─────────────────────────────────────────────────────
@@ -1368,6 +1379,684 @@ export default class GameScene extends Phaser.Scene {
                 // Initialize the interactive boss intro and specific mechanics
                 this.bossSys.initCustomBoss(e, type);
             }
+        }
+
+        const hpScale = 1 + (this.waveNum - 1) * 0.35 + Math.pow(this.waveNum / 10, 2);
+        e.hp = Math.floor(def.hp * hpScale); 
+        e.maxHp = e.hp;
+        e.type = type; e.speed = def.speed; e.originalSpeed = def.speed;
+        e.waveNum = this.waveNum;
+        e.scoreVal = def.score; e.xpVal = def.xp;
+        e.lastShot = 0; e.isDying = false;
+        e.tOffset = Math.random() * 100; // Fixed time offset for smooth sine waves
+
+        // Circular physics body based on rendered size
+        const rSize = 516 * sm.scale * 0.32;  // 516 = frame px width
+        e.body.setCircle(rSize, e.width/2 - rSize, e.height/2 - rSize);
+        this.enemies.add(e);
+
+        // Breathing glow or phantom blink
+        if (type === 'phantom') {
+            this.tweens.add({
+                targets: e, alpha: 0.1, duration: 800,
+                yoyo: true, repeat: -1, ease: 'Sine.easeInOut', hold: 400
+            });
+        } else {
+            this.tweens.add({
+                targets: e, alpha: 0.78, duration: Phaser.Math.Between(600, 1100),
+                yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+            });
+        }
+
+        if (type === 'boss' || type === 'mothership' || type === 'hivemind' || type === 'destroyer') {
+            this.bossRef = e;
+            const bossScale = 1 + (this.waveNum * 0.8) + Math.pow(this.waveNum / 6, 2.5);
+            e.hp = Math.floor(def.hp * bossScale) + (type === 'boss' ? 0 : (type === 'destroyer' ? 5000 : 3500));
+            e.maxHp = e.hp;
+            e.scoreVal = def.score;
+            e.xpVal = def.xp;
+            // Boss entry: scale up dramatically and slide down into the arena
+            e.setScale(0.01);
+            this.tweens.add({ targets: e, scale: e.spawnScale, y: 180, duration: 1500, ease: 'Cubic.easeOut' });
+            this.hud.bossBg.setVisible(true);
+            this.hud.bossBar.setVisible(true);
+            this.hud.bossName.setVisible(true);
+            this.hud.bossName.setText(type.toUpperCase());
+            
+            // Trigger cinematic intro
+            let bossNameId = type;
+            if (type === 'boss') bossNameId = 'dreadnought'; // fallback mapping
+            this.bossSys.showInteractiveBossIntro(bossNameId, (modifier) => {
+                e.combatModifier = modifier;
+                this.bossSys.setupHitZones(e);
+            });
+            this.eventSys.triggerCompanionComment('boss_spawn');
+        }
+        return e;
+    }
+
+    /**
+     * @description Main AI loop iterating over all active enemies to update their velocities, states, and firing patterns.
+     */
+    updateEnemies() {
+        const { player } = this;
+        this.enemies.getChildren().forEach(e => {
+            if (!e.active || e.isHitZone) return;
+            
+            e.isShielded = false;
+            if (!e.isFrozen) e.clearTint();
+
+            if (e.isDying) {
+                if (e.auraGraphics) {
+                    e.auraGraphics.destroy();
+                    e.auraGraphics = null;
+                }
+                e.setVelocity(0, 0);
+                return;
+            }
+            const angle = Phaser.Math.Angle.Between(e.x, e.y, player.x, player.y);
+            let moveAngle = angle;
+            
+            // Asteroid Avoidance Steering
+            if (this.hazardSys && this.hazardSys.asteroids) {
+                let avoidX = 0, avoidY = 0, avoids = 0;
+                this.hazardSys.asteroids.getChildren().forEach(a => {
+                    if (a.active) {
+                        const dist = Phaser.Math.Distance.Between(e.x, e.y, a.x, a.y);
+                        if (dist > 0 && dist < 200) {
+                            const repAngle = Phaser.Math.Angle.Between(a.x, a.y, e.x, e.y);
+                            const strength = 1 - (dist / 200);
+                            avoidX += Math.cos(repAngle) * strength;
+                            avoidY += Math.sin(repAngle) * strength;
+                            avoids++;
+                        }
+                    }
+                });
+                if (avoids > 0) {
+                    moveAngle = Math.atan2(Math.sin(angle) + avoidY * 2.5, Math.cos(angle) + avoidX * 2.5);
+                }
+            }
+
+            // Hivemind split logic
+            if (e.type === 'hivemind' && e.hp < e.maxHp * 0.5 && !e.hasSplit) {
+                e.hasSplit = true;
+                this.showDialog('THE HIVEMIND', 'WIR SIND VIELE. WIR SIND UNENDLICH GENVERVT.', '#00ff00', 4000);
+                for(let i=0; i<4; i++) {
+                    const clone = this.spawnEnemy('hivemind_clone');
+                    this.waveLeft++;
+                    clone.setPosition(e.x + Phaser.Math.Between(-80,80), e.y + Phaser.Math.Between(-80,80));
+                }
+            }
+
+            // Cryo effect expiry
+            if (e.cryoUntil && this.time.now > e.cryoUntil) {
+                e.clearTint();
+                if (e.isFrozen) {
+                    e.speed = e.originalSpeed;
+                    e.isFrozen = false;
+                }
+            }
+
+            if (e.type === 'stealth') {
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                const isStealth = (this.time.now % 4000) > 2000;
+                if (isStealth) {
+                    e.setAlpha(0.05); e.body.enable = false;
+                } else {
+                    e.setAlpha(0.8); e.body.enable = true;
+                }
+            } else if (e.type === 'carrier') {
+                const dist = Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y);
+                if (dist < 400) e.setVelocity(Math.cos(moveAngle)*-e.speed, Math.sin(moveAngle)*-e.speed);
+                else if (dist > 700) e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                else e.setVelocity(0, 0);
+                
+                if (this.time.now - (e.lastShot||0) > 2500) {
+                    e.lastShot = this.time.now;
+                    this.spawnEnemy('swarmer').setPosition(e.x, e.y);
+                    this.waveLeft++;
+                }
+            } else if (e.type === 'laser') {
+                const dist = Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y);
+                if (dist > 300 && !e.isCharging) {
+                    e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                } else {
+                    e.setVelocity(0, 0);
+                    if (!e.isCharging && this.time.now - e.lastShot > 3000) {
+                        e.isCharging = true;
+                        e.setTint(0xffffff);
+                        this.time.delayedCall(1000, () => {
+                            if (!e.active) return;
+                            e.isCharging = false;
+                            e.clearTint();
+                            e.lastShot = this.time.now;
+                            const fireAngle = Phaser.Math.Angle.Between(e.x, e.y, player.x, player.y);
+                            for(let i=0; i<3; i++) this.time.delayedCall(i*100, ()=>this.fireEnemyBullet(e.x, e.y, fireAngle));
+                        });
+                    }
+                }
+            } else if (e.type === 'destroyer') {
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                if (this.time.now - e.lastShot > 2500) {
+                    e.lastShot = this.time.now;
+                    for (let i = 0; i < 12; i++) {
+                        const a = angle + (Math.random() - 0.5) * 1.5;
+                        this.fireEnemyBullet(e.x, e.y, a);
+                    }
+                }
+            } else if (e.type === 'hivemind' || e.type === 'hivemind_clone') {
+                const t = this.time.now / 1000 + e.tOffset;
+                e.setVelocity(
+                    Math.cos(moveAngle)*e.speed + Math.sin(t*3)*(e.type === 'hivemind' ? 60 : 120),
+                    Math.sin(moveAngle)*e.speed + Math.cos(t*2)*(e.type === 'hivemind' ? 30 : 60)
+                );
+                const delay = e.type === 'hivemind' ? 1500 : 1000;
+                if (this.time.now - e.lastShot > delay) {
+                    e.lastShot = this.time.now;
+                    const shots = e.type === 'hivemind' ? 5 : 3;
+                    for (let i = 0; i < shots; i++) {
+                        const a = angle + (i - Math.floor(shots/2)) * 0.3;
+                        this.fireEnemyBullet(e.x, e.y, a);
+                    }
+                }
+            } else if (e.type === 'charger') {
+                const dist = Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y);
+                if (!e.state) e.state = { mode: 'chase', timer: 0, telegraph: null };
+                
+                if (e.state.mode === 'chase') {
+                    e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                    if (dist < 400 && this.time.now - (e.lastCharge||0) > 3000) {
+                        e.state.mode = 'aim';
+                        e.state.timer = this.time.now + 800;
+                        e.setVelocity(0, 0);
+                        const g = this.add.graphics();
+                        g.lineStyle(2, 0xffaa00, 0.6);
+                        g.lineBetween(e.x, e.y, e.x + Math.cos(angle)*600, e.y + Math.sin(angle)*600);
+                        e.state.telegraph = { g: g, angle: angle };
+                    }
+                } else if (e.state.mode === 'aim') {
+                    if (this.time.now > e.state.timer) {
+                        e.state.mode = 'dash';
+                        e.state.timer = this.time.now + 400;
+                        e.state.telegraph.g.destroy();
+                        const a = e.state.telegraph.angle;
+                        e.setVelocity(Math.cos(a)*800, Math.sin(a)*800);
+                        e.lastCharge = this.time.now;
+                    }
+                } else if (e.state.mode === 'dash') {
+                    if (this.time.now > e.state.timer) {
+                        e.state.mode = 'chase';
+                    }
+                }
+                if (e.isDying && e.state.telegraph) {
+                    e.state.telegraph.g.destroy();
+                    e.state.telegraph = null;
+                }
+            } else if (e.type === 'protector') {
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                if (!e.auraGraphics) {
+                    e.auraGraphics = this.add.graphics();
+                    e.auraGraphics.setDepth(3);
+                }
+                e.auraGraphics.clear();
+                e.auraGraphics.lineStyle(2, 0x00aaff, 0.4);
+                e.auraGraphics.strokeCircle(e.x, e.y, 150);
+                e.auraGraphics.fillStyle(0x00aaff, 0.1);
+                e.auraGraphics.fillCircle(e.x, e.y, 150);
+                
+                this.enemies.getChildren().forEach(other => {
+                    if (other !== e && other.active && !other.isDying && !other.isHitZone) {
+                        if (Phaser.Math.Distance.Between(e.x, e.y, other.x, other.y) < 150) {
+                            other.isShielded = true;
+                            if (!other.isFrozen) other.setTint(0x00aaff);
+                        }
+                    }
+                });
+                if (e.isDying && e.auraGraphics) {
+                    e.auraGraphics.destroy();
+                    e.auraGraphics = null;
+                }
+            } else if (e.type === 'shooter') {
+                const dist = Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y);
+                if (dist > 450) {
+                    e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                } else {
+                    e.setVelocity(Math.cos(moveAngle)*e.speed*0.3, Math.sin(moveAngle)*e.speed*0.3);
+                }
+
+                if (dist < 800 && this.time.now - e.lastShot > 1800) {
+                    e.lastShot = this.time.now;
+                    this.fireEnemyBullet(e.x, e.y, angle);
+                }
+            } else if (e.type === 'boss' || e.type === 'mothership' || e.type === 'hivemind' || e.type === 'destroyer') {
+                this.updateBoss(e, player, angle);
+            } else if (e.type === 'hitzone') {
+                // Hitzones are positioned by their parent, do nothing here.
+                return;
+            } else {
+                e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+            }
+
+            let rotOffset = -Math.PI/2;
+            if (e.type === 'mothership' || e.type === 'hivemind') {
+                rotOffset += Math.PI; // Flip these bosses so their thrusters point backward
+            }
+            e.setRotation(angle + rotOffset);
+        });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // BOSS AI (Danmaku / Bullet Hell)
+    // ─────────────────────────────────────────────────────
+    /**
+     * @description Handles phase transitions and movement patterns specifically for Boss entities.
+     * @param {Phaser.Physics.Arcade.Sprite} boss - The boss sprite instance.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player sprite instance.
+     * @param {number} angle - Angle towards the player.
+     */
+    updateBoss(boss, player, angle) {
+        const now = this.time.now;
+        const t = now / 1000 + boss.tOffset;
+        
+        // Initialize boss state if not present
+        if (!boss.state) {
+            boss.state = { phase: 1, attackPattern: 0, nextAttack: now + 2000, telegraph: null };
+        }
+        
+        // Phase transition
+        const hpPercent = boss.hp / boss.maxHp;
+        if (hpPercent < 0.5 && boss.state.phase === 1) {
+            boss.state.phase = 2;
+            this.showBanner('BOSS ENRAGE!', '#ff0055');
+            this.cameras.main.shake(200, 0.01);
+            this.triggerHitStop(1.0);
+            boss.state.nextAttack = now + 1000;
+        }
+
+        // Movement (Sine wave hover)
+        boss.setVelocity(
+            Math.cos(angle)*boss.speed * 0.5 + Math.sin(t*2)*80,
+            Math.sin(angle)*boss.speed * 0.5 + Math.cos(t*1.5)*40
+        );
+
+        // Attacks
+        if (now > boss.state.nextAttack) {
+            this.executeBossAttack(boss, player, angle, t);
+        }
+    }
+
+    /**
+     * @description Executes bullet-hell attack patterns based on the current boss phase and modifiers.
+     * @param {Phaser.Physics.Arcade.Sprite} boss - The boss executing the attack.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The target player.
+     * @param {number} angle - Angle towards the player.
+     * @param {number} t - Time offset used for procedural pattern generation.
+     */
+    executeBossAttack(boss, player, angle, t) {
+        const now = this.time.now;
+        const phase = boss.state.phase;
+        
+        let cdMod = 1;
+        if (boss.combatModifier) {
+            if (boss.combatModifier.aggro) cdMod = 0.6;
+            if (boss.combatModifier.defensive) cdMod = 1.4;
+            if (boss.combatModifier.spawnMinions && Math.random() < 0.5) {
+                this.spawnEnemy('swarmer').setPosition(boss.x, boss.y);
+                this.waveLeft++;
+            }
+        }
+        
+        boss.cdMod = cdMod;
+        
+        // Pick random attack based on boss type and phase
+        const attackType = Phaser.Math.Between(0, phase === 1 ? 1 : 2);
+        
+        if (attackType === 0) {
+            // Pattern: Shotgun Burst
+            const bullets = phase === 1 ? 7 : 12;
+            const spread = phase === 1 ? 0.6 : 1.2;
+            for (let i = 0; i < bullets; i++) {
+                const a = angle - (spread/2) + (spread / (bullets-1)) * i;
+                this.fireEnemyBullet(boss.x, boss.y, a, 350);
+            }
+            boss.state.nextAttack = now + (phase === 1 ? 2000 : 1200) * boss.cdMod;
+            
+        } else if (attackType === 1) {
+            // Pattern: Spiral Ring
+            const bullets = phase === 1 ? 12 : 24;
+            for (let i = 0; i < bullets; i++) {
+                const a = (Math.PI * 2 / bullets) * i + (t * 2);
+                this.fireEnemyBullet(boss.x, boss.y, a, 200);
+            }
+            boss.state.nextAttack = now + (phase === 1 ? 2500 : 1500) * boss.cdMod;
+            
+        } else if (attackType === 2) {
+            // Pattern: Death Laser Telegraph (Targeting line)
+            // Phase 2 exclusive!
+            if (!boss.state.telegraph) {
+                // Draw telegraph line
+                const graphics = this.add.graphics();
+                graphics.lineStyle(4, 0xff0055, 0.5);
+                graphics.lineBetween(boss.x, boss.y, boss.x + Math.cos(angle)*1500, boss.y + Math.sin(angle)*1500);
+                graphics.setDepth(4);
+                
+                boss.state.telegraph = { g: graphics, angle: angle };
+                boss.state.nextAttack = now + 800 * boss.cdMod; // Time to dodge!
+            } else {
+                // Fire the laser!
+                boss.state.telegraph.g.destroy();
+                const attackAngle = boss.state.telegraph.angle;
+                boss.state.telegraph = null;
+                
+                // Big burst of fast bullets acting as a laser
+                for(let j = 0; j < 5; j++) {
+                    this.time.delayedCall(j * 50, () => {
+                        if (!boss.active) return;
+                        this.fireEnemyBullet(boss.x, boss.y, attackAngle, 900);
+                        this.fireEnemyBullet(boss.x, boss.y, attackAngle + 0.1, 850);
+                        this.fireEnemyBullet(boss.x, boss.y, attackAngle - 0.1, 850);
+                    });
+                }
+                boss.state.nextAttack = now + 2500 * boss.cdMod;
+            }
+        }
+    }
+
+    /**
+     * @description Spawns an enemy projectile from the pool aiming at a specific angle.
+     * @param {number} x - Origin X coordinate.
+     * @param {number} y - Origin Y coordinate.
+     * @param {number} angle - Trajectory angle in radians.
+     * @param {number} [speed=230] - Velocity magnitude.
+     */
+    fireEnemyBullet(x, y, angle, speed = 230) {
+        const b = this.eBullets.get(x, y, 'enemy_projectile');
+        if (!b) return;
+        b.setActive(true).setVisible(true).setDepth(6);
+        b.setScale(0.04);
+        if (b.body) {
+            b.body.enable = true;
+            b.body.setCircle(128);
+        }
+        b.damage = 5 + (this.waveNum * 1.5) + (this.pd.maxHp * 0.04);
+        b.body.reset(x, y);
+        b.setVelocity(Math.cos(angle)*speed, Math.sin(angle)*speed);
+        b.rotation = angle;
+    }
+
+    // ─────────────────────────────────────────────────────
+    // COLLISION HANDLERS
+    // ─────────────────────────────────────────────────────
+    /**
+     * @description Collision callback when a player projectile strikes an enemy.
+     * @param {Phaser.Physics.Arcade.Image} bullet - The projectile striking the target.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The target being struck.
+     */
+    onBulletHitEnemy(bullet, enemy) {
+        if (!bullet.active || !enemy.active || enemy.isDying) return;
+        
+        if (enemy.isShielded) {
+            if (!bullet.pierce) this.bullets.killAndHide(bullet);
+            this.showDmgNum(enemy.x, enemy.y - 10, 'BLOCK', '#00aaff');
+            if (this.audioSys) this.audioSys.playHit();
+            return;
+        }
+        
+        if (bullet.pierce) {
+            if (!bullet.hitEnemies) bullet.hitEnemies = [];
+            if (bullet.hitEnemies.includes(enemy)) return;
+            bullet.hitEnemies.push(enemy);
+        } else {
+            this.bullets.killAndHide(bullet);
+        }
+
+        if (enemy.isHitZone) {
+            this.bossSys.damageHitZone(enemy, bullet.damage, enemy.parentBoss);
+            this.showDmgNum(enemy.x, enemy.y - 10, bullet.damage, bullet.isCrit ? '#ff0055' : '#ffff00');
+            if (enemy.parentBoss && !enemy.parentBoss.isDying) {
+                enemy.parentBoss.hp -= bullet.damage * 0.2;
+                if (enemy.parentBoss.hp <= 0) {
+                    this.killEnemy(enemy.parentBoss);
+                }
+            }
+            return;
+        }
+
+        if (this.pd.hasSupernova) {
+            this.weaponSys.triggerSupernova(enemy.x, enemy.y, this.pd.damage * 3, this.enemies);
+        }
+        
+        if (this.pd.isExplosive) {
+            // Bomber's passive: mini AoE around the hit target
+            const radius = 60;
+            const splashDmg = this.pd.damage * 0.5;
+            this.spawnDeathFX(enemy.x, enemy.y, 0xff5500); // Orange mini explosion
+            
+            this.enemies.getChildren().forEach(e => {
+                if (e.active && !e.isHitZone && !e.isDying && e !== enemy) {
+                    if (Phaser.Math.Distance.Between(enemy.x, enemy.y, e.x, e.y) < radius) {
+                        e.hp -= splashDmg;
+                        if (e.hp <= 0) this.killEnemy(e);
+                    }
+                }
+            });
+        }
+
+        const cryoLvl = this.pd.upgLevels['cryo_ray'] || 0;
+        if (cryoLvl > 0) {
+            enemy.isFrozen = true;
+            const slowFactor = Math.max(0.1, 0.85 - (cryoLvl * 0.15));
+            enemy.speed = Math.max(10, enemy.originalSpeed * slowFactor);
+            enemy.setTint(0x00ccff);
+            enemy.cryoUntil = this.time.now + 2000 + (cryoLvl * 500);
+        }
+
+        if (this.audioSys) this.audioSys.playHit();
+        enemy.hp -= bullet.damage;
+        
+        let color = '#ffffff';
+        if (bullet.isCrit) {
+            color = '#ff0055';
+            this.triggerHitStop(0.5);
+            this.cameras.main.shake(40, 0.005);
+        }
+
+        this.showDmgNum(enemy.x, enemy.y - 10, bullet.damage, color);
+        this.tweens.add({ targets: enemy, alpha: 0.35, duration: 60, yoyo: true });
+
+        if (enemy.hp <= 0) {
+            this.killEnemy(enemy);
+        }
+    }
+
+    /**
+     * @description Collision callback when the player physically collides with an enemy hull.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The enemy colliding with the player.
+     */
+    onPlayerTouchEnemy(player, enemy) {
+        if (!enemy.active || this.playerInvincible) return;
+        const collisionDmg = 10 + (this.waveNum * 2.5) + (this.pd.maxHp * 0.08);
+        this.damagePlayer(collisionDmg);
+        // Repulse enemy
+        const a = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
+        enemy.setVelocity(Math.cos(a)*320, Math.sin(a)*320);
+        this.time.delayedCall(300, () => { if (enemy.active) enemy.setVelocity(0,0); });
+    }
+
+    /**
+     * @description Collision callback when an enemy projectile strikes the player.
+     * @param {Phaser.Physics.Arcade.Sprite} player - The player.
+     * @param {Phaser.Physics.Arcade.Image} bullet - The enemy projectile.
+     */
+    onEnemyBulletHit(player, bullet) {
+        if (!bullet.active) return;
+        this.eBullets.killAndHide(bullet);
+        this.damagePlayer(bullet.damage || 10);
+    }
+
+    /**
+     * @description Collision callback when an orbital defense blade slices an enemy.
+     * @param {Phaser.Physics.Arcade.Sprite} blade - The orbital blade.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The target enemy.
+     */
+    onOrbitalHitEnemy(blade, enemy) {
+        if (!enemy.active || enemy.isDying || enemy.isShielded) return;
+        const now = this.time.now;
+        if (now - (enemy.lastOrbitalHit || 0) < 400) return; // Cooldown for orbital damage ticks
+        enemy.lastOrbitalHit = now;
+        
+        const dmg = this.pd.damage * 1.5;
+        if (this.audioSys) this.audioSys.playHit();
+        enemy.hp -= dmg;
+        this.showDmgNum(enemy.x, enemy.y - 10, dmg);
+        this.tweens.add({ targets: enemy, alpha: 0.35, duration: 60, yoyo: true });
+        
+        if (enemy.hp <= 0) {
+            this.killEnemy(enemy);
+        }
+    }
+
+    /**
+     * @description Collision callback when an orbital blade blocks an incoming enemy projectile.
+     * @param {Phaser.Physics.Arcade.Sprite} blade - The orbital blade.
+     * @param {Phaser.Physics.Arcade.Image} bullet - The blocked projectile.
+     */
+    onOrbitalHitEnemyBullet(blade, bullet) {
+        if (!bullet.active) return;
+        this.eBullets.killAndHide(bullet);
+        bullet.active = false;
+        bullet.body.enable = false;
+        this.spawnDeathFX(bullet.x, bullet.y, 0x00ffcc);
+        if (this.audioSys) this.audioSys.playHit();
+    }
+
+    /**
+     * @description Initiates the death sequence and cleanup for a defeated enemy.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The defeated enemy.
+     */
+    killEnemy(enemy) {
+        if (this.audioSys) this.audioSys.playExplosion();
+        
+        // Clean up boss telegraphs
+        if (enemy.state && enemy.state.telegraph) {
+            enemy.state.telegraph.g.destroy();
+            enemy.state.telegraph = null;
+        }
+        
+        enemy.isDying = true;
+        this.onEnemyDied(enemy);
+    }
+
+    /**
+     * @description Handles drop generation (XP, scrap, weapons), score calculation, and chain effects upon enemy death.
+     * @param {Phaser.Physics.Arcade.Sprite} enemy - The enemy that just died.
+     */
+    onEnemyDied(enemy) {
+        if (this.pd.vampireProtocol) {
+            this.healPlayer(1);
+        }
+        
+        if (this.shipClass === 'paladin') {
+            this.pd.vampireKills = (this.pd.vampireKills || 0) + 1;
+            if (this.pd.vampireKills >= 15) {
+                this.pd.vampireKills = 0;
+                this.healPlayer(1);
+            }
+        }
+
+        // Combo
+        const now = this.time.now;
+        this.comboCount = (now - this.lastKillTime < 1400) ? this.comboCount + 1 : 1;
+        this.lastKillTime = now;
+        if (this.comboCount >= 3) this.showCombo(this.comboCount);
+
+        const mult = Math.max(1, Math.floor(this.comboCount / 3));
+        this.score += (enemy.scoreVal || 0) * mult;
+
+        // AoE shockwave
+        if (this.pd.aoe) {
+            this.enemies.getChildren().forEach(other => {
+                if (other === enemy || !other.active) return;
+                const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, other.x, other.y);
+                if (d < 130) {
+                    if (other.isHitZone) {
+                        this.bossSys.damageHitZone(other, this.pd.damage * 0.6, other.parentBoss);
+                    } else {
+                        other.hp -= this.pd.damage * 0.6;
+                        if (other.hp <= 0 && !other.isDying) { 
+                            this.killEnemy(other); 
+                        }
+                    }
+                }
+            });
+        }
+
+        this.spawnXP(enemy.x, enemy.y, enemy.xpVal);
+        
+        // Scrap drops (40% chance for basic enemies, 5 scraps for boss)
+        if (enemy.type === 'boss') {
+            for (let i = 0; i < 5; i++) this.spawnScrap(enemy.x + Math.random()*40-20, enemy.y + Math.random()*40-20);
+        } else if (Math.random() < 0.40) {
+            this.spawnScrap(enemy.x, enemy.y);
+        }
+
+        const cubeChance = this.pd.unlockCubeBooster ? 0.30 : 0.20;
+        if (Math.random() < cubeChance) {
+            this.spawnCube(enemy.x, enemy.y);
+        }
+        
+        // Weapon Upgrade drop logic (Elites and Bosses)
+        if (enemy.type === 'elite' || enemy.type === 'boss' || enemy.type === 'mothership' || enemy.type === 'hivemind' || enemy.type === 'destroyer') {
+            if (Math.random() < 0.50) {
+                this.spawnWeaponUpgrade(enemy.x, enemy.y);
+            }
+        }
+
+        this.spawnDeathFX(enemy.x, enemy.y, enemy.displayWidth > 50 ? 0xff3300 : 0xff8800);
+        this.cameras.main.shake(120, enemy.type === 'boss' ? 0.018 : 0.006);
+
+        if (enemy.type === 'boss') {
+            this.triggerHitStop(3.0);
+            if (this.achieveSys.unlock('boss_1')) {
+                this.showBanner('ACHIEVEMENT: Piratenkönig auf Abwegen!', '#00ffff');
+            }
+            this.eventSys.triggerCompanionComment('boss_kill');
+            this.hud.bossBg.setVisible(false);
+            this.hud.bossBar.setVisible(false);
+            this.hud.bossName.setVisible(false);
+            this.bossRef = null;
+        }
+
+        if (enemy.auraGraphics) {
+            enemy.auraGraphics.destroy();
+            enemy.auraGraphics = null;
+        }
+        enemy.destroy();
+        if (enemy.waveNum === this.waveNum) {
+            this.waveLeft--;
+        }
+        // ── BOSS PHASE 2 TRANSITIONS ──
+        let phase2Type = null;
+        if (enemy.type === 'boss' && this.waveNum === 5) phase2Type = 'boss_cheese';
+        if (enemy.type === 'mothership' && this.waveNum === 10) phase2Type = 'boss_irs';
+        if (enemy.type === 'hivemind' && this.waveNum === 15) phase2Type = 'boss_vacuum';
+
+        if (phase2Type) {
+            this.waveLeft++; // keep wave alive
+            this.time.delayedCall(1500, () => {
+                if (!this.isGameOver) {
+                    const phase2Boss = this.spawnEnemy(phase2Type);
+                    phase2Boss.setPosition(enemy.x, enemy.y);
+                }
+            });
+        }
+
+        this.checkWaveComplete();
+    }
+
+    /**
+     * @description Spawns a scrap collectible at the specified coordinates.
      * @param {number} x - X coordinate.
      * @param {number} y - Y coordinate.
      */

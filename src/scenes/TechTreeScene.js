@@ -345,7 +345,9 @@ export default class TechTreeScene extends Phaser.Scene {
         }
 
         const iconSprite = this.add.sprite(0, 0, skill.sheet || 'tech_defense', skill.frame || 0);
-        iconSprite.setScale(0.5); // scaled up for 128x144
+        iconSprite.setOrigin(0.5, 0.5); // Explicitly center the sprite
+        iconSprite.setScale(0.32); // Scaled for 172x192 dimensions so it fits inside the hexagon
+
         if (!isUnlocked) {
             iconSprite.setTint(0x666677);
             iconSprite.setAlpha(0.5);

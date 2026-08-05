@@ -56,9 +56,9 @@ export default class HazardSystem {
         else if (sizeTier === 2) radius = Phaser.Math.Between(25, 40);
         else radius = Phaser.Math.Between(10, 20);
 
-        const texKey = isOre ? 'asteroid_2' : (Math.random() > 0.5 ? 'asteroid_1' : 'asteroid_3');
+        const texKey = isOre ? 'asteroid_ore_' + Phaser.Math.Between(0, 8) : 'asteroid_normal_' + Phaser.Math.Between(0, 8);
         const asteroidVisual = this.scene.physics.add.sprite(x, y, texKey);
-        asteroidVisual.setScale((radius * 2) / 1024);
+        asteroidVisual.setScale((radius * 2) / 341);
         
         this.asteroids.add(asteroidVisual);
         asteroidVisual.body.setCircle(450, 62, 62);

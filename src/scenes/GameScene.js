@@ -1312,19 +1312,6 @@ export default class GameScene extends Phaser.Scene {
             
             // Asteroid Avoidance Steering
             if (this.hazardSys && this.hazardSys.asteroids) {
-            this.physics.add.collider(this.hazardSys.asteroids, this.hazardSys.asteroids, (a1, a2) => {
-                if (!a1.active || !a2.active) return;
-                if (a1.isOre || a2.isOre) {
-                    this.hazardSys.explodeAsteroid(a1);
-                    this.hazardSys.explodeAsteroid(a2);
-                } else {
-                    const now = this.time.now;
-                    if (now - (a1.spawnTime || 0) > 300 && now - (a2.spawnTime || 0) > 300) {
-                        this.hazardSys.splitAsteroid(a1);
-                        this.hazardSys.splitAsteroid(a2);
-                    }
-                }
-            });
                 let avoidX = 0, avoidY = 0, avoids = 0;
                 this.hazardSys.asteroids.getChildren().forEach(a => {
                     if (a.active) {

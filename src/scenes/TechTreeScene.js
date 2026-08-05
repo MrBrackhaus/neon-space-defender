@@ -358,12 +358,13 @@ export default class TechTreeScene extends Phaser.Scene {
         
         // Glassmorphism inner hex
         const hexBg = this.add.polygon(0, 0, this.getHexPoints(45), fillColor, 0.85)
+            .setOrigin(0.5, 0.5)
             .setStrokeStyle(4, strokeColor, 1)
             .setInteractive(new Phaser.Geom.Polygon(this.getHexPoints(45)), Phaser.Geom.Polygon.Contains, { useHandCursor: true });
         
         // Glow effect behind the hex for unlocked/available
         if (glow || isAvailable) {
-            const outerGlow = this.add.polygon(0, 0, this.getHexPoints(52), strokeColor, 0.15);
+            const outerGlow = this.add.polygon(0, 0, this.getHexPoints(52), strokeColor, 0.15).setOrigin(0.5, 0.5);
             container.add(outerGlow);
             
             if (glow) {

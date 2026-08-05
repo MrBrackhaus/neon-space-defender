@@ -201,7 +201,37 @@ export default class BossSystem {
         overlay.setOrigin(0, 0);
         introContainer.add(overlay);
 
-        const bossName = this.scene.add.text(width / 2, height * 0.3, bossType.toUpperCase(), {
+        let portraitKey = null;
+        let isAnimated = false;
+        
+        if (bossType === "LORD GOUDA" || bossType === "MECHA-GOUDA") {
+            portraitKey = 'boss_cheese_portrait_anim';
+            isAnimated = true;
+        }
+
+        if (portraitKey) {
+            const portrait = this.scene.add.sprite(width / 2, height * 0.2, portraitKey);
+            if (isAnimated) {
+                portrait.play('anim_portrait_talk', true);
+            }
+            if (bossType === "MECHA-GOUDA") {
+                portrait.setTint(0x88aaff);
+            }
+            portrait.setScale(0);
+            portrait.setAlpha(0);
+            introContainer.add(portrait);
+            
+            this.scene.tweens.add({
+                targets: portrait,
+                scaleX: 0.5,
+                scaleY: 0.5,
+                alpha: 1,
+                duration: 600,
+                ease: 'Back.out'
+            });
+        }
+
+        const bossName = this.scene.add.text(width / 2, portraitKey ? height * 0.45 : height * 0.3, bossType.toUpperCase(), {
             fontFamily: 'Impact, sans-serif',
             fontSize: '72px',
             color: '#ff0044',

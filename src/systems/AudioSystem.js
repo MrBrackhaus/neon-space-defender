@@ -57,8 +57,8 @@ export default class AudioSystem {
         this.isPlaying = false;
         
         // Step resolution
-        this.bpm = 165;
-        this.stepDuration = (60 / this.bpm) / 4; // 16th note step duration (approx 0.111s at 135 BPM)
+        this.bpm = 110;
+        this.stepDuration = (60 / this.bpm) / 4; // 16th note step duration
         
         this.patternIndex = 0; // Which pattern in the track sequence
         this.stepIndex = 0;    // Which row in the current pattern (0-15 or 0-31)
@@ -99,127 +99,290 @@ export default class AudioSystem {
 
     playShoot(weaponClass = 'pulse') {
         if (this.volSfx <= 0.01) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        const time = this.ctx.currentTime;
-        
+        const t = this.ctx.currentTime;
+        const g = this.ctx.createGain();
+        g.connect(this.masterGainSfx);
+
         if (weaponClass === 'scatter') {
+            // Shotgun blast — noise burst + fast sine sweep
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = this.noiseBuffer;
+            const filt = this.ctx.createBiquadFilter();
+            filt.type = 'bandpass'; filt.frequency.value = 2000; filt.Q.value = 2;
+            noise.connect(filt); filt.connect(g);
+            g.gain.setValueAtTime(0.5, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+            noise.start(t); noise.stop(t + 0.12);
+
+            const osc = this.ctx.createOscillator();
+            const og = this.ctx.createGain();
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(400, time);
-            osc.frequency.exponentialRampToValueAtTime(30, time + 0.15);
-            gain.gain.setValueAtTime(0.7, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
-            osc.connect(gain); gain.connect(this.masterGainSfx);
-            osc.start(time); osc.stop(time + 0.15);
+            osc.frequency.setValueAtTime(600, t);
+            osc.frequency.exponentialRampToValueAtTime(30, t + 0.1);
+            og.gain.setValueAtTime(0.4, t);
+            og.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            osc.connect(og); og.connect(this.masterGainSfx);
+            osc.start(t); osc.stop(t + 0.1);
+
         } else if (weaponClass === 'railgun') {
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(1500, time);
-            osc.frequency.exponentialRampToValueAtTime(100, time + 0.35);
-            gain.gain.setValueAtTime(0.9, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.35);
-            osc.connect(gain); gain.connect(this.masterGainSfx);
-            osc.start(time); osc.stop(time + 0.35);
+            // Railgun — electric charge + high pitch zap
+            const osc1 = this.ctx.createOscillator();
+            osc1.type = 'square';
+            osc1.frequency.setValueAtTime(2000, t);
+            osc1.frequency.exponentialRampToValueAtTime(80, t + 0.4);
+            const osc2 = this.ctx.createOscillator();
+            osc2.type = 'sawtooth';
+            osc2.frequency.setValueAtTime(1800, t);
+            osc2.frequency.exponentialRampToValueAtTime(60, t + 0.35);
+            g.gain.setValueAtTime(0.5, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+            osc1.connect(g); osc2.connect(g);
+            osc1.start(t); osc1.stop(t + 0.4);
+            osc2.start(t); osc2.stop(t + 0.35);
+
+        } else if (weaponClass === 'sonic_wave') {
+            // Sonic wave — wobble sweep
+            const osc = this.ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, t);
+            osc.frequency.linearRampToValueAtTime(900, t + 0.08);
+            osc.frequency.linearRampToValueAtTime(200, t + 0.15);
+            g.gain.setValueAtTime(0.5, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+            osc.connect(g);
+            osc.start(t); osc.stop(t + 0.15);
+
+        } else if (weaponClass === 'heavy_cannon') {
+            // Heavy cannon — deep thump + noise
+            const osc = this.ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(200, t);
+            osc.frequency.exponentialRampToValueAtTime(30, t + 0.25);
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = this.noiseBuffer;
+            const filt = this.ctx.createBiquadFilter();
+            filt.type = 'lowpass'; filt.frequency.value = 800;
+            noise.connect(filt); filt.connect(g);
+            osc.connect(g);
+            g.gain.setValueAtTime(0.7, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+            osc.start(t); osc.stop(t + 0.25);
+            noise.start(t); noise.stop(t + 0.2);
+
         } else {
-            // pulse
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(800, time);
-            osc.frequency.exponentialRampToValueAtTime(100, time + 0.1);
-            gain.gain.setValueAtTime(0.8, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-            osc.connect(gain); gain.connect(this.masterGainSfx);
-            osc.start(time); osc.stop(time + 0.1);
+            // Pulse — snappy triangle chirp + sub click
+            const osc1 = this.ctx.createOscillator();
+            osc1.type = 'triangle';
+            osc1.frequency.setValueAtTime(1200, t);
+            osc1.frequency.exponentialRampToValueAtTime(200, t + 0.07);
+            const osc2 = this.ctx.createOscillator();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(100, t);
+            osc2.frequency.exponentialRampToValueAtTime(50, t + 0.05);
+            const g2 = this.ctx.createGain();
+            g2.gain.setValueAtTime(0.3, t);
+            g2.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+            osc2.connect(g2); g2.connect(this.masterGainSfx);
+            g.gain.setValueAtTime(0.5, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + 0.07);
+            osc1.connect(g);
+            osc1.start(t); osc1.stop(t + 0.07);
+            osc2.start(t); osc2.stop(t + 0.05);
         }
     }
 
     playExplosion() {
         if (this.volSfx <= 0.01) return;
-        const time = this.ctx.currentTime;
+        const t = this.ctx.currentTime;
+        const pitchMul = 0.85 + Math.random() * 0.3;
 
-        const noiseSource = this.ctx.createBufferSource();
-        noiseSource.buffer = this.noiseBuffer;
+        // Layer 1: Sub-bass impact
+        const oscSub = this.ctx.createOscillator();
+        oscSub.type = 'sine';
+        oscSub.frequency.setValueAtTime(60 * pitchMul, t);
+        oscSub.frequency.exponentialRampToValueAtTime(18, t + 0.8);
+        const gSub = this.ctx.createGain();
+        gSub.gain.setValueAtTime(1.5, t);
+        gSub.gain.setValueAtTime(1.2, t + 0.1);
+        gSub.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
+        oscSub.connect(gSub); gSub.connect(this.masterGainSfx);
+        oscSub.start(t); oscSub.stop(t + 0.8);
 
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1000, time);
-        filter.frequency.exponentialRampToValueAtTime(100, time + 0.5);
+        // Layer 2: Distorted mid crunch via waveshaper
+        const oscMid = this.ctx.createOscillator();
+        oscMid.type = 'sawtooth';
+        oscMid.frequency.setValueAtTime(300 * pitchMul, t);
+        oscMid.frequency.exponentialRampToValueAtTime(25, t + 0.5);
+        const shaper = this.ctx.createWaveShaper();
+        const curve = new Float32Array(256);
+        for (let i = 0; i < 256; i++) { const x = (i / 128) - 1; curve[i] = (Math.PI + 3) * x / (Math.PI + 3 * Math.abs(x)); }
+        shaper.curve = curve; shaper.oversample = '2x';
+        const gMid = this.ctx.createGain();
+        gMid.gain.setValueAtTime(0.5, t);
+        gMid.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+        oscMid.connect(shaper); shaper.connect(gMid); gMid.connect(this.masterGainSfx);
+        oscMid.start(t); oscMid.stop(t + 0.5);
 
-        const osc = this.ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(120, time);
-        osc.frequency.exponentialRampToValueAtTime(30, time + 0.4);
+        // Layer 3: Debris scatter (square pops)
+        const oscDebris = this.ctx.createOscillator();
+        oscDebris.type = 'square';
+        oscDebris.frequency.setValueAtTime(180 * pitchMul, t + 0.02);
+        oscDebris.frequency.exponentialRampToValueAtTime(40, t + 0.35);
+        const gDebris = this.ctx.createGain();
+        gDebris.gain.setValueAtTime(0, t);
+        gDebris.gain.linearRampToValueAtTime(0.35, t + 0.02);
+        gDebris.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+        oscDebris.connect(gDebris); gDebris.connect(this.masterGainSfx);
+        oscDebris.start(t); oscDebris.stop(t + 0.35);
 
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(1.5, time);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+        // Layer 4: Noise shrapnel burst
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.noiseBuffer;
+        const filtLow = this.ctx.createBiquadFilter();
+        filtLow.type = 'lowpass';
+        filtLow.frequency.setValueAtTime(5000, t);
+        filtLow.frequency.exponentialRampToValueAtTime(60, t + 0.7);
+        const gNoise = this.ctx.createGain();
+        gNoise.gain.setValueAtTime(0.8, t);
+        gNoise.gain.exponentialRampToValueAtTime(0.01, t + 0.7);
+        noise.connect(filtLow); filtLow.connect(gNoise); gNoise.connect(this.masterGainSfx);
+        noise.start(t); noise.stop(t + 0.7);
 
-        noiseSource.connect(filter); filter.connect(gain);
-        osc.connect(gain);
-        gain.connect(this.masterGainSfx);
-
-        noiseSource.start(time); noiseSource.stop(time + 0.5);
-        osc.start(time); osc.stop(time + 0.4);
+        // Layer 5: High sizzle tail
+        const noiseTail = this.ctx.createBufferSource();
+        noiseTail.buffer = this.noiseBuffer;
+        const filtHi = this.ctx.createBiquadFilter();
+        filtHi.type = 'highpass'; filtHi.frequency.value = 6000;
+        const gTail = this.ctx.createGain();
+        gTail.gain.setValueAtTime(0, t);
+        gTail.gain.linearRampToValueAtTime(0.2, t + 0.05);
+        gTail.gain.exponentialRampToValueAtTime(0.01, t + 0.9);
+        noiseTail.connect(filtHi); filtHi.connect(gTail); gTail.connect(this.masterGainSfx);
+        noiseTail.start(t); noiseTail.stop(t + 0.9);
     }
 
     playNovaBomb() {
         if (this.volSfx <= 0.01) return;
-        const time = this.ctx.currentTime;
+        const t = this.ctx.currentTime;
 
-        const osc = this.ctx.createOscillator();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(800, time);
-        osc.frequency.exponentialRampToValueAtTime(20, time + 2.0);
+        // Layer 1: Massive sub sweep
+        const oscSub = this.ctx.createOscillator();
+        oscSub.type = 'sine';
+        oscSub.frequency.setValueAtTime(80, t);
+        oscSub.frequency.linearRampToValueAtTime(30, t + 0.5);
+        oscSub.frequency.exponentialRampToValueAtTime(8, t + 3.0);
+        const gSub = this.ctx.createGain();
+        gSub.gain.setValueAtTime(2.0, t);
+        gSub.gain.setValueAtTime(1.5, t + 0.5);
+        gSub.gain.exponentialRampToValueAtTime(0.01, t + 3.0);
+        oscSub.connect(gSub); gSub.connect(this.masterGainSfx);
+        oscSub.start(t); oscSub.stop(t + 3.0);
 
+        // Layer 2: Distorted square sweep
+        const oscSweep = this.ctx.createOscillator();
+        oscSweep.type = 'square';
+        oscSweep.frequency.setValueAtTime(1500, t);
+        oscSweep.frequency.exponentialRampToValueAtTime(12, t + 2.8);
+        const shaperNova = this.ctx.createWaveShaper();
+        const curveNova = new Float32Array(256);
+        for (let i = 0; i < 256; i++) { const x = (i / 128) - 1; curveNova[i] = Math.tanh(x * 3); }
+        shaperNova.curve = curveNova;
+        const gSweep = this.ctx.createGain();
+        gSweep.gain.setValueAtTime(0.8, t);
+        gSweep.gain.exponentialRampToValueAtTime(0.01, t + 2.8);
+        oscSweep.connect(shaperNova); shaperNova.connect(gSweep); gSweep.connect(this.masterGainSfx);
+        oscSweep.start(t); oscSweep.stop(t + 2.8);
+
+        // Layer 3: Sawtooth overtone shimmer
+        const oscShimmer = this.ctx.createOscillator();
+        oscShimmer.type = 'sawtooth';
+        oscShimmer.frequency.setValueAtTime(800, t);
+        oscShimmer.frequency.exponentialRampToValueAtTime(20, t + 2.0);
+        const gShimmer = this.ctx.createGain();
+        gShimmer.gain.setValueAtTime(0.3, t);
+        gShimmer.gain.exponentialRampToValueAtTime(0.01, t + 2.0);
+        oscShimmer.connect(gShimmer); gShimmer.connect(this.masterGainSfx);
+        oscShimmer.start(t); oscShimmer.stop(t + 2.0);
+
+        // Layer 4: Evolving bandpass noise
         const noise = this.ctx.createBufferSource();
         noise.buffer = this.noiseBuffer;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(200, time);
-        filter.frequency.linearRampToValueAtTime(3000, time + 1.0);
-        filter.frequency.linearRampToValueAtTime(50, time + 2.0);
+        const filt = this.ctx.createBiquadFilter();
+        filt.type = 'bandpass'; filt.Q.value = 2;
+        filt.frequency.setValueAtTime(200, t);
+        filt.frequency.linearRampToValueAtTime(6000, t + 1.0);
+        filt.frequency.exponentialRampToValueAtTime(30, t + 3.0);
+        const gNoise = this.ctx.createGain();
+        gNoise.gain.setValueAtTime(1.2, t);
+        gNoise.gain.exponentialRampToValueAtTime(0.01, t + 3.0);
+        noise.connect(filt); filt.connect(gNoise); gNoise.connect(this.masterGainSfx);
+        noise.start(t); noise.stop(t + 3.0);
 
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(2.0, time);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + 2.0);
-
-        osc.connect(gain);
-        noise.connect(filter); filter.connect(gain);
-        gain.connect(this.masterGainSfx);
-
-        osc.start(time); osc.stop(time + 2.0);
-        noise.start(time); noise.stop(time + 2.0);
+        // Layer 5: Metallic ring decay
+        const oscRing = this.ctx.createOscillator();
+        oscRing.type = 'sine';
+        oscRing.frequency.setValueAtTime(440, t);
+        oscRing.frequency.exponentialRampToValueAtTime(220, t + 2.5);
+        const gRing = this.ctx.createGain();
+        gRing.gain.setValueAtTime(0, t);
+        gRing.gain.linearRampToValueAtTime(0.15, t + 0.3);
+        gRing.gain.exponentialRampToValueAtTime(0.01, t + 2.5);
+        oscRing.connect(gRing); gRing.connect(this.masterGainSfx);
+        oscRing.start(t); oscRing.stop(t + 2.5);
     }
 
     playAbility() {
         if (this.volSfx <= 0.01) return;
-        const time = this.ctx.currentTime;
+        const t = this.ctx.currentTime;
 
-        const osc = this.ctx.createOscillator();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(200, time);
-        osc.frequency.linearRampToValueAtTime(1200, time + 0.3);
+        // Rising sweep
+        const osc1 = this.ctx.createOscillator();
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(150, t);
+        osc1.frequency.exponentialRampToValueAtTime(1500, t + 0.3);
 
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(1.0, time + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+        // Shimmer layer
+        const osc2 = this.ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(800, t);
+        osc2.frequency.linearRampToValueAtTime(2000, t + 0.2);
 
-        osc.connect(gain);
-        gain.connect(this.masterGainSfx);
-        osc.start(time); osc.stop(time + 0.5);
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.7, t + 0.08);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+
+        osc1.connect(g); osc2.connect(g);
+        g.connect(this.masterGainSfx);
+        osc1.start(t); osc1.stop(t + 0.5);
+        osc2.start(t); osc2.stop(t + 0.3);
     }
 
     playHit() {
         if (this.volSfx <= 0.01) return;
-        const time = this.ctx.currentTime;
+        const t = this.ctx.currentTime;
+        // Randomized pitch for variety (each hit sounds slightly different)
+        const baseFreq = 600 + Math.random() * 400;
         const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(800, time);
-        osc.frequency.exponentialRampToValueAtTime(150, time + 0.08);
-        gain.gain.setValueAtTime(0.6, time);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.08);
-        osc.connect(gain); gain.connect(this.masterGainSfx);
-        osc.start(time); osc.stop(time + 0.08);
+        osc.frequency.setValueAtTime(baseFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.06);
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.4, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.06);
+        osc.connect(g); g.connect(this.masterGainSfx);
+        osc.start(t); osc.stop(t + 0.06);
+
+        // Tiny noise click for crunch
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.noiseBuffer;
+        const filt = this.ctx.createBiquadFilter();
+        filt.type = 'highpass'; filt.frequency.value = 4000;
+        const gn = this.ctx.createGain();
+        gn.gain.setValueAtTime(0.15, t);
+        gn.gain.exponentialRampToValueAtTime(0.01, t + 0.03);
+        noise.connect(filt); filt.connect(gn); gn.connect(this.masterGainSfx);
+        noise.start(t); noise.stop(t + 0.03);
     }
 
     playPickup(type = 'scrap') {
@@ -289,30 +452,58 @@ export default class AudioSystem {
 
     playPlayerHit() {
         if (this.volSfx <= 0.01) return;
-        const time = this.ctx.currentTime;
-        
+        const t = this.ctx.currentTime;
+
+        // Layer 1: Shield crack (distorted square burst)
+        const oscCrack = this.ctx.createOscillator();
+        oscCrack.type = 'square';
+        oscCrack.frequency.setValueAtTime(400, t);
+        oscCrack.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+        const shaperHit = this.ctx.createWaveShaper();
+        const curveHit = new Float32Array(256);
+        for (let i = 0; i < 256; i++) { const x = (i / 128) - 1; curveHit[i] = Math.tanh(x * 5); }
+        shaperHit.curve = curveHit;
+        const gCrack = this.ctx.createGain();
+        gCrack.gain.setValueAtTime(0.8, t);
+        gCrack.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        oscCrack.connect(shaperHit); shaperHit.connect(gCrack); gCrack.connect(this.masterGainSfx);
+        oscCrack.start(t); oscCrack.stop(t + 0.15);
+
+        // Layer 2: Sub thump
+        const oscThump = this.ctx.createOscillator();
+        oscThump.type = 'sine';
+        oscThump.frequency.setValueAtTime(70, t);
+        oscThump.frequency.exponentialRampToValueAtTime(25, t + 0.25);
+        const gThump = this.ctx.createGain();
+        gThump.gain.setValueAtTime(1.0, t);
+        gThump.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+        oscThump.connect(gThump); gThump.connect(this.masterGainSfx);
+        oscThump.start(t); oscThump.stop(t + 0.25);
+
+        // Layer 3: Noise debris
         const noise = this.ctx.createBufferSource();
         noise.buffer = this.noiseBuffer;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(800, time);
-        filter.frequency.exponentialRampToValueAtTime(200, time + 0.3);
-        
-        const osc = this.ctx.createOscillator();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(100, time);
-        osc.frequency.exponentialRampToValueAtTime(30, time + 0.3);
+        const filtHit = this.ctx.createBiquadFilter();
+        filtHit.type = 'bandpass';
+        filtHit.frequency.setValueAtTime(1200, t);
+        filtHit.frequency.exponentialRampToValueAtTime(200, t + 0.3);
+        filtHit.Q.value = 2;
+        const gNoise = this.ctx.createGain();
+        gNoise.gain.setValueAtTime(0.6, t);
+        gNoise.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        noise.connect(filtHit); filtHit.connect(gNoise); gNoise.connect(this.masterGainSfx);
+        noise.start(t); noise.stop(t + 0.3);
 
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(1.5, time);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
-
-        noise.connect(filter); filter.connect(gain);
-        osc.connect(gain);
-        gain.connect(this.masterGainSfx);
-
-        noise.start(time); noise.stop(time + 0.3);
-        osc.start(time); osc.stop(time + 0.3);
+        // Layer 4: Warning alarm ping
+        const oscPing = this.ctx.createOscillator();
+        oscPing.type = 'sine';
+        oscPing.frequency.setValueAtTime(1200, t);
+        const gPing = this.ctx.createGain();
+        gPing.gain.setValueAtTime(0, t);
+        gPing.gain.linearRampToValueAtTime(0.2, t + 0.01);
+        gPing.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        oscPing.connect(gPing); gPing.connect(this.masterGainSfx);
+        oscPing.start(t); oscPing.stop(t + 0.15);
     }
 
     playLevelUp() {
@@ -404,71 +595,577 @@ export default class AudioSystem {
     }
 
     _initTracks() {
-        // Tracker format: Arp Chord | Lead Note | Bass Note | Drum Code
-        // Modern Chiptune Style (165 BPM) - Driving, syncopated
-        
+        // ═══════════════════════════════════════════════════════════════
+        // MODERN CHIPTUNE TRACKER — 165 BPM — SYNTHWAVE / DEMOSCENE
+        // Each pattern = 32 steps (2 bars of 4/4 at 16th notes)
+        // Format: Arp Chord | Lead | Bass | Drum
+        // ═══════════════════════════════════════════════════════════════
+
+        // ─────────── MENU TRACK ─────────── (Fm → Db → Eb → Cm)
         const patMenu_A = this._parsePattern(`
-            C3,G3,C4  | C5  | C2  | K
+            F3,Ab3,C4 | F5  | F2  | K
             -         | -   | -   | -
-            C4,Eb4,G4 | Eb5 | C2  | H
-            -         | -   | Eb2 | -
-            C3,F3,C4  | -   | F2  | S
-            -         | C6  | -   | H
-            Eb3,G3,Bb3| G5  | F2  | K
-            -         | -   | Eb2 | H
-            Ab2,C3,Eb3| C5  | Ab1 | K
+            F3,Ab3,C4 | C5  | F2  | H
+            -         | -   | -   | -
+            F3,Ab3,C4 | Ab5 | F2  | S
             -         | -   | -   | H
-            Ab2,C3,Eb3| C5  | Ab1 | S
-            -         | -   | C2  | H
-            Bb2,D3,F3 | Bb4 | Bb1 | K
+            F3,Ab3,C4 | G5  | F2  | K
+            -         | F5  | -   | H
+            Db3,F3,Ab3| F5  | Db2 | K
+            -         | -   | -   | -
+            Db3,F3,Ab3| C5  | Db2 | H
+            -         | -   | -   | -
+            Db3,F3,Ab3| Ab5 | Db2 | S
             -         | -   | -   | H
-            Bb2,D3,F3 | D5  | Bb1 | S
-            -         | -   | D2  | H
+            Db3,F3,Ab3| G5  | Db2 | K
+            -         | F5  | -   | H
+            Eb3,G3,Bb3| G5  | Eb2 | K
+            -         | -   | -   | -
+            Eb3,G3,Bb3| Eb5 | Eb2 | H
+            -         | -   | -   | -
+            Eb3,G3,Bb3| Bb5 | Eb2 | S
+            -         | -   | -   | H
+            Eb3,G3,Bb3| G5  | Eb2 | K
+            -         | Eb5 | -   | H
+            C3,Eb3,G3 | C6  | C2  | K
+            -         | -   | -   | -
+            C3,Eb3,G3 | G5  | C2  | H
+            -         | -   | -   | -
+            C3,Eb3,G3 | Eb5 | C2  | S
+            -         | -   | -   | H
+            C3,Eb3,G3 | D5  | C2  | K
+            -         | C5  | -   | H
         `);
 
         const patMenu_B = this._parsePattern(`
-            F3,Ab3,C4 | C5  | F1  | K
-            -         | -   | F2  | H
-            F3,Ab3,C4 | F5  | F1  | H
-            -         | -   | Ab1 | K
+            Ab3,C4,Eb4| Eb5 | Ab1 | K
+            -         | -   | -   | -
+            Ab3,C4,Eb4| C5  | Ab1 | H
+            -         | Ab4 | -   | -
+            Ab3,C4,Eb4| Eb5 | Ab1 | S
+            -         | C5  | -   | H
+            Ab3,C4,Eb4| G5  | Ab1 | K
+            -         | Eb5 | -   | H
+            Bb3,D4,F4 | F5  | Bb1 | K
+            -         | -   | -   | -
+            Bb3,D4,F4 | D5  | Bb1 | H
+            -         | Bb4 | -   | -
+            Bb3,D4,F4 | F5  | Bb1 | S
+            -         | D5  | -   | H
+            Bb3,D4,F4 | A5  | Bb1 | K
+            -         | F5  | -   | H
+            C3,Eb3,G3 | G5  | C2  | K
+            -         | -   | -   | -
+            C3,Eb3,G3 | Eb5 | C2  | H
+            -         | C5  | -   | -
             C3,Eb3,G3 | G5  | C2  | S
-            -         | -   | C3  | H
-            C3,Eb3,G3 | Eb5 | C2  | K
-            -         | -   | Eb2 | H
-            G2,Bb2,D3 | D5  | G1  | K
-            -         | -   | -   | H
-            G2,Bb2,D3 | B4  | G1  | S
-            -         | -   | D2  | H
+            -         | Eb5 | -   | H
+            C3,Eb3,G3 | C6  | C2  | K
+            -         | G5  | -   | H
+            F3,Ab3,C4 | C5  | F2  | K
+            -         | -   | -   | -
+            F3,Ab3,C4 | Ab5 | F2  | H
+            -         | F5  | -   | -
+            F3,Ab3,C4 | C6  | F2  | S
+            -         | Ab5 | -   | H
+            F3,Ab3,C4 | G5  | F2  | K
+            -         | F5  | -   | H
+        `);
+
+        // ─────────── PAUSE TRACK ─────────── (Ambient / Dreamy — Ab → Fm → Db → Eb)
+        const patPause_A = this._parsePattern(`
+            Ab3,C4,Eb4| -   | Ab1 | -
+            -         | -   | -   | -
+            Ab3,C4,Eb4| C5  | -   | -
+            -         | -   | -   | -
+            Ab3,C4,Eb4| -   | Ab1 | -
+            -         | -   | -   | -
+            Ab3,C4,Eb4| Eb5 | -   | -
+            -         | -   | -   | -
+            F3,Ab3,C4 | -   | F1  | -
+            -         | -   | -   | -
+            F3,Ab3,C4 | Ab4 | -   | -
+            -         | -   | -   | -
+            F3,Ab3,C4 | -   | F1  | -
+            -         | -   | -   | -
+            F3,Ab3,C4 | C5  | -   | -
+            -         | -   | -   | -
+            Db3,F3,Ab3| -   | Db1 | -
+            -         | -   | -   | -
+            Db3,F3,Ab3| F4  | -   | -
+            -         | -   | -   | -
+            Db3,F3,Ab3| -   | Db1 | -
+            -         | -   | -   | -
+            Db3,F3,Ab3| Ab4 | -   | -
+            -         | -   | -   | -
+            Eb3,G3,Bb3| -   | Eb1 | -
+            -         | -   | -   | -
+            Eb3,G3,Bb3| G4  | -   | -
+            -         | -   | -   | -
+            Eb3,G3,Bb3| -   | Eb1 | -
+            -         | -   | -   | -
+            Eb3,G3,Bb3| Bb4 | -   | -
+            -         | -   | -   | -
+        `);
+
+        // ═══════════════════════════════════════════════════════════════
+        // STANDARD GAME TRACKS (std_1 — std_8)
+        // ═══════════════════════════════════════════════════════════════
+
+        // STD 1 — "Neon Highway" (Cm → Ab → Bb → Gm) — Driving, heroic
+        const patStd1_A = this._parsePattern(`
             C3,Eb3,G3 | C5  | C2  | K
+            -         | -   | C2  | H
+            C3,Eb3,G3 | Eb5 | C2  | -
+            -         | -   | C2  | H
+            C3,Eb3,G3 | G5  | C2  | S
+            -         | F5  | C2  | H
+            C3,Eb3,G3 | Eb5 | C2  | K
+            -         | D5  | C2  | H
+            Ab2,C3,Eb3| C5  | Ab1 | K
+            -         | -   | Ab1 | H
+            Ab2,C3,Eb3| G5  | Ab1 | -
+            -         | -   | Ab1 | H
+            Ab2,C3,Eb3| Bb5 | Ab1 | S
+            -         | Ab5 | Ab1 | H
+            Ab2,C3,Eb3| G5  | Ab1 | K
+            -         | F5  | Ab1 | H
+            Bb2,D3,F3 | D5  | Bb1 | K
+            -         | -   | Bb1 | H
+            Bb2,D3,F3 | F5  | Bb1 | -
+            -         | -   | Bb1 | H
+            Bb2,D3,F3 | Bb5 | Bb1 | S
+            -         | G5  | Bb1 | H
+            Bb2,D3,F3 | F5  | Bb1 | K
+            -         | D5  | Bb1 | H
+            G2,Bb2,D3 | D5  | G1  | K
+            -         | -   | G1  | H
+            G2,Bb2,D3 | G5  | G1  | -
+            -         | -   | G1  | H
+            G2,Bb2,D3 | D6  | G1  | S
+            -         | Bb5 | G1  | H
+            G2,Bb2,D3 | G5  | G1  | K
+            -         | D5  | G1  | H
+        `);
+
+        // STD 2 — "Stellar Drift" (Am → F → G → Em) — Spacey, flowing
+        const patStd2_A = this._parsePattern(`
+            A2,C3,E3  | A4  | A1  | K
+            -         | -   | A1  | H
+            A2,C3,E3  | C5  | A1  | -
+            -         | -   | A1  | H
+            A2,C3,E3  | E5  | A1  | S
+            -         | C5  | A1  | H
+            A2,C3,E3  | D5  | A1  | K
+            -         | C5  | A1  | H
+            F2,A2,C3  | C5  | F1  | K
+            -         | -   | F1  | H
+            F2,A2,C3  | A5  | F1  | -
+            -         | -   | F1  | H
+            F2,A2,C3  | C6  | F1  | S
+            -         | A5  | F1  | H
+            F2,A2,C3  | G5  | F1  | K
+            -         | F5  | F1  | H
+            G2,B2,D3  | B4  | G1  | K
+            -         | -   | G1  | H
+            G2,B2,D3  | D5  | G1  | -
+            -         | -   | G1  | H
+            G2,B2,D3  | G5  | G1  | S
+            -         | F5  | G1  | H
+            G2,B2,D3  | D5  | G1  | K
+            -         | B4  | G1  | H
+            E2,G2,B2  | E5  | E1  | K
+            -         | -   | E1  | H
+            E2,G2,B2  | B5  | E1  | -
+            -         | -   | E1  | H
+            E2,G2,B2  | G5  | E1  | S
+            -         | E5  | E1  | H
+            E2,G2,B2  | B4  | E1  | K
+            -         | E5  | E1  | H
+        `);
+
+        // STD 3 — "Void Runner" (Ebm → B → Db → Ab) — Dark, aggressive
+        const patStd3_A = this._parsePattern(`
+            Eb3,Gb3,Bb3| Eb5 | Eb2 | K
+            -          | -   | Eb2 | H
+            Eb3,Gb3,Bb3| Bb5 | Eb2 | K
+            -          | -   | Eb2 | H
+            Eb3,Gb3,Bb3| Gb5 | Eb2 | S
+            -          | Eb5 | Eb2 | H
+            Eb3,Gb3,Bb3| Db5 | Eb2 | K
+            -          | Bb4 | Eb2 | H
+            B2,Eb3,Gb3 | Gb5 | B1  | K
+            -          | -   | B1  | H
+            B2,Eb3,Gb3 | Eb5 | B1  | K
+            -          | -   | B1  | H
+            B2,Eb3,Gb3 | B5  | B1  | S
+            -          | Ab5 | B1  | H
+            B2,Eb3,Gb3 | Gb5 | B1  | K
+            -          | Eb5 | B1  | H
+            Db3,F3,Ab3 | Ab5 | Db2 | K
+            -          | -   | Db2 | H
+            Db3,F3,Ab3 | F5  | Db2 | K
+            -          | -   | Db2 | H
+            Db3,F3,Ab3 | Db6 | Db2 | S
+            -          | Ab5 | Db2 | H
+            Db3,F3,Ab3 | F5  | Db2 | K
+            -          | Db5 | Db2 | H
+            Ab2,C3,Eb3 | Eb5 | Ab1 | K
+            -          | -   | Ab1 | H
+            Ab2,C3,Eb3 | C5  | Ab1 | K
+            -          | -   | Ab1 | H
+            Ab2,C3,Eb3 | Ab5 | Ab1 | S
+            -          | G5  | Ab1 | H
+            Ab2,C3,Eb3 | Eb5 | Ab1 | K
+            -          | C5  | Ab1 | H
+        `);
+
+        // STD 4 — "Crystal Cascade" (Em → C → D → Bm) — Bright, fast
+        const patStd4_A = this._parsePattern(`
+            E3,G3,B3  | E5  | E2  | K
+            -         | -   | E2  | H
+            E3,G3,B3  | G5  | E2  | -
+            -         | -   | E2  | H
+            E3,G3,B3  | B5  | E2  | S
+            -         | A5  | E2  | H
+            E3,G3,B3  | G5  | E2  | K
+            -         | E5  | E2  | H
+            C3,E3,G3  | G5  | C2  | K
+            -         | -   | C2  | H
+            C3,E3,G3  | E5  | C2  | -
+            -         | -   | C2  | H
+            C3,E3,G3  | C6  | C2  | S
+            -         | B5  | C2  | H
+            C3,E3,G3  | G5  | C2  | K
+            -         | E5  | C2  | H
+            D3,Gb3,A3 | A5  | D2  | K
+            -         | -   | D2  | H
+            D3,Gb3,A3 | Gb5 | D2  | -
+            -         | -   | D2  | H
+            D3,Gb3,A3 | D6  | D2  | S
+            -         | A5  | D2  | H
+            D3,Gb3,A3 | Gb5 | D2  | K
+            -         | D5  | D2  | H
+            B2,D3,Gb3 | Gb5 | B1  | K
+            -         | -   | B1  | H
+            B2,D3,Gb3 | B5  | B1  | -
+            -         | -   | B1  | H
+            B2,D3,Gb3 | D5  | B1  | S
+            -         | Gb5 | B1  | H
+            B2,D3,Gb3 | B5  | B1  | K
+            -         | Gb5 | B1  | H
+        `);
+
+        // STD 5 — "Quantum Pulse" (Bbm → Gb → Ab → Fm) — Pulsing, intense
+        const patStd5_A = this._parsePattern(`
+            Bb2,Db3,F3| F5  | Bb1 | K
+            -         | Db5 | Bb1 | H
+            Bb2,Db3,F3| Bb5 | Bb1 | K
+            -         | -   | Bb1 | H
+            Bb2,Db3,F3| F5  | Bb1 | S
+            -         | Db5 | Bb1 | H
+            Bb2,Db3,F3| Ab5 | Bb1 | K
+            -         | F5  | Bb1 | H
+            Gb2,Bb2,Db3| Db5| Gb1 | K
+            -         | -   | Gb1 | H
+            Gb2,Bb2,Db3| Bb5| Gb1 | K
+            -         | -   | Gb1 | H
+            Gb2,Bb2,Db3| Db6| Gb1 | S
+            -         | Bb5| Gb1 | H
+            Gb2,Bb2,Db3| Gb5| Gb1 | K
+            -         | Db5| Gb1 | H
+            Ab2,C3,Eb3| Eb5 | Ab1 | K
+            -         | C5  | Ab1 | H
+            Ab2,C3,Eb3| Ab5 | Ab1 | K
+            -         | -   | Ab1 | H
+            Ab2,C3,Eb3| C5  | Ab1 | S
+            -         | Eb5 | Ab1 | H
+            Ab2,C3,Eb3| Ab5 | Ab1 | K
+            -         | C5  | Ab1 | H
+            F2,Ab2,C3 | C5  | F1  | K
+            -         | -   | F1  | H
+            F2,Ab2,C3 | F5  | F1  | K
+            -         | -   | F1  | H
+            F2,Ab2,C3 | Ab5 | F1  | S
+            -         | F5  | F1  | H
+            F2,Ab2,C3 | C5  | F1  | K
+            -         | Ab4 | F1  | H
+        `);
+
+        // STD 6 — "Photon Storm" (Dm → Bb → C → Am) — Upbeat, triumphant
+        const patStd6_A = this._parsePattern(`
+            D3,F3,A3  | D5  | D2  | K
+            -         | -   | D2  | H
+            D3,F3,A3  | F5  | D2  | -
+            -         | -   | D2  | H
+            D3,F3,A3  | A5  | D2  | S
+            -         | G5  | D2  | H
+            D3,F3,A3  | F5  | D2  | K
+            -         | E5  | D2  | H
+            Bb2,D3,F3 | F5  | Bb1 | K
+            -         | -   | Bb1 | H
+            Bb2,D3,F3 | D5  | Bb1 | -
+            -         | -   | Bb1 | H
+            Bb2,D3,F3 | Bb5 | Bb1 | S
+            -         | A5  | Bb1 | H
+            Bb2,D3,F3 | F5  | Bb1 | K
+            -         | D5  | Bb1 | H
+            C3,E3,G3  | E5  | C2  | K
+            -         | -   | C2  | H
+            C3,E3,G3  | G5  | C2  | -
+            -         | -   | C2  | H
+            C3,E3,G3  | C6  | C2  | S
+            -         | B5  | C2  | H
+            C3,E3,G3  | G5  | C2  | K
+            -         | E5  | C2  | H
+            A2,C3,E3  | E5  | A1  | K
+            -         | -   | A1  | H
+            A2,C3,E3  | A5  | A1  | -
+            -         | -   | A1  | H
+            A2,C3,E3  | C5  | A1  | S
+            -         | E5  | A1  | H
+            A2,C3,E3  | A5  | A1  | K
+            -         | G5  | A1  | H
+        `);
+
+        // STD 7 — "Plasma Surge" (Gm → Eb → F → Dm) — Heavy, groovy
+        const patStd7_A = this._parsePattern(`
+            G2,Bb2,D3 | G5  | G1  | K
+            -         | Bb5 | G1  | H
+            G2,Bb2,D3 | D5  | G1  | K
+            -         | -   | G1  | H
+            G2,Bb2,D3 | G5  | G1  | S
+            -         | F5  | G1  | H
+            G2,Bb2,D3 | D5  | G1  | K
+            -         | Bb4 | G1  | H
+            Eb3,G3,Bb3| Bb5 | Eb2 | K
+            -         | G5  | Eb2 | H
+            Eb3,G3,Bb3| Eb5 | Eb2 | K
             -         | -   | Eb2 | H
-            C3,Eb3,G3 | G5  | G2  | S
-            -         | -   | -   | H
+            Eb3,G3,Bb3| Bb5 | Eb2 | S
+            -         | G5  | Eb2 | H
+            Eb3,G3,Bb3| Eb5 | Eb2 | K
+            -         | D5  | Eb2 | H
+            F3,A3,C4  | C5  | F2  | K
+            -         | A5  | F2  | H
+            F3,A3,C4  | F5  | F2  | K
+            -         | -   | F2  | H
+            F3,A3,C4  | C6  | F2  | S
+            -         | A5  | F2  | H
+            F3,A3,C4  | F5  | F2  | K
+            -         | E5  | F2  | H
+            D3,F3,A3  | A5  | D2  | K
+            -         | F5  | D2  | H
+            D3,F3,A3  | D5  | D2  | K
+            -         | -   | D2  | H
+            D3,F3,A3  | A5  | D2  | S
+            -         | G5  | D2  | H
+            D3,F3,A3  | F5  | D2  | K
+            -         | D5  | D2  | H
         `);
 
-        // Extremely aggressive boss track (16th note basslines)
-        const patBoss_A = this._parsePattern(`
-            C2,C3,G3  | C4  | C1  | K
-            -         | -   | C2  | H
-            C3,Eb3,G3 | -   | C1  | K
-            -         | Eb4 | Eb1 | -
-            F2,C3,F3  | -   | F1  | S
-            -         | -   | F1  | H
-            Eb2,G2,C3 | -   | Gb1 | K
-            -         | -   | F1  | H
-            C2,C3,G3  | C4  | C1  | K
-            -         | -   | C2  | H
-            C3,Eb3,G3 | -   | C1  | K
-            -         | Db4 | Db1 | -
-            Bb1,F2,Bb2| -   | Bb0 | S
-            -         | -   | Bb0 | H
-            Ab1,Eb2,Ab2| -  | B0  | K
-            -         | -   | Bb0 | H
+        // STD 8 — "Warp Drive" (Dbm → A → B → Abm) — Ethereal, mysterious
+        const patStd8_A = this._parsePattern(`
+            Db3,E3,Ab3| Db5 | Db2 | K
+            -         | -   | Db2 | H
+            Db3,E3,Ab3| E5  | Db2 | -
+            -         | -   | Db2 | H
+            Db3,E3,Ab3| Ab5 | Db2 | S
+            -         | E5  | Db2 | H
+            Db3,E3,Ab3| Db6 | Db2 | K
+            -         | Ab5 | Db2 | H
+            A2,Db3,E3 | E5  | A1  | K
+            -         | -   | A1  | H
+            A2,Db3,E3 | Db5 | A1  | -
+            -         | -   | A1  | H
+            A2,Db3,E3 | A5  | A1  | S
+            -         | E5  | A1  | H
+            A2,Db3,E3 | Db5 | A1  | K
+            -         | A4  | A1  | H
+            B2,Eb3,Gb3| Gb5 | B1  | K
+            -         | -   | B1  | H
+            B2,Eb3,Gb3| Eb5 | B1  | -
+            -         | -   | B1  | H
+            B2,Eb3,Gb3| B5  | B1  | S
+            -         | Gb5 | B1  | H
+            B2,Eb3,Gb3| Eb5 | B1  | K
+            -         | B4  | B1  | H
+            Ab2,B2,Eb3| Eb5 | Ab1 | K
+            -         | -   | Ab1 | H
+            Ab2,B2,Eb3| Ab5 | Ab1 | -
+            -         | -   | Ab1 | H
+            Ab2,B2,Eb3| B5  | Ab1 | S
+            -         | Eb5 | Ab1 | H
+            Ab2,B2,Eb3| Ab5 | Ab1 | K
+            -         | Eb5 | Ab1 | H
         `);
 
+        // ═══════════════════════════════════════════════════════════════
+        // BOSS TRACKS (boss_1 — boss_4) — Aggressive, menacing, fast
+        // ═══════════════════════════════════════════════════════════════
+
+        // BOSS 1 — "Dreadnought" (Dm → Bb → Gm → A) — Relentless
+        const patBoss1_A = this._parsePattern(`
+            D3,F3,A3  | D5  | D2  | K
+            -         | F5  | D2  | H
+            D3,F3,A3  | A5  | D2  | K
+            -         | Bb5 | D2  | H
+            D3,F3,A3  | A5  | D2  | S
+            -         | F5  | D2  | H
+            D3,F3,A3  | E5  | D2  | K
+            -         | F5  | D2  | H
+            Bb2,D3,F3 | Bb4 | Bb1 | K
+            -         | D5  | Bb1 | H
+            Bb2,D3,F3 | F5  | Bb1 | K
+            -         | G5  | Bb1 | H
+            Bb2,D3,F3 | F5  | Bb1 | S
+            -         | D5  | Bb1 | H
+            Bb2,D3,F3 | C5  | Bb1 | K
+            -         | D5  | Bb1 | H
+            G2,Bb2,D3 | D5  | G1  | K
+            -         | G5  | G1  | H
+            G2,Bb2,D3 | Bb5 | G1  | K
+            -         | A5  | G1  | H
+            G2,Bb2,D3 | G5  | G1  | S
+            -         | D5  | G1  | H
+            G2,Bb2,D3 | F5  | G1  | K
+            -         | D5  | G1  | H
+            A2,Db3,E3 | E5  | A1  | K
+            -         | A5  | A1  | H
+            A2,Db3,E3 | Db5 | A1  | K
+            -         | E5  | A1  | H
+            A2,Db3,E3 | A5  | A1  | S
+            -         | Db6 | A1  | H
+            A2,Db3,E3 | E5  | A1  | K
+            -         | Db5 | A1  | H
+        `);
+
+        // BOSS 2 — "Crimson Tide" (Em → C → Am → B) — Dark & dramatic
+        const patBoss2_A = this._parsePattern(`
+            E3,G3,B3  | E5  | E2  | K
+            -         | G5  | E2  | H
+            E3,G3,B3  | B5  | E2  | K
+            -         | E6  | E2  | H
+            E3,G3,B3  | B5  | E2  | S
+            -         | G5  | E2  | H
+            E3,G3,B3  | Gb5 | E2  | K
+            -         | E5  | E2  | H
+            C3,E3,G3  | G5  | C2  | K
+            -         | C5  | C2  | H
+            C3,E3,G3  | E5  | C2  | K
+            -         | G5  | C2  | H
+            C3,E3,G3  | C6  | C2  | S
+            -         | B5  | C2  | H
+            C3,E3,G3  | G5  | C2  | K
+            -         | E5  | C2  | H
+            A2,C3,E3  | A5  | A1  | K
+            -         | C5  | A1  | H
+            A2,C3,E3  | E5  | A1  | K
+            -         | A5  | A1  | H
+            A2,C3,E3  | E5  | A1  | S
+            -         | C5  | A1  | H
+            A2,C3,E3  | B4  | A1  | K
+            -         | A4  | A1  | H
+            B2,Eb3,Gb3| B4  | B1  | K
+            -         | Eb5 | B1  | H
+            B2,Eb3,Gb3| Gb5 | B1  | K
+            -         | B5  | B1  | H
+            B2,Eb3,Gb3| Gb5 | B1  | S
+            -         | Eb5 | B1  | H
+            B2,Eb3,Gb3| Eb5 | B1  | K
+            -         | B4  | B1  | H
+        `);
+
+        // BOSS 3 — "Supernova" (Fm → Db → Bbm → C) — Frantic, climactic
+        const patBoss3_A = this._parsePattern(`
+            F3,Ab3,C4 | F5  | F2  | K
+            -         | C5  | F2  | H
+            F3,Ab3,C4 | Ab5 | F2  | K
+            -         | C6  | F2  | H
+            F3,Ab3,C4 | Ab5 | F2  | S
+            -         | F5  | F2  | H
+            F3,Ab3,C4 | Eb5 | F2  | K
+            -         | C5  | F2  | H
+            Db3,F3,Ab3| Ab5 | Db2 | K
+            -         | F5  | Db2 | H
+            Db3,F3,Ab3| Db5 | Db2 | K
+            -         | Ab5 | Db2 | H
+            Db3,F3,Ab3| F5  | Db2 | S
+            -         | Db5 | Db2 | H
+            Db3,F3,Ab3| C5  | Db2 | K
+            -         | Db5 | Db2 | H
+            Bb2,Db3,F3| F5  | Bb1 | K
+            -         | Db5 | Bb1 | H
+            Bb2,Db3,F3| Bb5 | Bb1 | K
+            -         | F5  | Bb1 | H
+            Bb2,Db3,F3| Db5 | Bb1 | S
+            -         | Bb4 | Bb1 | H
+            Bb2,Db3,F3| Ab4 | Bb1 | K
+            -         | Bb4 | Bb1 | H
+            C3,E3,G3  | E5  | C2  | K
+            -         | G5  | C2  | H
+            C3,E3,G3  | C6  | C2  | K
+            -         | G5  | C2  | H
+            C3,E3,G3  | E5  | C2  | S
+            -         | C5  | C2  | H
+            C3,E3,G3  | G5  | C2  | K
+            -         | E5  | C2  | H
+        `);
+
+        // BOSS 4 — "Singularity" (Abm → E → Gb → Ebm) — Crushing, final
+        const patBoss4_A = this._parsePattern(`
+            Ab2,B2,Eb3| Ab4 | Ab1 | K
+            -         | Eb5 | Ab1 | H
+            Ab2,B2,Eb3| B5  | Ab1 | K
+            -         | Eb5 | Ab1 | H
+            Ab2,B2,Eb3| Ab5 | Ab1 | S
+            -         | B4  | Ab1 | H
+            Ab2,B2,Eb3| Eb5 | Ab1 | K
+            -         | Ab4 | Ab1 | H
+            E2,Ab2,B2 | B4  | E1  | K
+            -         | E5  | E1  | H
+            E2,Ab2,B2 | Ab5 | E1  | K
+            -         | B5  | E1  | H
+            E2,Ab2,B2 | E5  | E1  | S
+            -         | Ab4 | E1  | H
+            E2,Ab2,B2 | B4  | E1  | K
+            -         | E5  | E1  | H
+            Gb2,Bb2,Db3| Db5| Gb1 | K
+            -         | Gb5 | Gb1 | H
+            Gb2,Bb2,Db3| Bb5| Gb1 | K
+            -         | Db6 | Gb1 | H
+            Gb2,Bb2,Db3| Gb5| Gb1 | S
+            -         | Db5 | Gb1 | H
+            Gb2,Bb2,Db3| Bb4| Gb1 | K
+            -         | Db5 | Gb1 | H
+            Eb3,Gb3,Bb3| Bb5| Eb2 | K
+            -         | Gb5 | Eb2 | H
+            Eb3,Gb3,Bb3| Eb5| Eb2 | K
+            -         | Bb5 | Eb2 | H
+            Eb3,Gb3,Bb3| Gb5| Eb2 | S
+            -         | Eb5 | Eb2 | H
+            Eb3,Gb3,Bb3| Bb4| Eb2 | K
+            -         | Eb5 | Eb2 | H
+        `);
+
+        // ═══════════════════════════════════════════════════════════════
+        // TRACK MAP
+        // ═══════════════════════════════════════════════════════════════
         this.tracks = {
-            menu: [patMenu_A, patMenu_A, patMenu_B, patMenu_A],
-            std_1: [patMenu_A, patMenu_B],
-            boss: [patBoss_A, patBoss_A, patBoss_A, patBoss_A]
+            'menu':   [patMenu_A, patMenu_B, patMenu_A, patMenu_B],
+            'pause':  [patPause_A, patPause_A],
+            'std_1':  [patStd1_A, patStd1_A],
+            'std_2':  [patStd2_A, patStd2_A],
+            'std_3':  [patStd3_A, patStd3_A],
+            'std_4':  [patStd4_A, patStd4_A],
+            'std_5':  [patStd5_A, patStd5_A],
+            'std_6':  [patStd6_A, patStd6_A],
+            'std_7':  [patStd7_A, patStd7_A],
+            'std_8':  [patStd8_A, patStd8_A],
+            'boss_1': [patBoss1_A, patBoss1_A],
+            'boss_2': [patBoss2_A, patBoss2_A],
+            'boss_3': [patBoss3_A, patBoss3_A],
+            'boss_4': [patBoss4_A, patBoss4_A]
         };
     }
 
@@ -496,59 +1193,43 @@ export default class AudioSystem {
         const gain = this.ctx.createGain();
         gain.connect(this.masterGainMusic);
 
-        if (code === 'K') { // Kick
-            // Fake Sidechain Compression on the rest of the music
-            this.sidechainGain.gain.setValueAtTime(0.1, time);
-            this.sidechainGain.gain.exponentialRampToValueAtTime(1.0, time + 0.25);
+        if (code === 'K') { // Kick → Electronic sub-pulse (not a drum!)
+            // Gentle sidechain pump for groove
+            this.sidechainGain.gain.setValueAtTime(0.3, time);
+            this.sidechainGain.gain.exponentialRampToValueAtTime(1.0, time + 0.15);
 
-            // Sub heavy kick
+            // Short sub-bass pulse (like a synth throb, not a kick drum)
             const osc = this.ctx.createOscillator();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(200, time);
-            osc.frequency.exponentialRampToValueAtTime(30, time + 0.2); // Drops lower (30Hz)
-            gain.gain.setValueAtTime(2.0, time); // Even louder kick
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-            
-            // Hard pitch click for punch
-            const click = this.ctx.createOscillator();
-            click.type = 'square';
-            click.frequency.setValueAtTime(1500, time);
-            click.frequency.exponentialRampToValueAtTime(50, time + 0.03);
-            click.connect(gain);
-            click.start(time); click.stop(time + 0.03);
-
+            osc.frequency.setValueAtTime(55, time); // Low A — pure sub tone
+            osc.frequency.setValueAtTime(45, time + 0.08);
+            gain.gain.setValueAtTime(0.8, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
             osc.connect(gain);
-            osc.start(time); osc.stop(time + 0.2);
-        } else if (code === 'S') { // Snare
+            osc.start(time); osc.stop(time + 0.12);
+
+        } else if (code === 'S') { // Snare → Short filtered noise burst (electronic clap)
             const noise = this.ctx.createBufferSource();
             noise.buffer = this.noiseBuffer;
             const filter = this.ctx.createBiquadFilter();
             filter.type = 'bandpass';
-            filter.frequency.value = 2000;
-            gain.gain.setValueAtTime(1.2, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
+            filter.frequency.value = 3500;
+            filter.Q.value = 1.5;
+            gain.gain.setValueAtTime(0.35, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
             noise.connect(filter); filter.connect(gain);
-            noise.start(time); noise.stop(time + 0.25);
-            
-            const osc = this.ctx.createOscillator();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(300, time);
-            osc.frequency.exponentialRampToValueAtTime(100, time + 0.1);
-            const oscGain = this.ctx.createGain();
-            oscGain.gain.setValueAtTime(0.8, time);
-            oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-            osc.connect(oscGain); oscGain.connect(this.masterGainMusic);
-            osc.start(time); osc.stop(time + 0.1);
-        } else if (code === 'H') { // Hihat
+            noise.start(time); noise.stop(time + 0.1);
+
+        } else if (code === 'H') { // Hihat → Tiny metallic tick
             const noise = this.ctx.createBufferSource();
             noise.buffer = this.noiseBuffer;
             const filter = this.ctx.createBiquadFilter();
             filter.type = 'highpass';
-            filter.frequency.value = 7000;
-            gain.gain.setValueAtTime(0.5, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+            filter.frequency.value = 9000;
+            gain.gain.setValueAtTime(0.18, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.025);
             noise.connect(filter); filter.connect(gain);
-            noise.start(time); noise.stop(time + 0.05);
+            noise.start(time); noise.stop(time + 0.025);
         }
     }
 
@@ -558,25 +1239,27 @@ export default class AudioSystem {
         const gain = this.ctx.createGain();
         gain.connect(this.masterGainMusic);
 
-        // Modern chiptune square lead with 50% pulse width (PWM simulation) and portamento
+        // Modern dual oscillator lead
         const osc1 = this.ctx.createOscillator();
         const osc2 = this.ctx.createOscillator();
         osc1.type = 'square';
         osc2.type = 'sawtooth';
         
-        // Very fast pitch sweep from octave above (Chiptune 'blip' attack)
-        osc1.frequency.setValueAtTime(freq * 2, time);
-        osc1.frequency.exponentialRampToValueAtTime(freq, time + 0.02);
-        
-        osc2.frequency.setValueAtTime(freq * 2 * 1.008, time); // detune
-        osc2.frequency.exponentialRampToValueAtTime(freq * 1.008, time + 0.02);
+        // Slight portamento/glide effect for modern feel
+        osc1.frequency.setValueAtTime(freq * 0.95, time);
+        osc1.frequency.exponentialRampToValueAtTime(freq, time + 0.05);
+        osc2.frequency.setValueAtTime(freq * 0.95 * 1.005, time);
+        osc2.frequency.exponentialRampToValueAtTime(freq * 1.005, time + 0.05);
 
         osc1.connect(gain);
         osc2.connect(gain);
 
         gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(0.2, time + 0.01);
-        const dur = this.stepDuration * 1.5;
+        gain.gain.linearRampToValueAtTime(0.12, time + 0.02);
+        
+        // Flowing melody notes (longer sustain)
+        const dur = this.stepDuration * 2.5; 
+        gain.gain.setValueAtTime(0.12, time + dur * 0.7);
         gain.gain.exponentialRampToValueAtTime(0.01, time + dur);
 
         osc1.start(time); osc1.stop(time + dur);
@@ -599,12 +1282,12 @@ export default class AudioSystem {
         oscSub.type = 'square';
         oscSub.frequency.setValueAtTime(freq * 0.5, time);
 
-        // Aggressive lowpass filter with high resonance
+        // Modern lowpass filter, doesn't drop all the way to 0 to keep the bass alive
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.Q.value = 12; // High resonance for that acid 'squelch'
-        filter.frequency.setValueAtTime(3000, time);
-        filter.frequency.exponentialRampToValueAtTime(80, time + this.stepDuration * 0.9);
+        filter.Q.value = 6; 
+        filter.frequency.setValueAtTime(1500, time);
+        filter.frequency.exponentialRampToValueAtTime(250, time + this.stepDuration * 0.5);
 
         // Drive the signal hot into the filter
         const driveGain = this.ctx.createGain();
@@ -615,12 +1298,15 @@ export default class AudioSystem {
         driveGain.connect(filter);
         filter.connect(gain);
 
+        // Sustained bass envelope (NOT a drum envelope)
         gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(0.7, time + 0.01); // Louder base volume
-        gain.gain.exponentialRampToValueAtTime(0.01, time + this.stepDuration);
+        gain.gain.linearRampToValueAtTime(0.6, time + 0.03); 
+        // Hold the bass longer for a smooth, rolling synthwave feel
+        gain.gain.setValueAtTime(0.6, time + this.stepDuration * 1.2); 
+        gain.gain.linearRampToValueAtTime(0.01, time + this.stepDuration * 1.5);
 
-        osc1.start(time); osc1.stop(time + this.stepDuration);
-        oscSub.start(time); oscSub.stop(time + this.stepDuration);
+        osc1.start(time); osc1.stop(time + this.stepDuration * 1.5);
+        oscSub.start(time); oscSub.stop(time + this.stepDuration * 1.5);
     }
 
     _setArp(chordStr) {
@@ -650,17 +1336,17 @@ export default class AudioSystem {
         // Start continuous synth
         this.arpOsc = this.ctx.createOscillator();
         this.arpGain = this.ctx.createGain();
-        this.arpOsc.type = 'square';
+        this.arpOsc.type = 'triangle'; // Softer, finer modern sound
         
         this.arpGain.gain.setValueAtTime(0, this.ctx.currentTime);
-        this.arpGain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + 0.02);
+        this.arpGain.gain.linearRampToValueAtTime(0.15, this.ctx.currentTime + 0.02);
         
         this.arpOsc.connect(this.arpGain);
         this.arpGain.connect(this.masterGainMusic);
         this.arpOsc.start();
 
-        // 32nd note arpeggiator tick (extremely fast switching like C64/Amiga)
-        const arpSpeedMs = (this.stepDuration / 2) * 1000;
+        // 16th note arpeggiator tick (much calmer, less hectic)
+        const arpSpeedMs = this.stepDuration * 1000;
         this.arpInterval = setInterval(() => {
             if (!this.arpOsc || !this.isPlaying) return;
             const freq = this.currentArpChord[this.arpNoteIndex];

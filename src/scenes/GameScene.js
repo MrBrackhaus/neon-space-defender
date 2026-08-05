@@ -277,7 +277,8 @@ export default class GameScene extends Phaser.Scene {
         this.initDOMCache(); // Initialize cached DOM elements for HUD
         
         if (this.audioSys) {
-            this.audioSys.playMusic(0);
+            const startTracks = ['std_1','std_2','std_3','std_4','std_5','std_6','std_7','std_8'];
+            this.audioSys.playMusic(Phaser.Utils.Array.GetRandom(startTracks));
         }
 
         // Groups — bullets use pool pattern (get/killAndHide) so velocity is preserved

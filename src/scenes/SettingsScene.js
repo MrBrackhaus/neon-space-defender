@@ -30,6 +30,14 @@ export default class SettingsScene extends Phaser.Scene {
      * @description Constructs the UI for the settings scene, loads saved configurations
      * from local storage, and binds interactive elements to adjust and persist those settings.
      */
+    /**
+     * @method init
+     * @description Receives data from the launching scene to determine where to return.
+     */
+    init(data) {
+        this.returnTo = (data && data.returnTo) || 'MenuScene';
+    }
+
     create() {
         const { width: cw, height: ch } = this.scale;
 
@@ -251,11 +259,18 @@ export default class SettingsScene extends Phaser.Scene {
         );
 
         // ── BACK BUTTON ──
-        createNeonButton(cw / 2, ch / 2 + panelHeight / 2 - 60, 'RETURN TO MAIN', 0x00ffff, '#00ffff', () => {
-            // Fade out the scene cleanly before transitioning back to the menu
+        createNeonButton(cw / 2, ch / 2 + panelHeight / 2 - 60, 
+            this.returnTo === 'PauseScene' ? 'BACK TO PAUSE' : 'RETURN TO MAIN', 
+            0x00ffff, '#00ffff', () => {
             this.cameras.main.fadeOut(300, 0, 0, 0);
             this.cameras.main.once('camerafadeoutcomplete', () => {
-                this.scene.start('MenuScene');
+                if (this.returnTo === 'PauseScene') {
+                    // Return to the pause overlay without killing the game
+                    this.scene.wake('PauseScene');
+                    this.scene.stop();
+                } else {
+                    this.scene.start('MenuScene');
+                }
             });
         });
 

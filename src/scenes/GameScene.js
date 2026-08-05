@@ -1377,9 +1377,8 @@ export default class GameScene extends Phaser.Scene {
         
         e.spawnScale = finalScale;
         
-        if (type.startsWith('boss_')) {
+        if (type === 'boss' || type === 'mothership' || type === 'hivemind' || type === 'destroyer' || type.startsWith('boss_')) {
             if (this.bossSys) {
-                // Initialize the interactive boss intro and specific mechanics
                 this.bossSys.initCustomBoss(e, type);
             }
         }
@@ -1426,13 +1425,7 @@ export default class GameScene extends Phaser.Scene {
             this.hud.bossName.setVisible(true);
             this.hud.bossName.setText(type.toUpperCase());
             
-            // Trigger cinematic intro
-            let bossNameId = type;
-            if (type === 'boss') bossNameId = 'dreadnought'; // fallback mapping
-            this.bossSys.showInteractiveBossIntro(bossNameId, (modifier) => {
-                e.combatModifier = modifier;
-                this.bossSys.setupHitZones(e);
-            });
+            // Intro is now handled by initCustomBoss up above
             this.eventSys.triggerCompanionComment('boss_spawn');
         }
         return e;

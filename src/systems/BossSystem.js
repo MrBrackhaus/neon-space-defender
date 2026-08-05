@@ -18,7 +18,27 @@ export default class BossSystem {
         let c1 = "[1] Attack!";
         let c2 = "[2] Defend!";
         
-        if (type === 'boss_cheese') {
+        if (type === 'boss') {
+            title = "DREADNOUGHT";
+            subtitle = "THE STEEL BEHEMOTH";
+            c1 = "[1] 'Friss Laser, Blecheimer!'";
+            c2 = "[2] 'Ausweichmanöver aktivieren!'";
+        } else if (type === 'mothership') {
+            title = "MOTHERSHIP";
+            subtitle = "ALIEN CARRIER";
+            c1 = "[1] 'Schilde durchbrechen!'";
+            c2 = "[2] 'Auf Distanz bleiben!'";
+        } else if (type === 'hivemind') {
+            title = "HIVEMIND";
+            subtitle = "THE SWARM QUEEN";
+            c1 = "[1] 'Feuer konzentrieren!'";
+            c2 = "[2] 'Drohnen abwehren!'";
+        } else if (type === 'destroyer') {
+            title = "VOID DESTROYER";
+            subtitle = "END OF ALL THINGS";
+            c1 = "[1] 'Alles oder Nichts!'";
+            c2 = "[2] 'Schilde auf Maximum!'";
+        } else if (type === 'boss_cheese') {
             title = "LORD GOUDA";
             subtitle = "THE LACTOSE OVERLORD";
             c1 = "[1] 'Ich bin laktoseintolerant!'";
@@ -36,6 +56,7 @@ export default class BossSystem {
         }
 
         this.showInteractiveBossIntro(title, subtitle, c1, c2, (modifier) => {
+            bossSprite.combatModifier = modifier;
             // Apply unique boss AI logic after dialogue
             bossSprite.customType = type;
             bossSprite.nextAttack = this.scene.time.now + 2000;

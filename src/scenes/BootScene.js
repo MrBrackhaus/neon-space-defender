@@ -125,8 +125,8 @@ export default class BootScene extends Phaser.Scene {
         
         // AI Generated Asteroids
         for (let i = 0; i < 9; i++) {
-            this.load.image('asteroid_normal_' + i, 'asteroids/normal_' + i + '.png?v=1');
-            this.load.image('asteroid_ore_' + i, 'asteroids/ore_' + i + '.png?v=1');
+            this.load.image('asteroid_normal_' + i, 'asteroids/normal_' + i + '.png?v=9');
+            this.load.image('asteroid_ore_' + i, 'asteroids/ore_' + i + '.png?v=9');
         }
         
         this.load.image('crystal_xp',   'crystal_xp.png?v=6');

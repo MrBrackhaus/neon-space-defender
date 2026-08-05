@@ -2243,7 +2243,7 @@ export default class GameScene extends Phaser.Scene {
             if (dist < 60) {
                 this.pd.scrap += c.scrapVal;
                 this.eventSys.triggerCompanionComment('scrap_pickup');
-                this.audioSys.playMenuHover();
+                this.audioSys.playHover();
                 c.destroy();
             }
         });
@@ -2259,7 +2259,7 @@ export default class GameScene extends Phaser.Scene {
             }
             if (dist < 60) {
                 this.pd.cubes += 1;
-                this.audioSys.playMenuHover();
+                this.audioSys.playHover();
                 c.destroy();
             }
         });
@@ -3016,6 +3016,7 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 }
+
 
 
 

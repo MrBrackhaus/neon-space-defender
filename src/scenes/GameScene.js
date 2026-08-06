@@ -1965,7 +1965,7 @@ export default class GameScene extends Phaser.Scene {
      * @param {Phaser.Physics.Arcade.Sprite} enemy - The enemy colliding with the player.
      */
     onPlayerTouchEnemy(player, enemy) {
-        if (!enemy.active || this.playerInvincible || this.godMode) return;
+        if (!player || !player.active || !enemy || !enemy.active || this.isGameOver || this.playerInvincible || this.godMode) return;
         const collisionDmg = 10 + (this.waveNum * 2.5) + (this.pd.maxHp * 0.08);
         this.damagePlayer(collisionDmg);
         // Repulse enemy if it has physics enabled
@@ -1982,7 +1982,7 @@ export default class GameScene extends Phaser.Scene {
      * @param {Phaser.Physics.Arcade.Image} bullet - The enemy projectile.
      */
     onEnemyBulletHit(player, bullet) {
-        if (!bullet.active) return;
+        if (!player || !player.active || !bullet || !bullet.active || this.isGameOver) return;
         this.eBullets.killAndHide(bullet);
         this.damagePlayer(bullet.damage || 10);
     }
@@ -2285,7 +2285,7 @@ export default class GameScene extends Phaser.Scene {
      * @param {number} amount - Amount of damage to deal.
      */
     damagePlayer(amount) {
-        if (this.isGameOver || this.playerInvincible || this.godMode || this.player.isInvulnerable || this.player.hasAegis) return;
+        if (this.isGameOver || !this.player || !this.player.active || this.playerInvincible || this.godMode || this.player.isInvulnerable || this.player.hasAegis) return;
 
         this.triggerHitStop(1.5);
         this.eventSys.triggerCompanionComment('take_damage');

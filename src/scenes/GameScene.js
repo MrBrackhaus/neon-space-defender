@@ -65,9 +65,9 @@ const ENEMY_DEFS = {
  */
 function getWaveComp(wave) {
     if (wave % 20 === 0) return { destroyer: 1 };
-    if (wave % 15 === 0) return { hivemind: 1 };
-    if (wave % 10 === 0) return { mothership: 1 };
-    if (wave % 5 === 0) return { boss: true };
+    if (wave % 15 === 0) return { isBoss: true, type: 'boss_vacuum' };
+    if (wave % 10 === 0) return { isBoss: true, type: 'boss_irs' };
+    if (wave % 5 === 0) return { isBoss: true, type: 'boss' };
     const n = 12 + Math.floor(wave * 4.5 + Math.pow(wave, 1.2));
     if (wave === 1) return { basic: n };
     if (wave === 2) return { basic: Math.ceil(n*0.5), swarmer: Math.ceil(n*0.5) };
@@ -2017,9 +2017,9 @@ export default class GameScene extends Phaser.Scene {
         this.spawnDeathFX(enemy.x, enemy.y, enemy.displayWidth > 50 ? 0xff3300 : 0xff8800);
         this.cameras.main.shake(120, enemy.type === 'boss' ? 0.018 : 0.006);
 
-        if (enemy.type === 'boss') {
+        if (enemy.type === 'boss' || enemy.type === 'boss_cheese' || enemy.type === 'boss_irs' || enemy.type === 'boss_vacuum') {
             this.triggerHitStop(3.0);
-            if (this.achieveSys.unlock('boss_1')) {
+            if (enemy.type === 'boss' && this.achieveSys.unlock('boss_1')) {
                 this.showBanner('ACHIEVEMENT: Piratenkönig auf Abwegen!', '#00ffff');
             }
             this.eventSys.triggerCompanionComment('boss_kill');
@@ -2040,8 +2040,6 @@ export default class GameScene extends Phaser.Scene {
         // ── BOSS PHASE 2 TRANSITIONS ──
         let phase2Type = null;
         if (enemy.type === 'boss' && this.waveNum === 5) phase2Type = 'boss_cheese';
-        if (enemy.type === 'mothership' && this.waveNum === 10) phase2Type = 'boss_irs';
-        if (enemy.type === 'hivemind' && this.waveNum === 15) phase2Type = 'boss_vacuum';
 
         if (phase2Type) {
             this.waveLeft++; // keep wave alive
@@ -2676,10 +2674,11 @@ export default class GameScene extends Phaser.Scene {
             }
         }
 
-        if (comp.boss) {
+        if (comp.boss || comp.isBoss) {
             this.waveLeft = 1;
+            const bType = comp.type || 'boss';
             this.showBanner('⚠ BOSS ⚠', '#ff0000');
-            this.time.delayedCall(2800, () => { if (!this.isGameOver) this.spawnEnemy('boss'); });
+            this.time.delayedCall(2800, () => { if (!this.isGameOver) this.spawnEnemy(bType); });
             return;
         }
 

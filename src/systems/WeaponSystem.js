@@ -506,17 +506,18 @@ export default class WeaponSystem {
   fireRainbowLaser(player, enemiesGroup, damage) {
     if (!player || !player.active) return;
     
-    // Create laser container that tracks player
-    const laserContainer = this.scene.add.container(player.x, player.y - 50).setDepth(12);
-    
     const lh = this.scene.scale.height * 1.5;
 
-    // Use rectangles with origin at bottom-center (0.5, 1) so they extend upwards from the container
-    const glow2 = this.scene.add.rectangle(0, 0, 70, lh, 0x00ffff).setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.4);
-    const glow1 = this.scene.add.rectangle(0, 0, 40, lh, 0xff00ff).setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.8);
-    const core = this.scene.add.rectangle(0, 0, 16, lh, 0xffffff).setOrigin(0.5, 1).setAlpha(1);
-    
-    laserContainer.add([glow2, glow1, core]);
+    // Create rectangles directly in the scene to avoid any Container rendering bugs
+    // Origin at bottom-center (0.5, 1) so they extend upwards from the player's horn
+    const glow2 = this.scene.add.rectangle(player.x, player.y - 50, 70, lh, 0x00ffff)
+        .setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.4).setDepth(12);
+        
+    const glow1 = this.scene.add.rectangle(player.x, player.y - 50, 40, lh, 0xff00ff)
+        .setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.8).setDepth(12);
+        
+    const core = this.scene.add.rectangle(player.x, player.y - 50, 16, lh, 0xffffff)
+        .setOrigin(0.5, 1).setAlpha(1).setDepth(12);
     
     // Shake camera continuously
     const shakeEvent = this.scene.time.addEvent({
@@ -530,7 +531,7 @@ export default class WeaponSystem {
     let elapsed = 0;
     
     // Particle emitter trailing the laser
-    const particles = this.scene.add.particles(0, 0, 'p_glow', {
+    const particles = this.scene.add.particles(player.x, player.y - 50, 'p_glow', {
         x: { min: -25, max: 25 },
         y: { min: -lh, max: 0 },
         speedY: { min: -400, max: -800 },
@@ -540,7 +541,7 @@ export default class WeaponSystem {
         blendMode: 'ADD',
         frequency: 10
     });
-    laserContainer.add(particles);
+    particles.setDepth(12);
 
     const updateEvent = this.scene.time.addEvent({
         delay: tickRate,
@@ -551,17 +552,25 @@ export default class WeaponSystem {
                 shakeEvent.remove();
                 updateEvent.remove();
                 this.scene.tweens.add({
-                    targets: laserContainer,
+                    targets: [glow2, glow1, core],
                     alpha: 0,
                     scaleX: 0,
                     duration: 200,
-                    onComplete: () => laserContainer.destroy()
+                    onComplete: () => {
+                        glow2.destroy();
+                        glow1.destroy();
+                        core.destroy();
+                        particles.destroy();
+                    }
                 });
                 return;
             }
             
-            // Move container with player, offset to horn
-            laserContainer.setPosition(player.x, player.y - 50); 
+            // Move visuals with player
+            glow2.setPosition(player.x, player.y - 50);
+            glow1.setPosition(player.x, player.y - 50);
+            core.setPosition(player.x, player.y - 50);
+            particles.setPosition(player.x, player.y - 50);
             
             // Shift colors over time
             const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x9400d3];

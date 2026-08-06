@@ -51,7 +51,7 @@ const WEAPONS = [
  * cost to unlock, and feature descriptions.
  */
 const SHIPS = [
-    { id: 'standard', img: 'ship_pizza_flitzer_portrait', animSheet: 'ship_pizza_flitzer_sheet', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Dein treuer Begleiter, verkrustet mit einem gigantischen Fett-Schild. (Ausgewogen)' },
+    { id: 'standard', img: 'ship_pizza_flitzer_portrait', animSheet: 'ship_pizza_flitzer_sheet', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.22, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Dein treuer Begleiter, verkrustet mit einem gigantischen Fett-Schild. (Ausgewogen)' },
     { id: 'interceptor', img: 'ship_interceptor', name: 'NEON-FLAMINGO', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Motel-Reklame mit geplündertem Void-Antrieb. Extrem fragil.' },
     { id: 'dreadnought', img: 'ship_dreadnought', name: 'ARCADE-KAPSEL', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Schild. Ein uralter Spielautomat mit Plasma-Reaktor. Einwurf: 1 Vierteldollar.' },
     { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim. Plastik-Karussell-Tierchen mit Antimaterie-Hörnern. Sparkles ist sehr stolz.' },
@@ -95,6 +95,8 @@ export default class ShipSelectScene extends Phaser.Scene {
         }
         
         // ─────────────────── BACKGROUND & ATMOSPHERE ───────────────────
+        const htmlHud = document.getElementById('html-hud');
+        if (htmlHud) htmlHud.style.display = 'none';
         
         this.add.image(cw / 2, ch / 2, 'bg').setAlpha(0.3).setDepth(0);
         
@@ -219,7 +221,8 @@ export default class ShipSelectScene extends Phaser.Scene {
                 .setInteractive({ useHandCursor: true });
                 
             // Ship preview icon
-            const icon = this.add.image(-90, 0, s.img).setScale(s.scale * 0.6);
+            const listScale = s.id === 'standard' ? 0.066 : s.scale * 0.6;
+            const icon = this.add.image(-90, 0, s.img).setScale(listScale);
             if (!isUnlocked) icon.setTint(0x444444);
             
             // Ship Name
@@ -294,7 +297,9 @@ export default class ShipSelectScene extends Phaser.Scene {
         this.cardContainer.add(pBox);
         
         // Fallback large sprite
-        this.cardSprite = this.add.image(0, -110, 'ship_standard').setScale(0.5);
+        const initialShip = SHIPS.find(x => x.id === this.previewShipId) || SHIPS[0];
+        const initScale = initialShip.id === 'standard' ? 0.33 : initialShip.scale * 3;
+        this.cardSprite = this.add.image(0, -110, initialShip.img).setScale(initScale);
         this.cardContainer.add(this.cardSprite);
 
         // Ship Name Display
@@ -364,7 +369,8 @@ export default class ShipSelectScene extends Phaser.Scene {
                 
                 // Set the ship preview image
                 this.cardSprite.setTexture(s.img);
-                this.cardSprite.setScale(s.scale * 3);
+                const animScale = s.id === 'standard' ? 0.33 : s.scale * 3;
+                this.cardSprite.setScale(animScale);
                 if (!isUnlocked) this.cardSprite.setTint(0x333333);
                 else this.cardSprite.clearTint();
 

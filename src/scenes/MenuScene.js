@@ -32,6 +32,10 @@ export default class MenuScene extends Phaser.Scene {
     create() {
         // ─────────────────── AUDIO SETUP ───────────────────
         
+        // Ensure HUD is hidden when we are in the menu
+        const htmlHud = document.getElementById('html-hud');
+        if (htmlHud) htmlHud.style.display = 'none';
+        
         // Initialize global AudioSystem if it doesn't exist yet
         if (!this.game.audioSys) {
             this.game.audioSys = new AudioSystem(this);

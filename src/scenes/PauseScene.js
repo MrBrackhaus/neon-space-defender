@@ -116,6 +116,8 @@ export default class PauseScene extends Phaser.Scene {
         // Instantiate Quit button
         createButton(ch * 0.8, 'QUIT TO MENU', () => {
             // Terminate the active game session and return to the main menu
+            const htmlHud = document.getElementById('html-hud');
+            if (htmlHud) htmlHud.style.display = 'none';
             this.scene.stop('GameScene');
             this.scene.stop();
             this.scene.start('MenuScene');

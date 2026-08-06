@@ -325,10 +325,10 @@ export default class GameScene extends Phaser.Scene {
         }
         this.fxIndex = 0;
 
-        let shipScale = 0.088;
+        let shipScale = 0.128;
         let shipTint = 0xffffff;
-        let shipTex = 'ship_pizza_flitzer_sheet';
-        let shipAnim = 'anim_player_fly';
+        let shipTex = 'ship_pizza_flitzer_portrait';
+        let shipAnim = null;
 
         if (this.shipClass === 'interceptor') { shipScale = 0.088; shipTex = 'ship_interceptor'; shipAnim = null; }
         if (this.shipClass === 'dreadnought') { shipScale = 0.11; shipTex = 'ship_dreadnought'; shipAnim = null; }
@@ -353,32 +353,73 @@ export default class GameScene extends Phaser.Scene {
         if (shipAnim) this.player.play(shipAnim);
 
         // Make the hitbox perfectly match the visual boundaries of the ship
-        this.player.body.setSize(this.player.width * 0.75, this.player.height * 0.75);
-        this.player.body.setOffset(this.player.width * 0.125, this.player.height * 0.125);
+        const isPizza = !this.shipClass || this.shipClass === 'standard';
+        if (isPizza) {
+            this.player.body.setSize(this.player.width * 0.45, this.player.height * 0.55);
+            this.player.body.setOffset(this.player.width * 0.275, this.player.height * 0.25);
+        } else {
+            this.player.body.setSize(this.player.width * 0.75, this.player.height * 0.75);
+            this.player.body.setOffset(this.player.width * 0.125, this.player.height * 0.125);
+        }
 
-        // Engine exhaust — correctly positioned for the smaller scale
-        this.engineLeft = this.add.particles(0, 0, 'p_glow', {
-            follow: this.player,
-            followOffset: { x: -9, y: 24 },
-            speedY: { min: 80, max: 180 }, speedX: { min: -18, max: 18 },
-            scale: { start: 0.5, end: 0 }, alpha: { start: 1, end: 0 },
-            tint: [0x00ffff, 0x8800ff, 0xffffff], blendMode: 'ADD', lifespan: 280, frequency: 25,
-        }).setDepth(9);
-        this.engineRight = this.add.particles(0, 0, 'p_glow', {
-            follow: this.player,
-            followOffset: { x: 9, y: 24 },
-            speedY: { min: 80, max: 180 }, speedX: { min: -18, max: 18 },
-            scale: { start: 0.5, end: 0 }, alpha: { start: 1, end: 0 },
-            tint: [0x00ffff, 0x8800ff, 0xffffff], blendMode: 'ADD', lifespan: 280, frequency: 25,
-        }).setDepth(9);
-        // Extra central engine glow
-        this.add.particles(0, 0, 'p_glow', {
-            follow: this.player,
-            followOffset: { x: 0, y: 26 },
-            speedY: { min: 100, max: 250 }, speedX: { min: -8, max: 8 },
-            scale: { start: 0.7, end: 0 }, alpha: { start: 0.6, end: 0 },
-            tint: [0xffffff, 0x6600ff], blendMode: 'ADD', lifespan: 200, frequency: 20,
-        }).setDepth(8);
+        // Engine exhaust
+        if (isPizza) {
+            this.pizzaEngines = {};
+            
+            // Main hull engines - Roaring flames
+            [-18, 18].forEach(ex => {
+                this.add.particles(0, 0, 'p_glow', {
+                    follow: this.player,
+                    followOffset: { x: ex, y: 52 },
+                    speedY: { min: 180, max: 280 }, speedX: { min: -12, max: 12 },
+                    scale: { start: 0.8, end: 0.1 }, alpha: { start: 1, end: 0 },
+                    tint: [0xffe600, 0xff7700, 0xff0000], blendMode: 'ADD', 
+                    lifespan: { min: 200, max: 300 }, frequency: 15,
+                }).setDepth(9);
+            });
+            
+            // Lateral maneuvering thrusters on the cannons - Sharp bursts
+            this.pizzaEngines.leftCannon = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: -36, y: 35 },
+                speedY: { min: 120, max: 200 }, speedX: { min: -8, max: 8 },
+                scale: { start: 0.5, end: 0.1 }, alpha: { start: 1, end: 0 },
+                tint: [0xffe600, 0xff3300], blendMode: 'ADD', 
+                lifespan: { min: 150, max: 200 }, frequency: 20,
+            }).setDepth(9);
+            this.pizzaEngines.leftCannon.emitting = false;
+
+            this.pizzaEngines.rightCannon = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 36, y: 35 },
+                speedY: { min: 120, max: 200 }, speedX: { min: -8, max: 8 },
+                scale: { start: 0.5, end: 0.1 }, alpha: { start: 1, end: 0 },
+                tint: [0xffe600, 0xff3300], blendMode: 'ADD', 
+                lifespan: { min: 150, max: 200 }, frequency: 20,
+            }).setDepth(9);
+            this.pizzaEngines.rightCannon.emitting = false;
+        } else {
+            this.engineLeft = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player,
+                followOffset: { x: -9, y: 24 },
+                speedY: { min: 80, max: 180 }, speedX: { min: -18, max: 18 },
+                scale: { start: 0.5, end: 0 }, alpha: { start: 1, end: 0 },
+                tint: [0x00ffff, 0x8800ff, 0xffffff], blendMode: 'ADD', lifespan: 280, frequency: 25,
+            }).setDepth(9);
+            this.engineRight = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player,
+                followOffset: { x: 9, y: 24 },
+                speedY: { min: 80, max: 180 }, speedX: { min: -18, max: 18 },
+                scale: { start: 0.5, end: 0 }, alpha: { start: 1, end: 0 },
+                tint: [0x00ffff, 0x8800ff, 0xffffff], blendMode: 'ADD', lifespan: 280, frequency: 25,
+            }).setDepth(9);
+            // Extra central engine glow
+            this.add.particles(0, 0, 'p_glow', {
+                follow: this.player,
+                followOffset: { x: 0, y: 26 },
+                speedY: { min: 100, max: 250 }, speedX: { min: -8, max: 8 },
+                scale: { start: 0.7, end: 0 }, alpha: { start: 0.6, end: 0 },
+                tint: [0xffffff, 0x6600ff], blendMode: 'ADD', lifespan: 200, frequency: 20,
+            }).setDepth(8);
+        }
 
         // Collisions
         // Core collision setup: Note that overlap is used instead of collide to prevent physics bounce
@@ -933,6 +974,14 @@ export default class GameScene extends Phaser.Scene {
         
         pd.isMoving = (vx !== 0 || vy !== 0);
         
+        // Maneuvering thrusters logic
+        if (this.pizzaEngines) {
+            // When flying left (vx < 0), fire right cannon thruster to push left.
+            // When flying right (vx > 0), fire left cannon thruster to push right.
+            this.pizzaEngines.leftCannon.emitting = (vx > 0.1);
+            this.pizzaEngines.rightCannon.emitting = (vx < -0.1);
+        }
+        
         // Smooth tilt without 360 degree spin wrapping bugs
         const targetAngle = this.playerBaseAngle + vx * 8;
         let diff = targetAngle - player.angle;
@@ -1023,17 +1072,47 @@ export default class GameScene extends Phaser.Scene {
             const shots = shotsForTarget[index];
             if (shots <= 0) return;
 
-            const pAngle = ang + Math.PI / 2;
-            const ox = Math.cos(pAngle);
-            const oy = Math.sin(pAngle);
+            const shipRot = this.player.rotation;
+            // Ship visual 'right' vector
+            const ox = Math.cos(shipRot);
+            const oy = Math.sin(shipRot);
+            // Ship visual 'forward' vector (Phaser angle 0 is right, so forward is -90 deg)
+            const fx = Math.cos(shipRot - Math.PI / 2);
+            const fy = Math.sin(shipRot - Math.PI / 2);
+            const isPizza = (!this.shipClass || this.shipClass === 'standard');
+            const forwardOffset = isPizza ? 35 : 0;
             
             if (shots === 1) {
                 this.fireSide = (this.fireSide === 1) ? -1 : 1;
-                this.fireBullet(this.player.x + (ox * 16 * this.fireSide), this.player.y + (oy * 16 * this.fireSide), ang);
+                const gunOffset = isPizza ? 36 : 16;
+                this.fireBullet(
+                    this.player.x + (ox * gunOffset * this.fireSide) + (fx * forwardOffset), 
+                    this.player.y + (oy * gunOffset * this.fireSide) + (fy * forwardOffset), 
+                    ang
+                );
             } else {
                 for (let i = 0; i < shots; i++) {
                     const a = ang + (i - (shots - 1) / 2) * spread;
-                    this.fireBullet(this.player.x, this.player.y, a);
+                    const gunOffset = isPizza ? 36 : 16;
+                    
+                    let activeOffset = 0;
+                    if (shots === 2) {
+                        activeOffset = (i === 0) ? -gunOffset : gunOffset;
+                    } else if (shots === 3) {
+                        if (i === 0) activeOffset = -gunOffset;
+                        else if (i === 1) activeOffset = 0;
+                        else activeOffset = gunOffset;
+                    } else {
+                        // 4+ shots: just spread them across the wings
+                        const side = (i % 2 === 0) ? -1 : 1;
+                        activeOffset = gunOffset * side + (side * (i * 2));
+                    }
+
+                    this.fireBullet(
+                        this.player.x + (ox * activeOffset) + (fx * forwardOffset), 
+                        this.player.y + (oy * activeOffset) + (fy * forwardOffset), 
+                        a
+                    );
                 }
             }
         });
@@ -1175,6 +1254,7 @@ export default class GameScene extends Phaser.Scene {
         if (isLaserDrone) b.setTint(0xff00ff); // Purple lasers
 
         b.setActive(true).setVisible(true);
+        b.setScale(1.5); // Make bullets bigger so they are easier to hit with
         if (b.body) {
             b.body.enable = true;
             b.body.setSize(b.width, b.height);
@@ -1403,8 +1483,11 @@ export default class GameScene extends Phaser.Scene {
         e.lastShot = 0; e.isDying = false;
         e.tOffset = Math.random() * 100; // Fixed time offset for smooth sine waves
 
-        // Circular physics body based on rendered size
-        const rSize = 516 * sm.scale * 0.32;  // 516 = frame px width
+        // Circular physics body based on unscaled texture dimensions
+        // The physics body automatically scales with the sprite, so do not multiply by sm.scale here!
+        const isBoss = (type === 'boss' || type === 'mothership' || type === 'hivemind' || type === 'destroyer' || type.startsWith('boss_'));
+        const hitBoxRatio = isBoss ? 0.2 : 0.32; // Bosses often have more padding, so use a tighter hitbox (40% diameter vs 64%)
+        const rSize = e.width * hitBoxRatio;
         e.body.setCircle(rSize, e.width/2 - rSize, e.height/2 - rSize);
         this.enemies.add(e);
 
@@ -1882,7 +1965,7 @@ export default class GameScene extends Phaser.Scene {
      * @param {Phaser.Physics.Arcade.Sprite} enemy - The enemy colliding with the player.
      */
     onPlayerTouchEnemy(player, enemy) {
-        if (!enemy.active || this.playerInvincible) return;
+        if (!enemy.active || this.playerInvincible || this.godMode) return;
         const collisionDmg = 10 + (this.waveNum * 2.5) + (this.pd.maxHp * 0.08);
         this.damagePlayer(collisionDmg);
         // Repulse enemy if it has physics enabled
@@ -2053,7 +2136,7 @@ export default class GameScene extends Phaser.Scene {
 
         if (phase2Type) {
             this.waveLeft++; // keep wave alive
-            this.time.delayedCall(1500, () => {
+            this.time.delayedCall(4000, () => {
                 if (!this.isGameOver) {
                     const phase2Boss = this.spawnEnemy(phase2Type);
                     phase2Boss.setPosition(enemy.x, enemy.y);
@@ -2202,7 +2285,7 @@ export default class GameScene extends Phaser.Scene {
      * @param {number} amount - Amount of damage to deal.
      */
     damagePlayer(amount) {
-        if (this.isGameOver || this.playerInvincible || this.player.isInvulnerable || this.player.hasAegis) return;
+        if (this.isGameOver || this.playerInvincible || this.godMode || this.player.isInvulnerable || this.player.hasAegis) return;
 
         this.triggerHitStop(1.5);
         this.eventSys.triggerCompanionComment('take_damage');
@@ -2654,7 +2737,7 @@ export default class GameScene extends Phaser.Scene {
             this.score += 1000 * n;
             this.addXP(200);
             this.showBanner(`WELLE ${n} ÜBERSPRUNGEN!`, '#ff4444');
-            this.time.delayedCall(1500, () => { if (!this.isGameOver) this.startWave(n + 1); });
+            this.time.delayedCall(4000, () => { if (!this.isGameOver) this.startWave(n + 1); });
             return;
         }
 
@@ -3076,7 +3159,7 @@ export default class GameScene extends Phaser.Scene {
         };
 
         // Buttons
-        createBtn(0, -150, 'JUMP TO BOSS 1 (LVL 10)', () => {
+        createBtn(0, -150, 'JUMP TO BOSS 1 (WAVE 5)', () => {
             this.waveNum = 4; // will be incremented to 5
             this.waveLeft = 0;
             
@@ -3095,8 +3178,8 @@ export default class GameScene extends Phaser.Scene {
             this.checkWaveComplete();
         });
 
-        createBtn(0, -90, 'JUMP TO WAVE 20', () => {
-            this.waveNum = 19;
+        createBtn(0, -90, 'JUMP TO BOSS 2 (WAVE 10)', () => {
+            this.waveNum = 9;
             this.waveLeft = 0;
             this.enemies.clear(true, true);
             this.checkWaveComplete();
@@ -3122,8 +3205,9 @@ export default class GameScene extends Phaser.Scene {
         });
 
         createBtn(0, 150, 'TOGGLE GODMODE', () => {
-            this.playerInvincible = !this.playerInvincible;
-            this.player.setAlpha(this.playerInvincible ? 0.5 : 1);
+            this.godMode = !this.godMode;
+            this.player.setAlpha(this.godMode ? 0.5 : 1);
+            this.showBanner(this.godMode ? 'GODMODE ON' : 'GODMODE OFF', '#ff00ff');
         });
 
         createBtn(0, 210, 'CLOSE', () => {

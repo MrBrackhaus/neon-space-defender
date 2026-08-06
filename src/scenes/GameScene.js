@@ -457,19 +457,19 @@ export default class GameScene extends Phaser.Scene {
             };
             
             this.arcadeEngines.outerLeft = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: -42, y: 95 }, ...engineConfig
+                follow: this.player, followOffset: { x: -30, y: 95 }, ...engineConfig
             }).setDepth(9);
             
             this.arcadeEngines.innerLeft = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: -15, y: 95 }, ...engineConfig
+                follow: this.player, followOffset: { x: -10, y: 95 }, ...engineConfig
             }).setDepth(9);
             
             this.arcadeEngines.innerRight = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 15, y: 95 }, ...engineConfig
+                follow: this.player, followOffset: { x: 10, y: 95 }, ...engineConfig
             }).setDepth(9);
             
             this.arcadeEngines.outerRight = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 42, y: 95 }, ...engineConfig
+                follow: this.player, followOffset: { x: 30, y: 95 }, ...engineConfig
             }).setDepth(9);
 
             // Pulsating Neon Aura around the ship

@@ -507,16 +507,16 @@ export default class WeaponSystem {
     if (!player || !player.active) return;
     
     // Create laser container that tracks player
-    const laserContainer = this.scene.add.container(player.x, player.y).setDepth(12);
+    const laserContainer = this.scene.add.container(player.x, player.y - 50).setDepth(12);
     
-    // Core white beam
-    const core = this.scene.add.graphics();
-    const glow1 = this.scene.add.graphics().setBlendMode('ADD');
-    const glow2 = this.scene.add.graphics().setBlendMode('ADD');
+    const lh = this.scene.scale.height * 1.5;
+
+    // Use rectangles with origin at bottom-center (0.5, 1) so they extend upwards from the container
+    const glow2 = this.scene.add.rectangle(0, 0, 70, lh, 0x00ffff).setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.4);
+    const glow1 = this.scene.add.rectangle(0, 0, 40, lh, 0xff00ff).setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.8);
+    const core = this.scene.add.rectangle(0, 0, 16, lh, 0xffffff).setOrigin(0.5, 1).setAlpha(1);
     
     laserContainer.add([glow2, glow1, core]);
-    
-    
     
     // Shake camera continuously
     const shakeEvent = this.scene.time.addEvent({
@@ -532,7 +532,7 @@ export default class WeaponSystem {
     // Particle emitter trailing the laser
     const particles = this.scene.add.particles(0, 0, 'p_glow', {
         x: { min: -25, max: 25 },
-        y: { min: -this.scene.scale.height, max: 0 },
+        y: { min: -lh, max: 0 },
         speedY: { min: -400, max: -800 },
         scale: { start: 0.8, end: 0 },
         tint: [0xff0000, 0xffff00, 0x00ff00, 0x00ffff, 0xff00ff],
@@ -548,7 +548,6 @@ export default class WeaponSystem {
         callback: () => {
             elapsed += tickRate;
             if (!player || !player.active || elapsed >= duration) {
-                // End laser
                 shakeEvent.remove();
                 updateEvent.remove();
                 this.scene.tweens.add({
@@ -567,20 +566,8 @@ export default class WeaponSystem {
             // Shift colors over time
             const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x9400d3];
             const cIdx = Math.floor(elapsed / 100) % colors.length;
-            
-            const lh = this.scene.scale.height * 1.5;
-            
-            core.clear();
-            core.fillStyle(0xffffff, 1);
-            core.fillRoundedRect(-8, -lh, 16, lh, 8);
-            
-            glow1.clear();
-            glow1.fillStyle(colors[cIdx], 0.8);
-            glow1.fillRoundedRect(-20, -lh, 40, lh, 20);
-            
-            glow2.clear();
-            glow2.fillStyle(colors[(cIdx + 3) % colors.length], 0.4);
-            glow2.fillRoundedRect(-35, -lh, 70, lh, 35);
+            glow1.setFillStyle(colors[cIdx]);
+            glow2.setFillStyle(colors[(cIdx + 3) % colors.length]);
 
             // Deal continuous damage
             const beamWidth = 65;
@@ -595,9 +582,6 @@ export default class WeaponSystem {
             });
         }
     });
-    
-    // Initial position
-    laserContainer.setPosition(player.x, player.y - 50);
   }
 
   // 💥 DOOM BEAM 💥

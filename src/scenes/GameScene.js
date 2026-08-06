@@ -331,7 +331,7 @@ export default class GameScene extends Phaser.Scene {
         let shipAnim = null;
 
         if (this.shipClass === 'interceptor') { shipScale = 0.11; shipTex = 'ship_neon_flamingo'; shipAnim = null; }
-        if (this.shipClass === 'dreadnought') { shipScale = 0.11; shipTex = 'ship_dreadnought'; shipAnim = null; }
+        if (this.shipClass === 'dreadnought') { shipScale = 0.16; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
         if (this.shipClass === 'phantom') { shipScale = 0.115; shipTex = 'ship_phantom'; shipAnim = null; }
         if (this.shipClass === 'paladin') { shipScale = 0.125; shipTex = 'ship_paladin'; shipAnim = null; }
         if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; shipAnim = null; }
@@ -355,6 +355,7 @@ export default class GameScene extends Phaser.Scene {
         // Make the hitbox perfectly match the visual boundaries of the ship
         const isPizza = !this.shipClass || this.shipClass === 'standard';
         const isFlamingo = this.shipClass === 'interceptor';
+        const isArcade = this.shipClass === 'dreadnought';
         if (isPizza) {
             this.player.body.setSize(this.player.width * 0.45, this.player.height * 0.55);
             this.player.body.setOffset(this.player.width * 0.275, this.player.height * 0.25);
@@ -362,6 +363,10 @@ export default class GameScene extends Phaser.Scene {
             // Flamingo has an elongated body - tighter hitbox
             this.player.body.setSize(this.player.width * 0.4, this.player.height * 0.6);
             this.player.body.setOffset(this.player.width * 0.3, this.player.height * 0.2);
+        } else if (isArcade) {
+            // Arcade Kapsel is chunky, broad and blocky
+            this.player.body.setSize(this.player.width * 0.65, this.player.height * 0.65);
+            this.player.body.setOffset(this.player.width * 0.175, this.player.height * 0.175);
         } else {
             this.player.body.setSize(this.player.width * 0.75, this.player.height * 0.75);
             this.player.body.setOffset(this.player.width * 0.125, this.player.height * 0.125);
@@ -439,6 +444,26 @@ export default class GameScene extends Phaser.Scene {
                 lifespan: { min: 120, max: 180 }, frequency: 18,
             }).setDepth(9);
             this.flamingoEngines.rightWing.emitting = false;
+        } else if (isArcade) {
+            // ═══ ARCADE-KAPSEL: Plasma-Reaktor & Neon-Aura ═══
+            // Main Plasma Reactor (Green/Teal)
+            this.arcadeEngines = {};
+            this.arcadeEngines.main = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 0, y: 45 },
+                speedY: { min: 150, max: 250 }, speedX: { min: -15, max: 15 },
+                scale: { start: 0.8, end: 0.1 }, alpha: { start: 1, end: 0 },
+                tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
+                lifespan: { min: 300, max: 400 }, frequency: 15,
+            }).setDepth(9);
+
+            // Pulsating Neon Aura around the ship (rainbow cycle is done in update())
+            this.arcadeEngines.aura = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player,
+                speedY: { min: 20, max: 50 }, speedX: { min: -20, max: 20 },
+                scale: { start: 1.2, end: 0.2 }, alpha: { start: 0.3, end: 0 },
+                tint: 0xffffff, blendMode: 'ADD',
+                lifespan: { min: 500, max: 800 }, frequency: 30,
+            }).setDepth(9);
         } else {
             this.engineLeft = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,
@@ -1027,6 +1052,16 @@ export default class GameScene extends Phaser.Scene {
             this.flamingoEngines.leftWing.emitting = (vx > 0.1);
             this.flamingoEngines.rightWing.emitting = (vx < -0.1);
         }
+        if (this.arcadeEngines) {
+            // Rainbow aura color cycling
+            const hue = (this.time.now * 0.1) % 360;
+            const color = Phaser.Display.Color.HSVToRGB(hue / 360, 1, 1).color;
+            this.arcadeEngines.aura.particleTint = color;
+            
+            // Thrust intensity based on movement (since it's slow)
+            const speed = Math.abs(vy);
+            this.arcadeEngines.main.frequency = speed > 0.1 ? 8 : 25;
+        }
         
         // Smooth tilt without 360 degree spin wrapping bugs
         const targetAngle = this.playerBaseAngle + vx * 8;
@@ -1126,11 +1161,14 @@ export default class GameScene extends Phaser.Scene {
             const fx = Math.cos(shipRot - Math.PI / 2);
             const fy = Math.sin(shipRot - Math.PI / 2);
             const isPizza = (!this.shipClass || this.shipClass === 'standard');
-            const forwardOffset = isPizza ? 35 : 0;
+            const isArcade = (this.shipClass === 'dreadnought');
+            
+            // Arcade Kapsel is very boxy, move bullets further forward
+            const forwardOffset = isPizza ? 35 : (isArcade ? 45 : 0);
             
             if (shots === 1) {
                 this.fireSide = (this.fireSide === 1) ? -1 : 1;
-                const gunOffset = isPizza ? 36 : 16;
+                const gunOffset = isPizza ? 36 : (isArcade ? 55 : 16);
                 this.fireBullet(
                     this.player.x + (ox * gunOffset * this.fireSide) + (fx * forwardOffset), 
                     this.player.y + (oy * gunOffset * this.fireSide) + (fy * forwardOffset), 
@@ -1139,7 +1177,7 @@ export default class GameScene extends Phaser.Scene {
             } else {
                 for (let i = 0; i < shots; i++) {
                     const a = ang + (i - (shots - 1) / 2) * spread;
-                    const gunOffset = isPizza ? 36 : 16;
+                    const gunOffset = isPizza ? 36 : (isArcade ? 55 : 16);
                     
                     let activeOffset = 0;
                     if (shots === 2) {
@@ -2754,6 +2792,9 @@ export default class GameScene extends Phaser.Scene {
     updateOrbitals() {
         const count = this.pd.orbitals;
         
+        // For Dreadnought/Arcade-Kapsel, weapons are on the extreme left/right wings
+        let isArcade = (this.shipClass === 'dreadnought');
+
         while (this.orbitalsGroup.getChildren().length < count) {
             const b = this.orbitalsGroup.create(this.player.x, this.player.y, 'orbital_blade').setDepth(9);
             b.setScale(0.06);

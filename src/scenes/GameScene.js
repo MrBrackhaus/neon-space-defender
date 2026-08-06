@@ -1968,11 +1968,11 @@ export default class GameScene extends Phaser.Scene {
         if (!player || !player.active || !enemy || !enemy.active || this.isGameOver || this.playerInvincible || this.godMode) return;
         const collisionDmg = 10 + (this.waveNum * 2.5) + (this.pd.maxHp * 0.08);
         this.damagePlayer(collisionDmg);
-        // Repulse enemy if it has physics enabled
-        if (typeof enemy.setVelocity === 'function') {
+        // Repulse enemy if it has physics enabled and body still exists
+        if (enemy.body && typeof enemy.setVelocity === 'function') {
             const a = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
             enemy.setVelocity(Math.cos(a)*320, Math.sin(a)*320);
-            this.time.delayedCall(300, () => { if (enemy.active && typeof enemy.setVelocity === 'function') enemy.setVelocity(0,0); });
+            this.time.delayedCall(300, () => { if (enemy.active && enemy.body && typeof enemy.setVelocity === 'function') enemy.setVelocity(0,0); });
         }
     }
 

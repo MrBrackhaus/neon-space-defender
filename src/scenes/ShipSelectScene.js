@@ -51,10 +51,10 @@ const WEAPONS = [
  * cost to unlock, and feature descriptions.
  */
 const SHIPS = [
-    { id: 'standard', img: 'ship_pizza_flitzer_portrait', animSheet: 'ship_pizza_flitzer_sheet', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.18, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Dein treuer Begleiter, verkrustet mit einem gigantischen Fett-Schild. (Ausgewogen)' },
+    { id: 'standard', img: 'ship_pizza_flitzer_portrait', animKey: 'ship_pizza_flitzer_anim', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.18, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Dein treuer Begleiter, verkrustet mit einem gigantischen Fett-Schild. (Ausgewogen)' },
     { id: 'interceptor', img: 'ship_neon_flamingo', name: 'NEON-FLAMINGO', cost: 100, color: 0xff44aa, scale: 0.14, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Abgerockter Mecha-Flamingo aus dem Freizeitpark. Triebwerke mit Panzertape. Extrem fragil.' },
     { id: 'dreadnought', img: 'ship_arcade_kapsel', name: 'ARCADE-KAPSEL', cost: 150, color: 0x00ff00, scale: 0.16, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit 2 Schild-Aufladungen. Eine fliegende Retro-Spielhalle mit Plasma-Reaktor. Einwurf: 1 Vierteldollar.' },
-    { id: 'phantom', img: 'ship_phantom', animSheet: 'ship_phantom_sheet', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim. Plastik-Karussell-Tierchen mit Antimaterie-Hörnern. Sparkles ist sehr stolz.' },
+    { id: 'phantom', img: 'ship_phantom', animKey: 'anim_ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.18, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim. Plastik-Karussell-Tierchen mit Antimaterie-Hörnern. Sparkles ist sehr stolz.' },
     { id: 'paladin', img: 'ship_paladin', name: 'OKTOHORNCAT', cost: 200, color: 0xffcc00, scale: 0.16, hp: 1.5, dmg: 0.8, spd: 0.8, feature: 'Heilt sich. Plüschiges Maskottchen, von innen mit Titanplatten verstärkt. Sehr flauschig.' },
     { id: 'bomber', img: 'ship_bomber', name: 'NEON-GALEONE', cost: 200, color: 0xff00ff, scale: 0.16, hp: 1.2, dmg: 1.1, spd: 0.9, feature: 'Bomben-Spezialist. Ein gigantischer Haufen aus glühendem Neon-Schrott, zusammengehalten von Panzertape.' }
 ];
@@ -299,7 +299,8 @@ export default class ShipSelectScene extends Phaser.Scene {
         // Fallback large sprite
         const initialShip = SHIPS.find(x => x.id === this.previewShipId) || SHIPS[0];
         const initScale = initialShip.id === 'standard' ? 0.33 : initialShip.scale * 3;
-        this.cardSprite = this.add.image(0, -110, initialShip.img).setScale(initScale);
+        this.cardSprite = this.add.sprite(0, -110, initialShip.img).setScale(initScale);
+        if (initialShip.animKey) this.cardSprite.play(initialShip.animKey);
         this.cardContainer.add(this.cardSprite);
 
         // Ship Name Display
@@ -369,6 +370,12 @@ export default class ShipSelectScene extends Phaser.Scene {
                 
                 // Set the ship preview image
                 this.cardSprite.setTexture(s.img);
+                if (s.animKey) {
+                    this.cardSprite.play(s.animKey);
+                } else {
+                    this.cardSprite.stop();
+                    this.cardSprite.setTexture(s.img);
+                }
                 const animScale = s.id === 'standard' ? 0.33 : s.scale * 3;
                 this.cardSprite.setScale(animScale);
                 if (!isUnlocked) this.cardSprite.setTint(0x333333);

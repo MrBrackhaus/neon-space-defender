@@ -46,7 +46,7 @@ const ENEMY_DEFS = {
     stealth: { hp: 70,  speed: 140, score: 50, xp: 35, color: 0x222222, shoots: false },
     carrier: { hp: 400, speed: 20,  score: 100, xp: 80, color: 0x00ffaa, shoots: false },
     laser:   { hp: 60,  speed: 35,  score: 60, xp: 40, color: 0xff0000, shoots: true },
-    boss:      { hp: 1300, speed: 25, score: 1000, xp: 500, color: 0xff0000, shoots: true },
+    boss:      { hp: 2500, speed: 25, score: 1000, xp: 500, color: 0xff0000, shoots: true },
     mothership:{ hp: 4500, speed: 30, score: 1500, xp: 800, color: 0xff00ff, shoots: true },
     hivemind:  { hp: 6000, speed: 40, score: 2000, xp: 1000, color: 0x00ff00, shoots: true },
     hivemind_clone: { hp: 1500, speed: 110, score: 400, xp: 200, color: 0x55ff55, shoots: true },
@@ -1720,7 +1720,7 @@ export default class GameScene extends Phaser.Scene {
             const spread = phase === 1 ? 0.6 : 1.2;
             for (let i = 0; i < bullets; i++) {
                 const a = angle - (spread/2) + (spread / (bullets-1)) * i;
-                this.fireEnemyBullet(boss.x, boss.y, a, 350);
+                this.fireEnemyBullet(boss.x, boss.y, a, 350, 0.4);
             }
             boss.state.nextAttack = now + (phase === 1 ? 2000 : 1200) * boss.cdMod;
             
@@ -1729,7 +1729,7 @@ export default class GameScene extends Phaser.Scene {
             const bullets = phase === 1 ? 12 : 24;
             for (let i = 0; i < bullets; i++) {
                 const a = (Math.PI * 2 / bullets) * i + (t * 2);
-                this.fireEnemyBullet(boss.x, boss.y, a, 200);
+                this.fireEnemyBullet(boss.x, boss.y, a, 200, 0.4);
             }
             boss.state.nextAttack = now + (phase === 1 ? 2500 : 1500) * boss.cdMod;
             
@@ -1755,9 +1755,9 @@ export default class GameScene extends Phaser.Scene {
                 for(let j = 0; j < 5; j++) {
                     this.time.delayedCall(j * 50, () => {
                         if (!boss.active) return;
-                        this.fireEnemyBullet(boss.x, boss.y, attackAngle, 900);
-                        this.fireEnemyBullet(boss.x, boss.y, attackAngle + 0.1, 850);
-                        this.fireEnemyBullet(boss.x, boss.y, attackAngle - 0.1, 850);
+                        this.fireEnemyBullet(boss.x, boss.y, attackAngle, 900, 0.8);
+                        this.fireEnemyBullet(boss.x, boss.y, attackAngle + 0.1, 850, 0.8);
+                        this.fireEnemyBullet(boss.x, boss.y, attackAngle - 0.1, 850, 0.8);
                     });
                 }
                 boss.state.nextAttack = now + 2500 * boss.cdMod;
@@ -1772,7 +1772,7 @@ export default class GameScene extends Phaser.Scene {
      * @param {number} angle - Trajectory angle in radians.
      * @param {number} [speed=230] - Velocity magnitude.
      */
-    fireEnemyBullet(x, y, angle, speed = 230) {
+    fireEnemyBullet(x, y, angle, speed = 230, dmgMod = 1.0) {
         const b = this.eBullets.get(x, y, 'enemy_projectile');
         if (!b) return;
         b.setActive(true).setVisible(true).setDepth(6);
@@ -1781,7 +1781,7 @@ export default class GameScene extends Phaser.Scene {
             b.body.enable = true;
             b.body.setCircle(128);
         }
-        b.damage = 5 + (this.waveNum * 1.5) + (this.pd.maxHp * 0.04);
+        b.damage = (5 + (this.waveNum * 1.5) + (this.pd.maxHp * 0.04)) * dmgMod;
         b.body.reset(x, y);
         b.setVelocity(Math.cos(angle)*speed, Math.sin(angle)*speed);
         b.rotation = angle;

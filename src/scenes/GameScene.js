@@ -446,12 +446,19 @@ export default class GameScene extends Phaser.Scene {
             this.flamingoEngines.rightWing.emitting = false;
         } else if (isArcade) {
             // ═══ ARCADE-KAPSEL: Plasma-Reaktor & Neon-Aura ═══
-            // Main Plasma Reactor (Green/Teal)
+            // Left and Right Plasma Reactors (Green/Teal)
             this.arcadeEngines = {};
-            this.arcadeEngines.main = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 0, y: 45 },
-                speedY: { min: 150, max: 250 }, speedX: { min: -15, max: 15 },
-                scale: { start: 0.8, end: 0.1 }, alpha: { start: 1, end: 0 },
+            this.arcadeEngines.left = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: -28, y: 40 },
+                speedY: { min: 150, max: 250 }, speedX: { min: -10, max: 10 },
+                scale: { start: 0.6, end: 0.1 }, alpha: { start: 1, end: 0 },
+                tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
+                lifespan: { min: 300, max: 400 }, frequency: 15,
+            }).setDepth(9);
+            this.arcadeEngines.right = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 28, y: 40 },
+                speedY: { min: 150, max: 250 }, speedX: { min: -10, max: 10 },
+                scale: { start: 0.6, end: 0.1 }, alpha: { start: 1, end: 0 },
                 tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
                 lifespan: { min: 300, max: 400 }, frequency: 15,
             }).setDepth(9);
@@ -1055,12 +1062,15 @@ export default class GameScene extends Phaser.Scene {
         if (this.arcadeEngines) {
             // Rainbow aura color cycling
             const hue = (this.time.now * 0.1) % 360;
-            const color = Phaser.Display.Color.HSVToRGB(hue / 360, 1, 1).color;
+            const colorObj = Phaser.Display.Color.HSVToRGB(hue / 360, 1, 1);
+            const color = colorObj.color;
             this.arcadeEngines.aura.particleTint = color;
+            this.player.setTint(color); // Apply rainbow tint to the ship sprite itself!
             
             // Thrust intensity based on movement (since it's slow)
             const speed = Math.abs(vy);
-            this.arcadeEngines.main.frequency = speed > 0.1 ? 8 : 25;
+            this.arcadeEngines.left.frequency = speed > 0.1 ? 8 : 25;
+            this.arcadeEngines.right.frequency = speed > 0.1 ? 8 : 25;
         }
         
         // Smooth tilt without 360 degree spin wrapping bugs

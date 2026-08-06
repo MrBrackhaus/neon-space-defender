@@ -331,7 +331,7 @@ export default class GameScene extends Phaser.Scene {
         let shipAnim = null;
 
         if (this.shipClass === 'interceptor') { shipScale = 0.11; shipTex = 'ship_neon_flamingo'; shipAnim = null; }
-        if (this.shipClass === 'dreadnought') { shipScale = 0.16; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
+        if (this.shipClass === 'dreadnought') { shipScale = 0.24; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
         if (this.shipClass === 'phantom') { shipScale = 0.115; shipTex = 'ship_phantom'; shipAnim = null; }
         if (this.shipClass === 'paladin') { shipScale = 0.125; shipTex = 'ship_paladin'; shipAnim = null; }
         if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; shipAnim = null; }
@@ -449,14 +449,14 @@ export default class GameScene extends Phaser.Scene {
             // Left and Right Plasma Reactors (Green/Teal)
             this.arcadeEngines = {};
             this.arcadeEngines.left = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: -28, y: 40 },
+                follow: this.player, followOffset: { x: -45, y: 65 },
                 speedY: { min: 150, max: 250 }, speedX: { min: -10, max: 10 },
                 scale: { start: 0.6, end: 0.1 }, alpha: { start: 1, end: 0 },
                 tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
                 lifespan: { min: 300, max: 400 }, frequency: 15,
             }).setDepth(9);
             this.arcadeEngines.right = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 28, y: 40 },
+                follow: this.player, followOffset: { x: 45, y: 65 },
                 speedY: { min: 150, max: 250 }, speedX: { min: -10, max: 10 },
                 scale: { start: 0.6, end: 0.1 }, alpha: { start: 1, end: 0 },
                 tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
@@ -467,24 +467,24 @@ export default class GameScene extends Phaser.Scene {
             this.arcadeEngines.aura = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,
                 speedY: { min: 20, max: 50 }, speedX: { min: -20, max: 20 },
-                scale: { start: 1.2, end: 0.2 }, alpha: { start: 0.3, end: 0 },
+                scale: { start: 1.5, end: 0.2 }, alpha: { start: 0.3, end: 0 },
                 tint: 0xffffff, blendMode: 'ADD',
                 lifespan: { min: 500, max: 800 }, frequency: 30,
             }).setDepth(9);
 
             // Neon Accents (Rainbow nodes on the ship body)
             this.arcadeEngines.neon1 = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: -20, y: -20 },
+                follow: this.player, followOffset: { x: -35, y: -30 },
                 speedY: 0, speedX: 0, scale: { start: 0.4, end: 0.4 }, alpha: 0.8,
                 tint: 0xffffff, blendMode: 'ADD', lifespan: 50, frequency: 40
             }).setDepth(11);
             this.arcadeEngines.neon2 = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 20, y: -20 },
+                follow: this.player, followOffset: { x: 35, y: -30 },
                 speedY: 0, speedX: 0, scale: { start: 0.4, end: 0.4 }, alpha: 0.8,
                 tint: 0xffffff, blendMode: 'ADD', lifespan: 50, frequency: 40
             }).setDepth(11);
             this.arcadeEngines.neon3 = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 0, y: -5 },
+                follow: this.player, followOffset: { x: 0, y: -10 },
                 speedY: 0, speedX: 0, scale: { start: 0.5, end: 0.5 }, alpha: 0.8,
                 tint: 0xffffff, blendMode: 'ADD', lifespan: 50, frequency: 40
             }).setDepth(11);

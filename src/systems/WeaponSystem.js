@@ -505,37 +505,96 @@ export default class WeaponSystem {
   // 🌈 RAINBOW LASER (PHANTOM SPECIAL) 🌈
   fireRainbowLaser(player, enemiesGroup, damage) {
     if (!player || !player.active) return;
-    const beamWidth = 40;
     
-    const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x9400d3];
-    const gfx = this.scene.add.graphics();
+    // Create laser container that tracks player
+    const laserContainer = this.scene.add.container(player.x, player.y).setDepth(12);
     
-    // Draw multiple overlapping colored beams
-    colors.forEach((color, i) => {
-        const w = beamWidth - (i * 4);
-        if (w > 0) {
-            gfx.fillStyle(color, 0.8);
-            gfx.fillRect(player.x - w / 2, 0, w, player.y);
-        }
-    });
+    // Core white beam
+    const core = this.scene.add.rectangle(0, -this.scene.scale.height, 18, this.scene.scale.height * 2, 0xffffff).setOrigin(0.5, 0.5);
+    // Outer colored glow
+    const glow1 = this.scene.add.rectangle(0, -this.scene.scale.height, 45, this.scene.scale.height * 2, 0xff00ff).setOrigin(0.5, 0.5).setBlendMode('ADD').setAlpha(0.7);
+    const glow2 = this.scene.add.rectangle(0, -this.scene.scale.height, 70, this.scene.scale.height * 2, 0x00ffff).setOrigin(0.5, 0.5).setBlendMode('ADD').setAlpha(0.4);
     
-    gfx.setDepth(12);
-
-    const enemies = enemiesGroup.getChildren();
-    enemies.forEach(enemy => {
-      if (enemy && enemy.active) {
-        if (Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
-          if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 10);
-          else if (enemy.hp !== undefined) enemy.hp -= damage * 10;
-        }
-      }
-    });
-
-    this.scene.cameras.main.shake(300, 0.02);
+    laserContainer.add([glow2, glow1, core]);
+    
+    // Color cycle tween for glow1 and glow2
     this.scene.tweens.add({
-      targets: gfx, alpha: 0,
-      duration: 600, onComplete: () => { gfx.destroy(); }
+        targets: [glow1, glow2],
+        scaleX: 1.5,
+        alpha: 1,
+        yoyo: true,
+        repeat: -1,
+        duration: 100
     });
+    
+    // Shake camera continuously
+    const shakeEvent = this.scene.time.addEvent({
+        delay: 100,
+        callback: () => this.scene.cameras.main.shake(100, 0.015),
+        loop: true
+    });
+
+    const duration = 1500; // 1.5 seconds
+    const tickRate = 100; // damage every 100ms
+    let elapsed = 0;
+    
+    // Particle emitter trailing the laser
+    const particles = this.scene.add.particles(0, 0, 'p_glow', {
+        x: { min: -25, max: 25 },
+        y: { min: -this.scene.scale.height, max: 0 },
+        speedY: { min: -400, max: -800 },
+        scale: { start: 0.8, end: 0 },
+        tint: [0xff0000, 0xffff00, 0x00ff00, 0x00ffff, 0xff00ff],
+        lifespan: 300,
+        blendMode: 'ADD',
+        frequency: 10
+    });
+    laserContainer.add(particles);
+
+    const updateEvent = this.scene.time.addEvent({
+        delay: tickRate,
+        loop: true,
+        callback: () => {
+            elapsed += tickRate;
+            if (!player || !player.active || elapsed >= duration) {
+                // End laser
+                shakeEvent.remove();
+                updateEvent.remove();
+                this.scene.tweens.add({
+                    targets: laserContainer,
+                    alpha: 0,
+                    scaleX: 0,
+                    duration: 200,
+                    onComplete: () => laserContainer.destroy()
+                });
+                return;
+            }
+            
+            // Move container with player, offset to horn
+            laserContainer.setPosition(player.x, player.y - 50); 
+            
+            // Shift colors over time
+            const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x9400d3];
+            const cIdx = Math.floor(elapsed / 100) % colors.length;
+            glow1.setFillStyle(colors[cIdx]);
+            glow2.setFillStyle(colors[(cIdx + 3) % colors.length]);
+
+            // Deal continuous damage
+            const beamWidth = 65;
+            const enemies = enemiesGroup.getChildren();
+            enemies.forEach(enemy => {
+                if (enemy && enemy.active) {
+                    if (Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
+                        if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 1.5);
+                        else if (enemy.hp !== undefined) enemy.hp -= damage * 1.5;
+                    }
+                }
+            });
+        }
+    });
+    
+    // Initial position
+    laserContainer.setPosition(player.x, player.y - 50);
   }
 
   // 💥 DOOM BEAM 💥

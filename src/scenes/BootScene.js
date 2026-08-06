@@ -66,6 +66,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('ship_neon_flamingo', 'ship_neon_flamingo.png?v=1');
         this.load.image('ship_arcade_kapsel', 'ship_arcade_kapsel.png?v=1');
         this.load.image('ship_phantom', 'ship_phantom.png?v=6');
+        this.load.spritesheet('ship_phantom_sheet', 'assets/ship_phantom_sheet.png?v=1', { frameWidth: 1024, frameHeight: 1024 });
         this.load.image('ship_paladin', 'ship_paladin.png?v=6');
         this.load.image('ship_bomber', 'ship_bomber.png?v=6');
 
@@ -184,6 +185,12 @@ export default class BootScene extends Phaser.Scene {
         // (ship_fly no longer needed — player uses static sprite)
         
         // Enemy animations from spritesheets
+        this.anims.create({
+            key: 'anim_ship_phantom',
+            frames: this.anims.generateFrameNumbers('ship_phantom_sheet', { start: 0, end: 11 }),
+            frameRate: 15, repeat: -1
+        });
+
         this.anims.create({
             key: 'anim_basic',
             frames: this.anims.generateFrameNumbers('enemy_basic_sheet', { start: 0, end: 3 }),

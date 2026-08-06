@@ -46,7 +46,7 @@ export default class BootScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         // Subtitle text
-        this.add.text(cw/2, ch/2 + 36, 'NEON ROGUELIKE — VOID ANOMALY', {
+        this.add.text(cw/2, ch/2 + 36, 'NEON SPACE DEFENDER — VOID ANOMALY', {
             fontFamily: 'Orbitron, monospace', fontSize: '11px', color: '#333366',
             letterSpacing: 4
         }).setOrigin(0.5);

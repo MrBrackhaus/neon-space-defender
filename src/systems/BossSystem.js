@@ -223,8 +223,8 @@ export default class BossSystem {
             
             this.scene.tweens.add({
                 targets: portrait,
-                scaleX: 0.5,
-                scaleY: 0.5,
+                scaleX: 1.0,
+                scaleY: 1.0,
                 alpha: 1,
                 duration: 600,
                 ease: 'Back.out'

@@ -446,21 +446,30 @@ export default class GameScene extends Phaser.Scene {
             this.flamingoEngines.rightWing.emitting = false;
         } else if (isArcade) {
             // ═══ ARCADE-KAPSEL: Plasma-Reaktor & Neon-Aura ═══
-            // Left and Right Plasma Reactors (Green/Teal)
+            // Four Plasma Reactors (Green/Teal) clustered at the bottom center
             this.arcadeEngines = {};
-            this.arcadeEngines.left = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: -45, y: 65 },
-                speedY: { min: 150, max: 250 }, speedX: { min: -10, max: 10 },
-                scale: { start: 0.6, end: 0.1 }, alpha: { start: 1, end: 0 },
+            
+            const engineConfig = {
+                speedY: { min: 150, max: 250 }, speedX: { min: -5, max: 5 },
+                scale: { start: 0.5, end: 0.1 }, alpha: { start: 1, end: 0 },
                 tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
                 lifespan: { min: 300, max: 400 }, frequency: 15,
+            };
+            
+            this.arcadeEngines.outerLeft = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: -28, y: 55 }, ...engineConfig
             }).setDepth(9);
-            this.arcadeEngines.right = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 45, y: 65 },
-                speedY: { min: 150, max: 250 }, speedX: { min: -10, max: 10 },
-                scale: { start: 0.6, end: 0.1 }, alpha: { start: 1, end: 0 },
-                tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
-                lifespan: { min: 300, max: 400 }, frequency: 15,
+            
+            this.arcadeEngines.innerLeft = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: -10, y: 55 }, ...engineConfig
+            }).setDepth(9);
+            
+            this.arcadeEngines.innerRight = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 10, y: 55 }, ...engineConfig
+            }).setDepth(9);
+            
+            this.arcadeEngines.outerRight = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 28, y: 55 }, ...engineConfig
             }).setDepth(9);
 
             // Pulsating Neon Aura around the ship
@@ -1091,8 +1100,11 @@ export default class GameScene extends Phaser.Scene {
             
             // Thrust intensity based on movement (since it's slow)
             const speed = Math.abs(vy);
-            this.arcadeEngines.left.frequency = speed > 0.1 ? 8 : 25;
-            this.arcadeEngines.right.frequency = speed > 0.1 ? 8 : 25;
+            const freq = speed > 0.1 ? 8 : 25;
+            this.arcadeEngines.outerLeft.frequency = freq;
+            this.arcadeEngines.innerLeft.frequency = freq;
+            this.arcadeEngines.innerRight.frequency = freq;
+            this.arcadeEngines.outerRight.frequency = freq;
         }
         
         // Smooth tilt without 360 degree spin wrapping bugs

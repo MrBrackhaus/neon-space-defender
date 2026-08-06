@@ -508,40 +508,52 @@ export default class WeaponSystem {
     
     const lh = this.scene.scale.height * 1.5;
 
-    // Create rectangles directly in the scene to avoid any Container rendering bugs
-    // Origin at bottom-center (0.5, 1) so they extend upwards from the player's horn
-    const glow2 = this.scene.add.rectangle(player.x, player.y - 50, 70, lh, 0x00ffff)
-        .setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.4).setDepth(12);
-        
-    const glow1 = this.scene.add.rectangle(player.x, player.y - 50, 40, lh, 0xff00ff)
-        .setOrigin(0.5, 1).setBlendMode('ADD').setAlpha(0.8).setDepth(12);
-        
-    const core = this.scene.add.rectangle(player.x, player.y - 50, 16, lh, 0xffffff)
-        .setOrigin(0.5, 1).setAlpha(1).setDepth(12);
+    // Use Graphics for smooth, rounded caps instead of blocky rectangles.
+    // We draw in world-space (positive height) to avoid any rendering bugs.
+    const glow2 = this.scene.add.graphics().setBlendMode('ADD').setDepth(12);
+    const glow1 = this.scene.add.graphics().setBlendMode('ADD').setDepth(12);
+    const core = this.scene.add.graphics().setDepth(12);
+    
+    // Impact flare at the base of the horn to make it look powerful
+    const flareGlow = this.scene.add.circle(player.x, player.y - 50, 60, 0xff00ff, 0.7).setBlendMode('ADD').setDepth(12);
+    const flareCore = this.scene.add.circle(player.x, player.y - 50, 30, 0xffffff, 1).setBlendMode('ADD').setDepth(13);
+    
+    // Pulse the flare
+    const flareTween = this.scene.tweens.add({
+        targets: [flareGlow, flareCore],
+        scaleX: 1.3,
+        scaleY: 1.3,
+        duration: 100,
+        yoyo: true,
+        repeat: -1
+    });
     
     // Shake camera continuously
     const shakeEvent = this.scene.time.addEvent({
         delay: 100,
-        callback: () => this.scene.cameras.main.shake(100, 0.015),
+        callback: () => this.scene.cameras.main.shake(100, 0.02),
         loop: true
     });
 
     const duration = 1500; // 1.5 seconds
-    const tickRate = 100; // damage every 100ms
+    const tickRate = 50; // Update visual more frequently for smoothness
     let elapsed = 0;
     
-    // Particle emitter trailing the laser
+    // Fast-moving upward particles inside the beam
     const particles = this.scene.add.particles(player.x, player.y - 50, 'p_glow', {
-        x: { min: -25, max: 25 },
+        x: { min: -15, max: 15 },
         y: { min: -lh, max: 0 },
-        speedY: { min: -400, max: -800 },
-        scale: { start: 0.8, end: 0 },
+        speedY: { min: -1000, max: -2000 }, // Extremely fast
+        scale: { start: 1.2, end: 0 },
         tint: [0xff0000, 0xffff00, 0x00ff00, 0x00ffff, 0xff00ff],
-        lifespan: 300,
+        lifespan: 400,
         blendMode: 'ADD',
-        frequency: 10
+        frequency: 15
     });
     particles.setDepth(12);
+
+    // Dynamic streaks to give the beam a feeling of intense energy flow
+    const streaks = this.scene.add.graphics().setBlendMode('ADD').setDepth(13);
 
     const updateEvent = this.scene.time.addEvent({
         delay: tickRate,
@@ -551,44 +563,83 @@ export default class WeaponSystem {
             if (!player || !player.active || elapsed >= duration) {
                 shakeEvent.remove();
                 updateEvent.remove();
+                flareTween.stop();
                 this.scene.tweens.add({
-                    targets: [glow2, glow1, core],
+                    targets: [glow2, glow1, core, flareGlow, flareCore, streaks],
                     alpha: 0,
                     scaleX: 0,
-                    duration: 200,
+                    duration: 300,
                     onComplete: () => {
                         glow2.destroy();
                         glow1.destroy();
                         core.destroy();
+                        flareGlow.destroy();
+                        flareCore.destroy();
+                        streaks.destroy();
                         particles.destroy();
                     }
                 });
                 return;
             }
             
-            // Move visuals with player
-            glow2.setPosition(player.x, player.y - 50);
-            glow1.setPosition(player.x, player.y - 50);
-            core.setPosition(player.x, player.y - 50);
-            particles.setPosition(player.x, player.y - 50);
+            const startY = player.y - 50 - lh;
+            const px = player.x;
+            const py = player.y - 50;
             
-            // Shift colors over time
-            const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x9400d3];
-            const cIdx = Math.floor(elapsed / 100) % colors.length;
-            glow1.setFillStyle(colors[cIdx]);
-            glow2.setFillStyle(colors[(cIdx + 3) % colors.length]);
+            // Move flares and particles
+            flareGlow.setPosition(px, py);
+            flareCore.setPosition(px, py);
+            particles.setPosition(px, py);
+            
+            // Shift colors over time rapidly
+            const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x00ffff, 0x4b0082, 0xff00ff];
+            const cIdx = Math.floor(elapsed / 80) % colors.length;
+            const color1 = colors[cIdx];
+            const color2 = colors[(cIdx + 3) % colors.length];
 
-            // Deal continuous damage
-            const beamWidth = 65;
-            const enemies = enemiesGroup.getChildren();
-            enemies.forEach(enemy => {
-                if (enemy && enemy.active) {
-                    if (Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
-                        if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 1.5);
-                        else if (enemy.hp !== undefined) enemy.hp -= damage * 1.5;
+            // Add a slight pulsing width effect
+            const pulse = 1 + Math.sin(elapsed * 0.05) * 0.15;
+
+            core.clear();
+            core.fillStyle(0xffffff, 1);
+            core.fillRoundedRect(px - 10 * pulse, startY, 20 * pulse, lh, 10 * pulse);
+            
+            glow1.clear();
+            glow1.fillStyle(color1, 0.8);
+            glow1.fillRoundedRect(px - 30 * pulse, startY, 60 * pulse, lh, 30 * pulse);
+            
+            glow2.clear();
+            glow2.fillStyle(color2, 0.4);
+            glow2.fillRoundedRect(px - 50 * pulse, startY, 100 * pulse, lh, 50 * pulse);
+            
+            flareGlow.setFillStyle(color1, 0.7);
+            
+            // Draw high-speed streaks moving up
+            streaks.clear();
+            streaks.lineStyle(3, 0xffffff, 0.9);
+            for(let i=0; i<3; i++) {
+                const sx = px + Phaser.Math.Between(-25, 25);
+                // Move streak up rapidly
+                const sy = py - ((elapsed * 2.5 + i * 400) % lh); 
+                streaks.beginPath();
+                streaks.moveTo(sx, sy);
+                streaks.lineTo(sx, sy - Phaser.Math.Between(100, 300));
+                streaks.strokePath();
+            }
+
+            // Deal continuous damage (every 100ms)
+            if (elapsed % 100 === 0) {
+                const beamWidth = 70;
+                const enemies = enemiesGroup.getChildren();
+                enemies.forEach(enemy => {
+                    if (enemy && enemy.active) {
+                        if (Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
+                            if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 1.5);
+                            else if (enemy.hp !== undefined) enemy.hp -= damage * 1.5;
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     });
   }

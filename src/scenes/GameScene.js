@@ -55,7 +55,9 @@ const ENEMY_DEFS = {
     protector: { hp: 200, speed: 30, score: 70, xp: 50, color: 0x00aaff, shoots: false },
     boss_cheese: { hp: 3000, speed: 20, score: 2000, xp: 1000, color: 0xffff00, shoots: true },
     boss_irs: { hp: 4500, speed: 30, score: 3000, xp: 1500, color: 0xff0000, shoots: true },
+    boss_irs_p2: { hp: 6000, speed: 45, score: 4000, xp: 2000, color: 0xff4400, shoots: true },
     boss_vacuum: { hp: 6000, speed: 40, score: 4000, xp: 2000, color: 0x00ffff, shoots: true },
+    boss_vacuum_p2: { hp: 8000, speed: 60, score: 6000, xp: 3000, color: 0x00ff00, shoots: true },
 };
 
 /**
@@ -1364,8 +1366,10 @@ export default class GameScene extends Phaser.Scene {
             charger: { sheet: 'enemy_charger_sheet', anim: null, scale: 0.3 },
             protector: { sheet: 'enemy_protector_sheet', anim: null, scale: 0.4 },
             boss_cheese: { sheet: 'boss_cheese', anim: 'anim_boss_cheese_idle', scale: 1.5 },
-            boss_irs: { sheet: 'boss_irs', anim: null, scale: 0.5 },
-            boss_vacuum: { sheet: 'boss_vacuum', anim: null, scale: 0.5 }
+            boss_irs: { sheet: 'boss_irs', anim: null, scale: 0.8 },
+            boss_irs_p2: { sheet: 'boss_irs_p2', anim: null, scale: 0.9 },
+            boss_vacuum: { sheet: 'boss_vacuum', anim: null, scale: 0.8 },
+            boss_vacuum_p2: { sheet: 'boss_vacuum_p2', anim: null, scale: 0.9 }
         };
         const sm  = SPRITE_MAP[type] || SPRITE_MAP.basic;
         const def = ENEMY_DEFS[type] || ENEMY_DEFS.basic;
@@ -2017,7 +2021,7 @@ export default class GameScene extends Phaser.Scene {
         this.spawnDeathFX(enemy.x, enemy.y, enemy.displayWidth > 50 ? 0xff3300 : 0xff8800);
         this.cameras.main.shake(120, enemy.type === 'boss' ? 0.018 : 0.006);
 
-        if (enemy.type === 'boss' || enemy.type === 'boss_cheese' || enemy.type === 'boss_irs' || enemy.type === 'boss_vacuum') {
+        if (enemy.type === 'boss_cheese' || enemy.type === 'boss_irs_p2' || enemy.type === 'boss_vacuum_p2') {
             this.triggerHitStop(3.0);
             if (enemy.type === 'boss' && this.achieveSys.unlock('boss_1')) {
                 this.showBanner('ACHIEVEMENT: Piratenkönig auf Abwegen!', '#00ffff');
@@ -2039,7 +2043,9 @@ export default class GameScene extends Phaser.Scene {
         }
         // ── BOSS PHASE 2 TRANSITIONS ──
         let phase2Type = null;
-        if (enemy.type === 'boss' && this.waveNum === 5) phase2Type = 'boss_cheese';
+        if (enemy.type === 'boss') phase2Type = 'boss_cheese';
+        if (enemy.type === 'boss_irs') phase2Type = 'boss_irs_p2';
+        if (enemy.type === 'boss_vacuum') phase2Type = 'boss_vacuum_p2';
 
         if (phase2Type) {
             this.waveLeft++; // keep wave alive

@@ -93,8 +93,10 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('boss_cheese_portrait_anim', 'assets/boss_cheese_portrait_anim.png?v=2', { frameWidth: 512, frameHeight: 512 });
         this.load.spritesheet('boss_p1_portrait_anim', 'assets/boss_p1_portrait_anim.png?v=2', { frameWidth: 512, frameHeight: 512 });
         this.load.image('boss_irs', 'assets/boss_irs.png?v=3');
+        this.load.image('boss_irs_p2', 'assets/boss_irs_p2.png?v=1');
         this.load.spritesheet('boss_irs_portrait_anim', 'assets/boss_irs_portrait_anim.png?v=1', { frameWidth: 512, frameHeight: 512 });
         this.load.image('boss_vacuum', 'assets/boss_vacuum.png?v=3');
+        this.load.image('boss_vacuum_p2', 'assets/boss_vacuum_p2.png?v=1');
         this.load.spritesheet('boss_vacuum_portrait_anim', 'assets/boss_vacuum_portrait_anim.png?v=1', { frameWidth: 512, frameHeight: 512 });
 
         // Cinematic intro images

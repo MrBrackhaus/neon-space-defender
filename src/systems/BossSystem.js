@@ -48,11 +48,21 @@ export default class BossSystem {
             subtitle = "INTERDIMENSIONAL REVENUE SERVICE";
             c1 = "[1] 'Ich zahle keine Steuern!'";
             c2 = "[2] 'Ich habe meine Quittungen!'";
+        } else if (type === 'boss_irs_p2') {
+            title = "VOID I.R.S. - TRUE FORM";
+            subtitle = "DER KOSMISCHE STEUER-DÄMON";
+            c1 = "[1] 'Deine Frist ist abgelaufen!'";
+            c2 = "[2] 'Zeit für eine Nachzahlung!'";
         } else if (type === 'boss_vacuum') {
             title = "ROOMBA-TRON 9000";
             subtitle = "THE 4D LITTER BOX";
             c1 = "[1] 'Staub saugen? Niemals!'";
             c2 = "[2] 'Katzenhaare blockieren deine Bürsten!'";
+        } else if (type === 'boss_vacuum_p2') {
+            title = "ROOMBA-TRON - MELTDOWN";
+            subtitle = "CORE EXPOSED. CRITICAL ERROR.";
+            c1 = "[1] 'System überhitzt!'";
+            c2 = "[2] 'Lass ihn hochgehen!'";
         }
 
         this.showInteractiveBossIntro(title, subtitle, c1, c2, (modifier) => {
@@ -210,10 +220,10 @@ export default class BossSystem {
         } else if (bossType === "MECHA-GOUDA") {
             portraitKey = 'boss_p1_portrait_anim';
             animKey = 'anim_p1_portrait_talk';
-        } else if (bossType === "VOID I.R.S.") {
+        } else if (bossType === "VOID I.R.S." || bossType === "VOID I.R.S. - TRUE FORM") {
             portraitKey = 'boss_irs_portrait_anim';
             animKey = 'anim_irs_portrait_talk';
-        } else if (bossType === "ROOMBA-TRON 9000") {
+        } else if (bossType === "ROOMBA-TRON 9000" || bossType === "ROOMBA-TRON - MELTDOWN") {
             portraitKey = 'boss_vacuum_portrait_anim';
             animKey = 'anim_vacuum_portrait_talk';
         }

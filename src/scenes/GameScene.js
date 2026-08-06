@@ -331,7 +331,7 @@ export default class GameScene extends Phaser.Scene {
         let shipAnim = null;
 
         if (this.shipClass === 'interceptor') { shipScale = 0.11; shipTex = 'ship_neon_flamingo'; shipAnim = null; }
-        if (this.shipClass === 'dreadnought') { shipScale = 0.24; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
+        if (this.shipClass === 'dreadnought') { shipScale = 0.20; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
         if (this.shipClass === 'phantom') { shipScale = 0.115; shipTex = 'ship_phantom'; shipAnim = null; }
         if (this.shipClass === 'paladin') { shipScale = 0.125; shipTex = 'ship_paladin'; shipAnim = null; }
         if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; shipAnim = null; }
@@ -1076,16 +1076,16 @@ export default class GameScene extends Phaser.Scene {
         pd.isMoving = (vx !== 0 || vy !== 0);
         
         // Maneuvering thrusters logic
-        if (this.pizzaEngines) {
+        if (this.pizzaEngines && this.pizzaEngines.leftCannon) {
             this.pizzaEngines.leftCannon.emitting = (vx > 0.1);
             this.pizzaEngines.rightCannon.emitting = (vx < -0.1);
         }
-        if (this.flamingoEngines) {
+        if (this.flamingoEngines && this.flamingoEngines.leftWing) {
             // Wing thrusters fire opposite to movement direction
             this.flamingoEngines.leftWing.emitting = (vx > 0.1);
             this.flamingoEngines.rightWing.emitting = (vx < -0.1);
         }
-        if (this.arcadeEngines) {
+        if (this.arcadeEngines && this.arcadeEngines.aura) {
             // Rainbow aura color cycling
             const hue = (this.time.now * 0.1) % 360;
             const colorObj = Phaser.Display.Color.HSVToRGB(hue / 360, 1, 1);

@@ -450,26 +450,26 @@ export default class GameScene extends Phaser.Scene {
             this.arcadeEngines = {};
             
             const engineConfig = {
-                speedY: { min: 150, max: 250 }, speedX: { min: -5, max: 5 },
-                scale: { start: 0.5, end: 0.1 }, alpha: { start: 1, end: 0 },
+                speedY: { min: 200, max: 350 }, speedX: { min: -5, max: 5 },
+                scale: { start: 0.8, end: 0.2 }, alpha: { start: 1, end: 0 },
                 tint: [0x00ff00, 0x00ffcc, 0x00aa00], blendMode: 'ADD',
                 lifespan: { min: 300, max: 400 }, frequency: 15,
             };
             
             this.arcadeEngines.outerLeft = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: -28, y: 55 }, ...engineConfig
+                follow: this.player, followOffset: { x: -22, y: 80 }, ...engineConfig
             }).setDepth(9);
             
             this.arcadeEngines.innerLeft = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: -10, y: 55 }, ...engineConfig
+                follow: this.player, followOffset: { x: -7, y: 80 }, ...engineConfig
             }).setDepth(9);
             
             this.arcadeEngines.innerRight = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 10, y: 55 }, ...engineConfig
+                follow: this.player, followOffset: { x: 7, y: 80 }, ...engineConfig
             }).setDepth(9);
             
             this.arcadeEngines.outerRight = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 28, y: 55 }, ...engineConfig
+                follow: this.player, followOffset: { x: 22, y: 80 }, ...engineConfig
             }).setDepth(9);
 
             // Pulsating Neon Aura around the ship

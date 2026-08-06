@@ -37,12 +37,14 @@ export default class AudioSystem {
 
         // Connect SFX Master -> Compressor (Dry Signal)
         this.masterGainSfx.connect(this.compressor);
+        
+        // --- Echo disabled per user request (no echo in space) ---
         // Connect SFX Master -> Delay Network (Wet Signal)
-        this.masterGainSfx.connect(this.sfxDelay);
-        this.sfxDelay.connect(this.sfxFilter);
-        this.sfxFilter.connect(this.sfxFeedback);
-        this.sfxFeedback.connect(this.sfxDelay);
-        this.sfxDelay.connect(this.compressor);
+        // this.masterGainSfx.connect(this.sfxDelay);
+        // this.sfxDelay.connect(this.sfxFilter);
+        // this.sfxFilter.connect(this.sfxFeedback);
+        // this.sfxFeedback.connect(this.sfxDelay);
+        // this.sfxDelay.connect(this.compressor);
 
         // Connect Music Master -> Compressor
         this.masterGainMusic.connect(this.sidechainGain);

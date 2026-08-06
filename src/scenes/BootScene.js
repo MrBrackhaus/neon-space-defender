@@ -63,7 +63,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('ship_pizza_flitzer_portrait', 'ship_pizza_flitzer_portrait.png?v=7');
         this.load.spritesheet('ship_pizza_flitzer_sheet', 'ship_pizza_flitzer_sheet.png?v=7', { frameWidth: 512, frameHeight: 512 });
         this.load.image('ship_standard', 'ship_standard.png?v=6');
-        this.load.image('ship_interceptor', 'ship_interceptor.png?v=6');
+        this.load.image('ship_neon_flamingo', 'ship_neon_flamingo.png?v=1');
         this.load.image('ship_dreadnought', 'ship_dreadnought.png?v=6');
         this.load.image('ship_phantom', 'ship_phantom.png?v=6');
         this.load.image('ship_paladin', 'ship_paladin.png?v=6');

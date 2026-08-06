@@ -330,7 +330,7 @@ export default class GameScene extends Phaser.Scene {
         let shipTex = 'ship_pizza_flitzer_portrait';
         let shipAnim = null;
 
-        if (this.shipClass === 'interceptor') { shipScale = 0.088; shipTex = 'ship_interceptor'; shipAnim = null; }
+        if (this.shipClass === 'interceptor') { shipScale = 0.11; shipTex = 'ship_neon_flamingo'; shipAnim = null; }
         if (this.shipClass === 'dreadnought') { shipScale = 0.11; shipTex = 'ship_dreadnought'; shipAnim = null; }
         if (this.shipClass === 'phantom') { shipScale = 0.115; shipTex = 'ship_phantom'; shipAnim = null; }
         if (this.shipClass === 'paladin') { shipScale = 0.125; shipTex = 'ship_paladin'; shipAnim = null; }
@@ -354,9 +354,14 @@ export default class GameScene extends Phaser.Scene {
 
         // Make the hitbox perfectly match the visual boundaries of the ship
         const isPizza = !this.shipClass || this.shipClass === 'standard';
+        const isFlamingo = this.shipClass === 'interceptor';
         if (isPizza) {
             this.player.body.setSize(this.player.width * 0.45, this.player.height * 0.55);
             this.player.body.setOffset(this.player.width * 0.275, this.player.height * 0.25);
+        } else if (isFlamingo) {
+            // Flamingo has an elongated body - tighter hitbox
+            this.player.body.setSize(this.player.width * 0.4, this.player.height * 0.6);
+            this.player.body.setOffset(this.player.width * 0.3, this.player.height * 0.2);
         } else {
             this.player.body.setSize(this.player.width * 0.75, this.player.height * 0.75);
             this.player.body.setOffset(this.player.width * 0.125, this.player.height * 0.125);
@@ -396,6 +401,44 @@ export default class GameScene extends Phaser.Scene {
                 lifespan: { min: 150, max: 200 }, frequency: 20,
             }).setDepth(9);
             this.pizzaEngines.rightCannon.emitting = false;
+        } else if (isFlamingo) {
+            // ═══ NEON-FLAMINGO: Void-Antrieb ═══
+            this.flamingoEngines = {};
+
+            // Leg engines - Main thrust (always on), dark void core with neon magenta/cyan edges
+            this.flamingoEngines.leftLeg = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: -12, y: 48 },
+                speedY: { min: 200, max: 320 }, speedX: { min: -8, max: 8 },
+                scale: { start: 0.6, end: 0.05 }, alpha: { start: 1, end: 0 },
+                tint: [0xff00ff, 0xff44aa, 0x00ffff], blendMode: 'ADD',
+                lifespan: { min: 200, max: 300 }, frequency: 12,
+            }).setDepth(9);
+            this.flamingoEngines.rightLeg = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 12, y: 48 },
+                speedY: { min: 200, max: 320 }, speedX: { min: -8, max: 8 },
+                scale: { start: 0.6, end: 0.05 }, alpha: { start: 1, end: 0 },
+                tint: [0xff00ff, 0xff44aa, 0x00ffff], blendMode: 'ADD',
+                lifespan: { min: 200, max: 300 }, frequency: 12,
+            }).setDepth(9);
+
+            // Wing thrusters - Maneuvering (toggle with movement direction)
+            this.flamingoEngines.leftWing = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: -38, y: 12 },
+                speedY: { min: 100, max: 180 }, speedX: { min: -5, max: 5 },
+                scale: { start: 0.4, end: 0.05 }, alpha: { start: 0.9, end: 0 },
+                tint: [0xff44aa, 0x00ffff], blendMode: 'ADD',
+                lifespan: { min: 120, max: 180 }, frequency: 18,
+            }).setDepth(9);
+            this.flamingoEngines.leftWing.emitting = false;
+
+            this.flamingoEngines.rightWing = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 38, y: 12 },
+                speedY: { min: 100, max: 180 }, speedX: { min: -5, max: 5 },
+                scale: { start: 0.4, end: 0.05 }, alpha: { start: 0.9, end: 0 },
+                tint: [0xff44aa, 0x00ffff], blendMode: 'ADD',
+                lifespan: { min: 120, max: 180 }, frequency: 18,
+            }).setDepth(9);
+            this.flamingoEngines.rightWing.emitting = false;
         } else {
             this.engineLeft = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,
@@ -976,10 +1019,13 @@ export default class GameScene extends Phaser.Scene {
         
         // Maneuvering thrusters logic
         if (this.pizzaEngines) {
-            // When flying left (vx < 0), fire right cannon thruster to push left.
-            // When flying right (vx > 0), fire left cannon thruster to push right.
             this.pizzaEngines.leftCannon.emitting = (vx > 0.1);
             this.pizzaEngines.rightCannon.emitting = (vx < -0.1);
+        }
+        if (this.flamingoEngines) {
+            // Wing thrusters fire opposite to movement direction
+            this.flamingoEngines.leftWing.emitting = (vx > 0.1);
+            this.flamingoEngines.rightWing.emitting = (vx < -0.1);
         }
         
         // Smooth tilt without 360 degree spin wrapping bugs

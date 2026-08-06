@@ -463,7 +463,7 @@ export default class GameScene extends Phaser.Scene {
                 lifespan: { min: 300, max: 400 }, frequency: 15,
             }).setDepth(9);
 
-            // Pulsating Neon Aura around the ship (rainbow cycle is done in update())
+            // Pulsating Neon Aura around the ship
             this.arcadeEngines.aura = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,
                 speedY: { min: 20, max: 50 }, speedX: { min: -20, max: 20 },
@@ -471,6 +471,23 @@ export default class GameScene extends Phaser.Scene {
                 tint: 0xffffff, blendMode: 'ADD',
                 lifespan: { min: 500, max: 800 }, frequency: 30,
             }).setDepth(9);
+
+            // Neon Accents (Rainbow nodes on the ship body)
+            this.arcadeEngines.neon1 = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: -20, y: -20 },
+                speedY: 0, speedX: 0, scale: { start: 0.4, end: 0.4 }, alpha: 0.8,
+                tint: 0xffffff, blendMode: 'ADD', lifespan: 50, frequency: 40
+            }).setDepth(11);
+            this.arcadeEngines.neon2 = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 20, y: -20 },
+                speedY: 0, speedX: 0, scale: { start: 0.4, end: 0.4 }, alpha: 0.8,
+                tint: 0xffffff, blendMode: 'ADD', lifespan: 50, frequency: 40
+            }).setDepth(11);
+            this.arcadeEngines.neon3 = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 0, y: -5 },
+                speedY: 0, speedX: 0, scale: { start: 0.5, end: 0.5 }, alpha: 0.8,
+                tint: 0xffffff, blendMode: 'ADD', lifespan: 50, frequency: 40
+            }).setDepth(11);
         } else {
             this.engineLeft = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,
@@ -1065,7 +1082,12 @@ export default class GameScene extends Phaser.Scene {
             const colorObj = Phaser.Display.Color.HSVToRGB(hue / 360, 1, 1);
             const color = colorObj.color;
             this.arcadeEngines.aura.particleTint = color;
-            this.player.setTint(color); // Apply rainbow tint to the ship sprite itself!
+            this.player.clearTint(); // Ensure the ship itself is NOT tinted
+            
+            // Emit static neon dots on the ship that cycle through rainbow colors
+            this.arcadeEngines.neon1.particleTint = color;
+            this.arcadeEngines.neon2.particleTint = color;
+            this.arcadeEngines.neon3.particleTint = color;
             
             // Thrust intensity based on movement (since it's slow)
             const speed = Math.abs(vy);

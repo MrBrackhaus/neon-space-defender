@@ -332,7 +332,7 @@ export default class GameScene extends Phaser.Scene {
 
         if (this.shipClass === 'interceptor') { shipScale = 0.11; shipTex = 'ship_neon_flamingo'; shipAnim = null; }
         if (this.shipClass === 'dreadnought') { shipScale = 0.20; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
-        if (this.shipClass === 'phantom') { shipScale = 0.135; shipTex = 'ship_phantom'; shipAnim = 'anim_ship_phantom'; }
+        if (this.shipClass === 'phantom') { shipScale = 0.155; shipTex = 'ship_phantom'; shipAnim = 'anim_ship_phantom'; }
         if (this.shipClass === 'paladin') { shipScale = 0.125; shipTex = 'ship_paladin'; shipAnim = null; }
         if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; shipAnim = null; }
 

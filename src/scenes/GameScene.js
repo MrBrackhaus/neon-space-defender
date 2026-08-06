@@ -327,14 +327,14 @@ export default class GameScene extends Phaser.Scene {
 
         let shipScale = 0.088;
         let shipTint = 0xffffff;
-        let shipTex = 'ship_standard';
-        let shipAnim = null;
+        let shipTex = 'ship_pizza_flitzer_sheet';
+        let shipAnim = 'anim_player_fly';
 
-        if (this.shipClass === 'interceptor') { shipScale = 0.088; shipTex = 'ship_interceptor'; }
-        if (this.shipClass === 'dreadnought') { shipScale = 0.11; shipTex = 'ship_dreadnought'; }
-        if (this.shipClass === 'phantom') { shipScale = 0.115; shipTex = 'ship_phantom'; }
-        if (this.shipClass === 'paladin') { shipScale = 0.125; shipTex = 'ship_paladin'; }
-        if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; }
+        if (this.shipClass === 'interceptor') { shipScale = 0.088; shipTex = 'ship_interceptor'; shipAnim = null; }
+        if (this.shipClass === 'dreadnought') { shipScale = 0.11; shipTex = 'ship_dreadnought'; shipAnim = null; }
+        if (this.shipClass === 'phantom') { shipScale = 0.115; shipTex = 'ship_phantom'; shipAnim = null; }
+        if (this.shipClass === 'paladin') { shipScale = 0.125; shipTex = 'ship_paladin'; shipAnim = null; }
+        if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; shipAnim = null; }
 
         this.playerBaseAngle = 0; // New generated ships point UP
         if (this.shipClass === 'phantom') this.playerBaseAngle = 180; // Phantom image was generated upside down
@@ -344,6 +344,10 @@ export default class GameScene extends Phaser.Scene {
             .setScale(shipScale)
             .setTint(shipTint)
             .setCollideWorldBounds(true);
+            
+        if (shipAnim) {
+            this.player.play(shipAnim);
+        }
         this.player.shipClass = this.shipClass;
             
         if (shipAnim) this.player.play(shipAnim);

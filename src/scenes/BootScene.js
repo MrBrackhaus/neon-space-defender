@@ -60,6 +60,8 @@ export default class BootScene extends Phaser.Scene {
         // ─────────────────── ASSET LOADING ───────────────────
 
         //  Player ships (static top-down render with transparency) 
+        this.load.image('ship_pizza_flitzer_portrait', 'ship_pizza_flitzer_portrait.png?v=7');
+        this.load.spritesheet('ship_pizza_flitzer_sheet', 'ship_pizza_flitzer_sheet.png?v=7', { frameWidth: 512, frameHeight: 512 });
         this.load.image('ship_standard', 'ship_standard.png?v=6');
         this.load.image('ship_interceptor', 'ship_interceptor.png?v=6');
         this.load.image('ship_dreadnought', 'ship_dreadnought.png?v=6');
@@ -174,6 +176,11 @@ export default class BootScene extends Phaser.Scene {
 
         // ─────────────────── ANIMATION CREATION ───────────────────
 
+        this.anims.create({
+            key: 'anim_player_fly',
+            frames: this.anims.generateFrameNumbers('ship_pizza_flitzer_sheet', { start: 0, end: 3 }),
+            frameRate: 15, repeat: -1
+        });
         // (ship_fly no longer needed — player uses static sprite)
         
         // Enemy animations from spritesheets

@@ -51,7 +51,7 @@ const WEAPONS = [
  * cost to unlock, and feature descriptions.
  */
 const SHIPS = [
-    { id: 'standard', img: 'ship_standard', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Dein treuer Begleiter, verkrustet mit einem gigantischen Fett-Schild. (Ausgewogen)' },
+    { id: 'standard', img: 'ship_pizza_flitzer_portrait', animSheet: 'ship_pizza_flitzer_sheet', name: 'PIZZA-FLITZER', cost: 0, color: 0xffffff, scale: 0.11, hp: 1.0, dmg: 1.0, spd: 1.0, feature: 'Dein treuer Begleiter, verkrustet mit einem gigantischen Fett-Schild. (Ausgewogen)' },
     { id: 'interceptor', img: 'ship_interceptor', name: 'NEON-FLAMINGO', cost: 100, color: 0x00ffff, scale: 0.11, hp: 0.5, dmg: 1.2, spd: 1.5, feature: '+15% Crit Chance. Motel-Reklame mit geplündertem Void-Antrieb. Extrem fragil.' },
     { id: 'dreadnought', img: 'ship_dreadnought', name: 'ARCADE-KAPSEL', cost: 150, color: 0xff4400, scale: 0.13, hp: 2.5, dmg: 1.5, spd: 0.7, feature: 'Startet mit Schild. Ein uralter Spielautomat mit Plasma-Reaktor. Einwurf: 1 Vierteldollar.' },
     { id: 'phantom', img: 'ship_phantom', name: 'LASER-EINHORN', cost: 200, color: 0x00ffcc, scale: 0.16, hp: 0.3, dmg: 2.0, spd: 1.8, feature: 'Dual-Aim. Plastik-Karussell-Tierchen mit Antimaterie-Hörnern. Sparkles ist sehr stolz.' },

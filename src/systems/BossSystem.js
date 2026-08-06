@@ -201,8 +201,8 @@ export default class BossSystem {
         overlay.setOrigin(0, 0);
         introContainer.add(overlay);
 
-        let portraitKey = null;
-        let animKey = null;
+        let portraitKey = 'jergeric_portrait'; // Fallback
+        let animKey = 'anim_portrait_talk';
         
         if (bossType === "LORD GOUDA") {
             portraitKey = 'boss_cheese_portrait_anim';
@@ -210,6 +210,12 @@ export default class BossSystem {
         } else if (bossType === "MECHA-GOUDA") {
             portraitKey = 'boss_p1_portrait_anim';
             animKey = 'anim_p1_portrait_talk';
+        } else if (bossType === "VOID I.R.S.") {
+            portraitKey = 'boss_irs_portrait_anim';
+            animKey = 'anim_irs_portrait_talk';
+        } else if (bossType === "ROOMBA-TRON 9000") {
+            portraitKey = 'boss_vacuum_portrait_anim';
+            animKey = 'anim_vacuum_portrait_talk';
         }
 
         if (portraitKey) {

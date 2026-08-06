@@ -92,8 +92,10 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('boss_phase1', 'assets/boss_phase1.png?v=2', { frameWidth: 224, frameHeight: 240 });
         this.load.spritesheet('boss_cheese_portrait_anim', 'assets/boss_cheese_portrait_anim.png?v=2', { frameWidth: 512, frameHeight: 512 });
         this.load.spritesheet('boss_p1_portrait_anim', 'assets/boss_p1_portrait_anim.png?v=2', { frameWidth: 512, frameHeight: 512 });
-        this.load.image('boss_irs', 'assets/boss_irs.png?v=2');
-        this.load.image('boss_vacuum', 'assets/boss_vacuum.png?v=2');
+        this.load.image('boss_irs', 'assets/boss_irs.png?v=3');
+        this.load.spritesheet('boss_irs_portrait_anim', 'assets/boss_irs_portrait_anim.png?v=1', { frameWidth: 512, frameHeight: 512 });
+        this.load.image('boss_vacuum', 'assets/boss_vacuum.png?v=3');
+        this.load.spritesheet('boss_vacuum_portrait_anim', 'assets/boss_vacuum_portrait_anim.png?v=1', { frameWidth: 512, frameHeight: 512 });
 
         // Cinematic intro images
         this.load.image('intro_hero',  'intro_hero_anime.jpg?v=6');
@@ -290,6 +292,12 @@ export default class BootScene extends Phaser.Scene {
         this.anims.create({ key: 'anim_jergeric', frames: this.anims.generateFrameNumbers('npc_jergeric', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'anim_sparkles', frames: this.anims.generateFrameNumbers('npc_sparkles', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'anim_nyx', frames: this.anims.generateFrameNumbers('npc_nyx', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
+
+        // Boss Portrait Animations
+        this.anims.create({ key: 'anim_p1_portrait_talk', frames: this.anims.generateFrameNumbers('boss_p1_portrait_anim', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
+        this.anims.create({ key: 'anim_portrait_talk', frames: this.anims.generateFrameNumbers('boss_cheese_portrait_anim', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
+        this.anims.create({ key: 'anim_irs_portrait_talk', frames: this.anims.generateFrameNumbers('boss_irs_portrait_anim', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
+        this.anims.create({ key: 'anim_vacuum_portrait_talk', frames: this.anims.generateFrameNumbers('boss_vacuum_portrait_anim', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
 
         // ─────────────────── SCENE TRANSITION ───────────────────
 

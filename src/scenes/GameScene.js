@@ -373,6 +373,10 @@ export default class GameScene extends Phaser.Scene {
         }
 
         // Engine exhaust
+        this.pizzaEngines = null;
+        this.flamingoEngines = null;
+        this.arcadeEngines = null;
+        
         if (isPizza) {
             this.pizzaEngines = {};
             

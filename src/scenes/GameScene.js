@@ -375,6 +375,7 @@ export default class GameScene extends Phaser.Scene {
         this.pizzaEngines = null;
         this.flamingoEngines = null;
         this.arcadeEngines = null;
+        this.phantomEngines = null;
         
         if (isPizza) {
             this.pizzaEngines = {};
@@ -500,7 +501,34 @@ export default class GameScene extends Phaser.Scene {
                 speedY: 0, speedX: 0, scale: { start: 0.5, end: 0.5 }, alpha: 0.8,
                 tint: 0xffffff, blendMode: 'ADD', lifespan: 50, frequency: 40
             }).setDepth(11);
-        } else {
+                } else if (this.shipClass === 'phantom') {
+            this.phantomEngines = {};
+            const ec = {
+                speedY: { min: 150, max: 280 }, speedX: { min: -5, max: 5 },
+                scale: { start: 0.5, end: 0.1 }, alpha: { start: 1, end: 0 },
+                tint: [0xff00ff, 0x00ffff, 0xff00cc], blendMode: 'ADD',
+                lifespan: { min: 150, max: 250 }, frequency: 18,
+            };
+            this.phantomEngines.ol = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: -45, y: 45 }, ...ec }).setDepth(9);
+            this.phantomEngines.il = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: -16, y: 55 }, ...ec }).setDepth(9);
+            this.phantomEngines.ir = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 16, y: 55 }, ...ec }).setDepth(9);
+            this.phantomEngines.or = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 45, y: 45 }, ...ec }).setDepth(9);
+
+            this.phantomLaserTimer = this.time.addEvent({
+                delay: 4500,
+                callback: () => {
+                    if (!this.player || !this.player.active) return;
+                    this.weaponSys.fireRainbowLaser(this.player, this.enemies, this.pd.damage);
+                    if(this.game && this.game.audioSys) this.game.audioSys.playExplosion();
+                    this.player.anims.timeScale = 5.0;
+                    this.time.delayedCall(800, () => {
+                        if (this.player && this.player.active) this.player.anims.timeScale = 1.0;
+                    });
+                },
+                callbackScope: this,
+                loop: true
+            });
+} else {
             this.engineLeft = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,
                 followOffset: { x: -9, y: 24 },

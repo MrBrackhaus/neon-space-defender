@@ -502,6 +502,42 @@ export default class WeaponSystem {
     });
   }
 
+  // 🌈 RAINBOW LASER (PHANTOM SPECIAL) 🌈
+  fireRainbowLaser(player, enemiesGroup, damage) {
+    if (!player || !player.active) return;
+    const beamWidth = 40;
+    
+    const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x9400d3];
+    const gfx = this.scene.add.graphics();
+    
+    // Draw multiple overlapping colored beams
+    colors.forEach((color, i) => {
+        const w = beamWidth - (i * 4);
+        if (w > 0) {
+            gfx.fillStyle(color, 0.8);
+            gfx.fillRect(player.x - w / 2, 0, w, player.y);
+        }
+    });
+    
+    gfx.setDepth(12);
+
+    const enemies = enemiesGroup.getChildren();
+    enemies.forEach(enemy => {
+      if (enemy && enemy.active) {
+        if (Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
+          if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 10);
+          else if (enemy.hp !== undefined) enemy.hp -= damage * 10;
+        }
+      }
+    });
+
+    this.scene.cameras.main.shake(300, 0.02);
+    this.scene.tweens.add({
+      targets: gfx, alpha: 0,
+      duration: 600, onComplete: () => { gfx.destroy(); }
+    });
+  }
+
   // 💥 DOOM BEAM 💥
   fireDoomBeam(player, enemiesGroup, damage) {
     if (!player || !player.active) return;

@@ -510,22 +510,13 @@ export default class WeaponSystem {
     const laserContainer = this.scene.add.container(player.x, player.y).setDepth(12);
     
     // Core white beam
-    const core = this.scene.add.rectangle(0, -this.scene.scale.height, 18, this.scene.scale.height * 2, 0xffffff).setOrigin(0.5, 0.5);
-    // Outer colored glow
-    const glow1 = this.scene.add.rectangle(0, -this.scene.scale.height, 45, this.scene.scale.height * 2, 0xff00ff).setOrigin(0.5, 0.5).setBlendMode('ADD').setAlpha(0.7);
-    const glow2 = this.scene.add.rectangle(0, -this.scene.scale.height, 70, this.scene.scale.height * 2, 0x00ffff).setOrigin(0.5, 0.5).setBlendMode('ADD').setAlpha(0.4);
+    const core = this.scene.add.graphics();
+    const glow1 = this.scene.add.graphics().setBlendMode('ADD');
+    const glow2 = this.scene.add.graphics().setBlendMode('ADD');
     
     laserContainer.add([glow2, glow1, core]);
     
-    // Color cycle tween for glow1 and glow2
-    this.scene.tweens.add({
-        targets: [glow1, glow2],
-        scaleX: 1.5,
-        alpha: 1,
-        yoyo: true,
-        repeat: -1,
-        duration: 100
-    });
+    
     
     // Shake camera continuously
     const shakeEvent = this.scene.time.addEvent({
@@ -576,8 +567,20 @@ export default class WeaponSystem {
             // Shift colors over time
             const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x9400d3];
             const cIdx = Math.floor(elapsed / 100) % colors.length;
-            glow1.setFillStyle(colors[cIdx]);
-            glow2.setFillStyle(colors[(cIdx + 3) % colors.length]);
+            
+            const lh = this.scene.scale.height * 1.5;
+            
+            core.clear();
+            core.fillStyle(0xffffff, 1);
+            core.fillRoundedRect(-8, -lh, 16, lh, 8);
+            
+            glow1.clear();
+            glow1.fillStyle(colors[cIdx], 0.8);
+            glow1.fillRoundedRect(-20, -lh, 40, lh, 20);
+            
+            glow2.clear();
+            glow2.fillStyle(colors[(cIdx + 3) % colors.length], 0.4);
+            glow2.fillRoundedRect(-35, -lh, 70, lh, 35);
 
             // Deal continuous damage
             const beamWidth = 65;

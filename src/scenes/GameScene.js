@@ -513,21 +513,6 @@ export default class GameScene extends Phaser.Scene {
             this.phantomEngines.il = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: -25, y: 45 }, ...ec }).setDepth(9);
             this.phantomEngines.ir = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 25, y: 45 }, ...ec }).setDepth(9);
             this.phantomEngines.or = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 65, y: 35 }, ...ec }).setDepth(9);
-
-            this.phantomLaserTimer = this.time.addEvent({
-                delay: 5500,
-                callback: () => {
-                    if (!this.player || !this.player.active) return;
-                    this.weaponSys.fireRainbowLaser(this.player, this.enemies, this.pd.damage);
-                    if(this.game && this.game.audioSys) this.game.audioSys.playExplosion();
-                    this.player.anims.timeScale = 5.0;
-                    this.time.delayedCall(1500, () => {
-                        if (this.player && this.player.active) this.player.anims.timeScale = 1.0;
-                    });
-                },
-                callbackScope: this,
-                loop: true
-            });
 } else {
             this.engineLeft = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,

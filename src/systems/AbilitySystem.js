@@ -143,24 +143,20 @@ export default class AbilitySystem {
      * @returns {void}
      */
     triggerPhantomUltimate() {
-        // Apply stealth visual (opacity 0.3)
-        this.scene.player.setAlpha(0.3);
+        if (!this.scene.player || !this.scene.player.active) return;
         
-        // Temporarily modify player speed and set a flag for GameScene logic
-        this.scene.playerPhantomSpeedBoost = true;
-        if (this.scene.player.speed) {
-            this.scene.player.originalSpeed = this.scene.player.speed;
-            this.scene.player.speed *= 2;
+        // Fire the magnificent rainbow laser
+        this.scene.weaponSys.fireRainbowLaser(this.scene.player, this.scene.enemies, this.scene.pd.damage);
+        
+        if (this.scene.audioSys) {
+            this.scene.audioSys.playExplosion();
         }
-
-        // Restore normal state after 3 seconds
-        this.scene.time.delayedCall(3000, () => {
+        
+        // Speed up the RGB animation
+        this.scene.player.anims.timeScale = 5.0;
+        this.scene.time.delayedCall(1500, () => {
             if (this.scene.player && this.scene.player.active) {
-                this.scene.player.setAlpha(1);
-                this.scene.playerPhantomSpeedBoost = false;
-                if (this.scene.player.originalSpeed) {
-                    this.scene.player.speed = this.scene.player.originalSpeed;
-                }
+                this.scene.player.anims.timeScale = 1.0;
             }
         });
     }

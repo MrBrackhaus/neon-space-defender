@@ -325,7 +325,7 @@ export default class GameScene extends Phaser.Scene {
         }
         this.fxIndex = 0;
 
-        let shipScale = 0.128;
+        let shipScale = 0.10;
         let shipTint = 0xffffff;
         let shipTex = 'ship_pizza_flitzer_portrait';
         let shipAnim = null;

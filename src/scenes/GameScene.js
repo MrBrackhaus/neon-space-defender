@@ -2007,10 +2007,14 @@ export default class GameScene extends Phaser.Scene {
         const b = this.eBullets.get(x, y, 'enemy_projectile');
         if (!b) return;
         b.setActive(true).setVisible(true).setDepth(6);
-        b.setScale(0.04);
+        b.setScale(0.12);
         if (b.body) {
             b.body.enable = true;
-            b.body.setCircle(128);
+            // The hitbox shouldn't be massive, keep it fair for the player
+            // If scale is 0.12 and image is 512, diameter is ~61. Radius 20 is fair.
+            // setCircle(radius, offsetX, offsetY) on original unscaled dimensions
+            // A circle of 128 on an unscaled 512 img gives a 256 diam, scaled down by 0.12 it's 30px.
+            b.body.setCircle(100, b.width/2 - 100, b.height/2 - 100);
         }
         b.damage = (5 + (this.waveNum * 1.5) + (this.pd.maxHp * 0.04)) * dmgMod;
         b.body.reset(x, y);

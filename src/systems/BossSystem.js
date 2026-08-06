@@ -121,7 +121,7 @@ export default class BossSystem {
         if (Math.random() > 0.5) {
             // Milk Laser (thick white projectile)
             const angle = Phaser.Math.Angle.Between(bossSprite.x, bossSprite.y, this.scene.player.x, this.scene.player.y);
-            const laser = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'enemy_projectile');
+            const laser = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'enemy_projectile').setDepth(6);
             laser.setTint(0xffffff); // White milk laser
             laser.setScale(0.8, 2.5); // Thick
             laser.setRotation(angle);
@@ -186,7 +186,7 @@ export default class BossSystem {
         // Shoot dust balls (spread of 5 projectiles)
         for(let i=0; i<5; i++) {
             const angle = Phaser.Math.FloatBetween(Math.PI/4, Math.PI*3/4);
-            const p = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y + 50, 'enemy_projectile');
+            const p = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y + 50, 'enemy_projectile').setDepth(6);
             p.setTint(0x555555); // Dust color
             p.setScale(1.2);
             this.scene.eBullets.add(p);

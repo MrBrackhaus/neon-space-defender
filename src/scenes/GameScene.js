@@ -1351,7 +1351,7 @@ export default class GameScene extends Phaser.Scene {
             tank:    { sheet: 'enemy_tank_sheet',    anim: 'anim_tank',    scale: 0.32 },
             shooter: { sheet: 'enemy_shooter_sheet', anim: 'anim_shooter', scale: 0.25 },
             elite:   { sheet: 'enemy_elite_sheet',   anim: 'anim_elite',   scale: 0.28 },
-            boss:    { sheet: 'enemy_boss_sheet',    anim: 'anim_boss',    scale: 0.65 },
+            boss:    { sheet: 'boss_phase1',         anim: 'anim_boss_p1_idle', scale: 1.5 },
             swarmer: { sheet: 'enemy_swarmer_sheet', anim: 'anim_swarmer', scale: 0.12 },
             phantom: { sheet: 'enemy_phantom_sheet', anim: 'anim_phantom', scale: 0.22 },
             stealth: { sheet: 'enemy_stealth_sheet', anim: 'anim_stealth', scale: 0.22 },
@@ -1877,10 +1877,12 @@ export default class GameScene extends Phaser.Scene {
         if (!enemy.active || this.playerInvincible) return;
         const collisionDmg = 10 + (this.waveNum * 2.5) + (this.pd.maxHp * 0.08);
         this.damagePlayer(collisionDmg);
-        // Repulse enemy
-        const a = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
-        enemy.setVelocity(Math.cos(a)*320, Math.sin(a)*320);
-        this.time.delayedCall(300, () => { if (enemy.active) enemy.setVelocity(0,0); });
+        // Repulse enemy if it has physics enabled
+        if (typeof enemy.setVelocity === 'function') {
+            const a = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
+            enemy.setVelocity(Math.cos(a)*320, Math.sin(a)*320);
+            this.time.delayedCall(300, () => { if (enemy.active && typeof enemy.setVelocity === 'function') enemy.setVelocity(0,0); });
+        }
     }
 
     /**

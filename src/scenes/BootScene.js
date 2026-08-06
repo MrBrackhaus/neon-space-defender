@@ -89,8 +89,9 @@ export default class BootScene extends Phaser.Scene {
         // Boss Overhaul Sprites
         this.load.spritesheet('boss_cheese', 'assets/boss_cheese.png?v=5', { frameWidth: 224, frameHeight: 240 });
         this.load.image('boss_cheese_portrait', 'assets/boss_cheese_portrait.png?v=1');
-        this.load.spritesheet('boss_phase1', 'assets/boss_phase1.png?v=1', { frameWidth: 224, frameHeight: 240 });
+        this.load.spritesheet('boss_phase1', 'assets/boss_phase1.png?v=2', { frameWidth: 224, frameHeight: 240 });
         this.load.spritesheet('boss_cheese_portrait_anim', 'assets/boss_cheese_portrait_anim.png?v=1', { frameWidth: 1024, frameHeight: 1024 });
+        this.load.spritesheet('boss_p1_portrait_anim', 'assets/boss_p1_portrait_anim.png?v=1', { frameWidth: 1024, frameHeight: 1024 });
         this.load.image('boss_irs', 'assets/boss_irs.png?v=2');
         this.load.image('boss_vacuum', 'assets/boss_vacuum.png?v=2');
 

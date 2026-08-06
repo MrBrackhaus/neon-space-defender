@@ -20,9 +20,9 @@ export default class BossSystem {
         
         if (type === 'boss') {
             title = "MECHA-GOUDA";
-            subtitle = "PROTOKOLL: ÜBERBACKEN";
-            c1 = "[1] 'Knack die Kruste!'";
-            c2 = "[2] 'Ausweichen, das Fett spritzt!'";
+            subtitle = "PROTOKOLL: ZERSTÖREN. ZUTATEN: METALL & SCHMERZ.";
+            c1 = "[1] 'Ich werde deine Schaltkreise schmelzen, du Blech-Brötchen!'";
+            c2 = "[2] 'Lass uns das zivilisiert lösen... mit Laserfeuer!'";
         } else if (type === 'mothership') {
             title = "MOTHERSHIP";
             subtitle = "ALIEN CARRIER";
@@ -40,9 +40,9 @@ export default class BossSystem {
             c2 = "[2] 'Schilde auf Maximum!'";
         } else if (type === 'boss_cheese') {
             title = "LORD GOUDA";
-            subtitle = "CHOLERISCHER SCHMELZKÄSE-IMPERATOR";
-            c1 = "[1] 'Dein Verfallsdatum ist abgelaufen!'";
-            c2 = "[2] 'Ich habe laktosefreie Torpedos!'";
+            subtitle = "DER CHOLERISCHE SCHMELZKÄSE-IMPERATOR";
+            c1 = "[1] 'Dein metallischer Mantel ist gefallen! Jetzt kriegst du auf die Kruste!'";
+            c2 = "[2] 'Verdammt, er mutiert! Alle laktosefreien Torpedos abfeuern!'";
         } else if (type === 'boss_irs') {
             title = "VOID I.R.S.";
             subtitle = "INTERDIMENSIONAL REVENUE SERVICE";
@@ -202,20 +202,20 @@ export default class BossSystem {
         introContainer.add(overlay);
 
         let portraitKey = null;
-        let isAnimated = false;
+        let animKey = null;
         
-        if (bossType === "LORD GOUDA" || bossType === "MECHA-GOUDA") {
+        if (bossType === "LORD GOUDA") {
             portraitKey = 'boss_cheese_portrait_anim';
-            isAnimated = true;
+            animKey = 'anim_portrait_talk';
+        } else if (bossType === "MECHA-GOUDA") {
+            portraitKey = 'boss_p1_portrait_anim';
+            animKey = 'anim_p1_portrait_talk';
         }
 
         if (portraitKey) {
             const portrait = this.scene.add.sprite(width / 2, height * 0.2, portraitKey);
-            if (isAnimated) {
-                portrait.play('anim_portrait_talk', true);
-            }
-            if (bossType === "MECHA-GOUDA") {
-                portrait.setTint(0x88aaff);
+            if (animKey) {
+                portrait.play(animKey, true);
             }
             portrait.setScale(0);
             portrait.setAlpha(0);

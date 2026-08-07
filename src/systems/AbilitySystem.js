@@ -187,22 +187,105 @@ export default class AbilitySystem {
     }
 
     triggerPaladinUltimate() {
+        if (!this.scene.player || !this.scene.player.active) return;
+        
+        const px = this.scene.player.x;
+        const py = this.scene.player.y;
+        
+        // Healing and Shield logic
         this.scene.pd.shield = 3;
         this.scene.healPlayer(50);
-        const aura = this.scene.add.circle(this.scene.player.x, this.scene.player.y, 10, 0x00ffff, 0.8);
-        this.scene.tweens.add({
-            targets: aura, radius: 400, alpha: 0, duration: 800,
-            onComplete: () => aura.destroy()
-        });
-        if (this.scene.enemies) {
-            this.scene.enemies.getChildren().forEach(e => {
-                if (e.active && Phaser.Math.Distance.Between(this.scene.player.x, this.scene.player.y, e.x, e.y) < 400) {
-                    e.hp -= 200;
-                    if (e.hp <= 0 && !e.isDying) this.scene.killEnemy(e);
-                }
-            });
+        
+        if (this.scene.audioSys) {
+            this.scene.audioSys.playExplosion();
         }
+        
+        // Camera shake
+        this.scene.cameras.main.shake(400, 0.03);
+        
+        // --- PREMIUM NEON ENERGY WAVE VISUALS ---
+        const maxRadius = 600;
+        
+        // 1. Multiple expanding shockwave rings
+        const shockwave1 = this.scene.add.graphics().setBlendMode('ADD').setDepth(11);
+        const shockwave2 = this.scene.add.graphics().setBlendMode('ADD').setDepth(11);
+        const shockwave3 = this.scene.add.graphics().setBlendMode('ADD').setDepth(11);
+        
+        let waveRadius = 0;
+        
+        const waveTween = this.scene.tweens.addCounter({
+            from: 0,
+            to: maxRadius,
+            duration: 800,
+            ease: 'Cubic.easeOut',
+            onUpdate: (tween) => {
+                waveRadius = tween.getValue();
+                const alpha = 1 - (waveRadius / maxRadius);
+                
+                shockwave1.clear();
+                shockwave1.lineStyle(15, 0xff00ff, alpha);
+                shockwave1.strokeCircle(px, py, waveRadius);
+                
+                shockwave2.clear();
+                shockwave2.lineStyle(8, 0x00ffff, alpha * 0.8);
+                shockwave2.strokeCircle(px, py, waveRadius * 0.85);
+                
+                shockwave3.clear();
+                shockwave3.lineStyle(4, 0xffffff, alpha);
+                shockwave3.strokeCircle(px, py, waveRadius * 0.95);
+            },
+            onComplete: () => {
+                shockwave1.destroy();
+                shockwave2.destroy();
+                shockwave3.destroy();
+            }
+        });
+        
+        // 2. LOTS OF GLITTER (360 degree particle explosion)
+        const glitter = this.scene.add.particles(px, py, 'p_glow', {
+            speed: { min: 200, max: 800 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 1.0, end: 0 },
+            alpha: { start: 1, end: 0 },
+            tint: [0xff00ff, 0x00ffff, 0xffcc00, 0xffffff, 0x00ff00],
+            lifespan: 1000,
+            blendMode: 'ADD',
+            quantity: 150, // Massive explosion of glitter
+            gravityY: 0
+        });
+        glitter.setDepth(12);
+        glitter.explode(150, px, py);
+        this.scene.time.delayedCall(1200, () => glitter.destroy());
+        
+        // 3. Central Flare Flash
+        const flare = this.scene.add.circle(px, py, 150, 0xffffff, 1).setBlendMode('ADD').setDepth(13);
+        this.scene.tweens.add({
+            targets: flare,
+            scaleX: 0,
+            scaleY: 0,
+            alpha: 0,
+            duration: 400,
+            onComplete: () => flare.destroy()
+        });
+
+        // --- DAMAGE LOGIC ---
+        // Deal massive damage to all enemies within radius
+        const enemies = this.scene.enemies ? this.scene.enemies.getChildren() : [];
+        enemies.forEach(e => {
+            if (e && e.active) {
+                const dist = Phaser.Math.Distance.Between(px, py, e.x, e.y);
+                if (dist <= maxRadius) {
+                    const dmg = (this.scene.pd.damage * 5) + 300;
+                    if (typeof e.takeDamage === 'function') {
+                        e.takeDamage(dmg);
+                    } else if (e.hp !== undefined) {
+                        e.hp -= dmg;
+                        if (e.hp <= 0 && !e.isDying && this.scene.killEnemy) {
+                            this.scene.killEnemy(e);
+                        }
+                    }
+                }
+            }
+        });
     }
 }
-
-

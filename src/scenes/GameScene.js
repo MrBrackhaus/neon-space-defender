@@ -1748,7 +1748,9 @@ export default class GameScene extends Phaser.Scene {
                 let avoidX = 0, avoidY = 0, avoids = 0;
                 this.hazardSys.asteroids.getChildren().forEach(a => {
                     if (a.active) {
-                        const distSq = Phaser.Math.Distance.BetweenSq(e.x, e.y, a.x, a.y);
+                        const dx = e.x - a.x;
+                        const dy = e.y - a.y;
+                        const distSq = dx * dx + dy * dy;
                         if (distSq > 0 && distSq < 40000) { // 200 * 200 = 40000
                             const dist = Math.sqrt(distSq);
                             const repAngle = Phaser.Math.Angle.Between(a.x, a.y, e.x, e.y);
@@ -2713,7 +2715,7 @@ export default class GameScene extends Phaser.Scene {
         const rangeSq = this.pd.magnetRange * this.pd.magnetRange;
         this.crystals.getChildren().forEach(c => {
             if (!c.active) return;
-            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
             if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
@@ -2729,7 +2731,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.scraps.getChildren().forEach(c => {
             if (!c.active) return;
-            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
             if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
@@ -2742,7 +2744,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.cubesGroup.getChildren().forEach(c => {
             if (!c.active) return;
-            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
             if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
@@ -2758,7 +2760,7 @@ export default class GameScene extends Phaser.Scene {
         
         this.weaponUpgradesGroup.getChildren().forEach(c => {
             if (!c.active) return;
-            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
             if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);

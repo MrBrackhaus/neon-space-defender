@@ -1910,6 +1910,7 @@ export default class GameScene extends Phaser.Scene {
                 return;
             } else {
                 e.setVelocity(Math.cos(moveAngle)*e.speed, Math.sin(moveAngle)*e.speed);
+                if (e.customUpdate) e.customUpdate();
             }
 
             let rotOffset = -Math.PI/2;

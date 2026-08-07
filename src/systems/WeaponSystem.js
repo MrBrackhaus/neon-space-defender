@@ -867,8 +867,8 @@ export default class WeaponSystem {
   spawnSawblades(player, enemiesGroup, damage, level = 1) {
     if (!player || !player.active) return;
     const numBlades = 1 + level;
-    // Massive orbit radius so they don't overlap with orbitals
-    const orbitRadius = 220;
+    // Radius changed to 110 (just outside the 70px plasma orbitals)
+    const orbitRadius = 110;
     const bladeGraphics = [];
 
     for (let i = 0; i < numBlades; i++) {
@@ -917,7 +917,7 @@ export default class WeaponSystem {
         }
 
         const timeInSec = elapsed / 1000;
-        const orbitSpeed = 2; // Slower orbit due to wide radius
+        const orbitSpeed = 3;
         const spinSpeed = 25; // Extremely fast individual spin
 
         bladeGraphics.forEach(bg => {
@@ -1085,12 +1085,9 @@ export default class WeaponSystem {
     projectile.setBlendMode('ADD');
     
     this.scene.physics.add.existing(projectile);
-    projectile.body.setCircle(20, -20, -20); // Center physics body
+    projectile.body.setCircle(25, -25, -25); // Center physics body correctly
     projectile.setPosition(player.x, player.y - 40);
     projectile.body.setVelocityY(-400); // Slow but heavy
-    
-    projectile.damage = damage * (3 + level); // Massive damage
-    projectile.pierce = true; // Blows through everything
     
     // Comet trail effect
     const trailTimer = this.scene.time.addEvent({
@@ -1105,20 +1102,47 @@ export default class WeaponSystem {
             this.scene.tweens.add({ targets: trail, scale: 0, alpha: 0, duration: 400, onComplete: () => trail.destroy() });
         }
     });
-    
-    // Explosive impact shockwave
-    projectile.onHit = (enemyX, enemyY) => {
-        const shockwave = this.scene.add.circle(enemyX, enemyY, 20, 0xffffff, 0.8).setBlendMode('ADD').setDepth(14);
-        this.scene.tweens.add({
-            targets: shockwave,
-            scale: 6,
-            alpha: 0,
-            duration: 300,
-            onComplete: () => shockwave.destroy()
-        });
-    };
 
-    this.scene.bullets.add(projectile);
+    // Custom collision handler instead of using the restrictive 'this.bullets' group
+    this.scene.physics.add.overlap(projectile, enemiesGroup, (proj, enemy) => {
+        const hitCooldowns = proj.hitCooldowns || (proj.hitCooldowns = new Map());
+        const now = this.scene.time.now;
+        const lastHit = hitCooldowns.get(enemy) || 0;
+        
+        // Only hit the same enemy once every 300ms (piercing logic)
+        if (now - lastHit > 300) {
+            hitCooldowns.set(enemy, now);
+            const dmg = damage * (3 + level);
+            if (typeof enemy.takeDamage === 'function') enemy.takeDamage(dmg);
+            else if (enemy.hp !== undefined) enemy.hp -= dmg;
+            
+            // Explosive impact shockwave
+            const shockwave = this.scene.add.circle(enemy.x, enemy.y, 20, 0xffffff, 0.8).setBlendMode('ADD').setDepth(14);
+            this.scene.tweens.add({
+                targets: shockwave,
+                scale: 6,
+                alpha: 0,
+                duration: 300,
+                onComplete: () => shockwave.destroy()
+            });
+        }
+    });
+
+    // Destroy when off screen
+    const offScreenTimer = this.scene.time.addEvent({
+        delay: 100,
+        loop: true,
+        callback: () => {
+            if (!projectile.active) {
+                offScreenTimer.remove();
+                return;
+            }
+            if (projectile.y < -100) {
+                projectile.destroy();
+                offScreenTimer.remove();
+            }
+        }
+    });
   }
 
   updateDamageAura(player, enemiesGroup, damage, level = 1) {

@@ -21,19 +21,19 @@ import Phaser from 'phaser';
  */
 const NYX_POOL = [
     // ── OFFENSIV ───────────────────────────────────────────────────────────────
-    { id: 'overclock',        icon: '⚡', name: 'Koffein-Schock',           cost: 18, rarity: 'common',   color: '#ffff00', desc: '+200% Feuerrate für 15 Sek. Herzversagen nicht garantiert.' },
-    { id: 'berserker',        icon: '🔴', name: 'Berserker-Chip',            cost: 22, rarity: 'common',   color: '#ff4400', desc: '+50% Schaden, -30% Def. "Risiko ist Romantik."' },
+    { id: 'overclock',        icon: '⚡', name: 'Koffein-Schock',           cost: 18, rarity: 'common',   color: '#ffff00', desc: '+200% Feuerrate. Hält an, bis der nächste Boss getötet wird.' },
+    { id: 'berserker',        icon: '🔴', name: 'Berserker-Chip',            cost: 22, rarity: 'common',   color: '#ff4400', desc: '+50% Schaden, -25% Max HP. "Risiko ist Romantik."' },
     { id: 'explosive_rounds', icon: '💥', name: 'Explodierende Munition',    cost: 20, rarity: 'common',   color: '#ff8800', desc: 'Jeder Schuss explodiert beim Aufprall in kleinem AoE-Radius.' },
     { id: 'homing_rounds',    icon: '🎯', name: 'Suchwaffensystem',          cost: 25, rarity: 'uncommon', color: '#00ffff', desc: 'Geschosse biegen leicht in Richtung nächsten Feind ab.' },
-    { id: 'double_fire',      icon: '🔫', name: 'Doppelläufer-Umbau',       cost: 22, rarity: 'uncommon', color: '#ff00cc', desc: '+1 Dauerhafter Schuss. Solange du lebst. Also kurz.' },
+    { id: 'double_fire',      icon: '🔫', name: 'Doppelläufer-Umbau',       cost: 22, rarity: 'uncommon', color: '#ff00cc', desc: '+1 Dauerhafter Schuss. (Max: 3)', maxLevel: 3 },
     { id: 'crit_boost',       icon: '⭐', name: 'Zielcomputer-Hack',        cost: 20, rarity: 'common',   color: '#ffdd00', desc: '+25% Crit-Chance. Aus völlig unbekannten Gründen.' },
     { id: 'poison_rounds',    icon: '☠️', name: 'Schimmelextrakt-Munition', cost: 18, rarity: 'common',   color: '#88ff00', desc: 'Vergiftet Treffer. 2 HP/Sek Schaden für 4 Sekunden.' },
     { id: 'ricochet',         icon: '🪃', name: 'Prallschuss-Modul',        cost: 24, rarity: 'uncommon', color: '#ff9966', desc: 'Geschosse prallen an Wänden und bis zu 2 weiteren Feinden ab.' },
-    { id: 'overcharge',       icon: '🔋', name: 'Überladungs-Kapazitor',    cost: 28, rarity: 'uncommon', color: '#ffcc00', desc: 'Nächste 15 Schüsse: 500% Schaden. Danach: reguläre Waffe.' },
-    { id: 'bullet_speed',     icon: '💨', name: 'Hypergeschoss-Kit',        cost: 16, rarity: 'common',   color: '#ccffff', desc: '+80% Projektilgeschwindigkeit. Trifft auch schnelle Ziele.' },
-    { id: 'emp_blast',        icon: '🌩️', name: 'EMP-Granate',              cost: 22, rarity: 'uncommon', color: '#88aaff', desc: 'Betäubt ALLE Feinde für 3 Sekunden sofort beim Kauf.' },
-    { id: 'damage_aura',      icon: '🔥', name: 'Plasma-Aura',              cost: 26, rarity: 'uncommon', color: '#ff4400', desc: 'Feinde im Radius 100px nehmen dauerhaft 5 DMG/Sek.' },
-    { id: 'sniper_mode',      icon: '🔭', name: 'Sniper-Protokoll',         cost: 24, rarity: 'uncommon', color: '#ffaacc', desc: 'Schüsse durchdringen alle Feinde. Feuerrate halbiert.' },
+    { id: 'overcharge',       icon: '🔋', name: 'Überladungs-Kapazitor',    cost: 28, rarity: 'uncommon', color: '#ffcc00', desc: 'Deine Waffe feuert mit 500% Schaden für die gesamte nächste Welle.' },
+    { id: 'bullet_speed',     icon: '💨', name: 'Hypergeschoss-Kit',        cost: 16, rarity: 'common',   color: '#ccffff', desc: '+40% Projektilgeschwindigkeit. Trifft auch schnelle Ziele. (Max: 3)', maxLevel: 3 },
+    { id: 'emp_blast',        icon: '🌩️', name: 'EMP-Granate',              cost: 22, rarity: 'uncommon', color: '#88aaff', desc: '[R] Betäubt ALLE Feinde für 3 Sekunden (Aktives Item).' },
+    { id: 'damage_aura',      icon: '🔥', name: 'Plasma-Aura',              cost: 26, rarity: 'uncommon', color: '#ff4400', desc: 'Aura fügt nahen Feinden jede Sekunde Schaden zu. (Max: 3)', maxLevel: 3 },
+    { id: 'kinetic_accelerator', icon: '☄️', name: 'Kinetischer Beschleuniger', cost: 24, rarity: 'uncommon', color: '#ffaacc', desc: 'Schüsse richten bis zu +150% mehr Schaden an, je weiter sie fliegen.' },
 
     // ── DEFENSIV ──────────────────────────────────────────────────────────────
     { id: 'shield_recharge',  icon: '🛡️', name: 'Schild-Notladung',         cost: 14, rarity: 'common',   color: '#4499ff', desc: 'Stellt alle Schutzschild-Ladungen sofort wieder her.' },
@@ -41,23 +41,23 @@ const NYX_POOL = [
     { id: 'temp_shield',      icon: '🔷', name: 'Temporäres Kraftfeld',     cost: 16, rarity: 'common',   color: '#00ccff', desc: '+2 Schild-Ladungen für diese Runde. Schmilzt bei Hitze.' },
     { id: 'invincible_dash',  icon: '👻', name: 'Ghost-Protocol',            cost: 22, rarity: 'uncommon', color: '#aabbff', desc: 'Dash macht dich für 1 Sek unverwundbar (statt 0.25 Sek).' },
     { id: 'regen_boost',      icon: '💚', name: 'Nano-Droge',               cost: 18, rarity: 'common',   color: '#00ff88', desc: '+8 HP/Sek Regen für diese Runde. Aus fragwürdigen Quellen.' },
-    { id: 'mirror_shield',    icon: '🪞', name: 'Reflektor-Panel',          cost: 26, rarity: 'uncommon', color: '#aaddff', desc: '30% Chance: Eingehender Schaden trifft stattdessen den Angreifer.' },
+    { id: 'mirror_shield',    icon: '🪞', name: 'Reflektor-Panel',          cost: 26, rarity: 'uncommon', color: '#aaddff', desc: 'Erzeugt ein permanentes Schild (30% Reflektions-Chance).' },
     { id: 'hp_to_shield',     icon: '⚗️', name: 'HP-Konverter',             cost: 18, rarity: 'common',   color: '#aa55ff', desc: 'Opfert 25% HP → +3 Schild-Ladungen. "Gesundheit ist Schildausdruck."' },
     { id: 'guardian_angel',   icon: '😇', name: 'Schutzengel-Protokoll',    cost: 32, rarity: 'rare',     color: '#ffffaa', desc: 'Einmalig: Überlebe tödlichen Treffer mit 1 HP. Dann ist Schluss.' },
     { id: 'speed_boost',      icon: '🚀', name: 'Nachbrenner-Modul',        cost: 16, rarity: 'common',   color: '#ffff88', desc: '+40% Bewegungsgeschwindigkeit für diese Runde.' },
 
     // ── UTILITY ───────────────────────────────────────────────────────────────
-    { id: 'orbital_strike',   icon: '☄️', name: 'Katzenklo-Orbital-Laser',  cost: 12, rarity: 'common',   color: '#ff00aa', desc: 'Feinde unter galaktischem Katzenstreu begraben. Sofort.' },
+    { id: 'orbital_strike',   icon: '☄️', name: 'Katzenklo-Drohne',         cost: 12, rarity: 'common',   color: '#ff00aa', desc: 'Drohne, die automatisch auf Feinde feuert. (Max: 3)', maxLevel: 3 },
     { id: 'vampire_protocol', icon: '🧛', name: 'Zecken-Modul',             cost: 15, rarity: 'common',   color: '#cc00ff', desc: '20% Trefferchance: Heilt 1 HP. Widerlich, aber effektiv.' },
     { id: 'scrap_magnet',     icon: '🧲', name: 'Schrott-Magnet Ultra',     cost: 12, rarity: 'common',   color: '#ffaa00', desc: '+200px XP/Scrap-Anziehungsradius für diese Runde.' },
     { id: 'xp_boost',         icon: '📈', name: 'Erfahrungs-Injektion',     cost: 16, rarity: 'uncommon', color: '#88ff88', desc: 'Sofort +80 XP. "Erfahrung kaufen" ist nur ein Konzept.' },
     { id: 'nova_refill',      icon: '💣', name: 'Plutonium-Reload',         cost: 14, rarity: 'common',   color: '#ff00ff', desc: '+2 Nova-Bomben. Nyx garantiert keine Rücknahme.' },
     { id: 'wave_skip',        icon: '⏭️', name: 'Wellen-Bestechung',        cost: 30, rarity: 'rare',     color: '#ff4444', desc: 'Überspringt die nächste Welle. Bestechung funktioniert im All.' },
     { id: 'score_multiplier', icon: '✖️', name: 'Score-Doppler',            cost: 20, rarity: 'uncommon', color: '#ffcc44', desc: '2× Score für 30 Sek. Ranglistenmanipulation inklusive.' },
-    { id: 'xp_vacuum',        icon: '🌀', name: 'XP-Staubsauger',          cost: 14, rarity: 'common',   color: '#88ffcc', desc: 'Saugt ALLE XP-Kristalle auf dem Bildschirm sofort ein.' },
+
     { id: 'cube_rain',        icon: '💎', name: 'Würfelregen',              cost: 10, rarity: 'common',   color: '#aa77ff', desc: '+25 Cubes sofort. Nyx druckt Währung. Klassisch.' },
-    { id: 'gravity_well',     icon: '🌑', name: 'Schwerekraft-Kammer',      cost: 26, rarity: 'uncommon', color: '#8800ff', desc: 'Zieht alle Feinde 5 Sek zur Bildschirmmitte. Dann: Chaos.' },
-    { id: 'kill_weakest',     icon: '💀', name: "Nyx' Selektionsprogramm",  cost: 20, rarity: 'uncommon', color: '#ff0044', desc: 'Eliminiert die 10 schwächsten Gegner auf dem Bildschirm. "Survival of the fittest."' },
+    { id: 'gravity_well',     icon: '🌑', name: 'Schwerekraft-Kammer',      cost: 26, rarity: 'uncommon', color: '#8800ff', desc: '[R] Zieht alle Feinde 5 Sek zur Mitte (Aktives Item).' },
+    { id: 'kill_weakest',     icon: '💀', name: "Nyx' Selektionsprogramm",  cost: 20, rarity: 'uncommon', color: '#ff0044', desc: '[R] Eliminiert die 10 schwächsten Gegner (Aktives Item).' },
 
     // ── CHAOS & RISIKO ────────────────────────────────────────────────────────
     { id: 'chaos_mode',       icon: '🎲', name: 'Chaos-Würfel',             cost: 8,  rarity: 'rare',     color: '#ff44ff', desc: 'ZUFÄLLIG: 60% mächtiger Buff, 40% kleiner Debuff. Nyx weiß selbst nicht was passiert.' },
@@ -213,8 +213,29 @@ export default class InGameShopScene extends Phaser.Scene {
         // Check tech tree requirements
         const hasFusionCore = parseInt(localStorage.getItem('neon_tech_fusion') || '0') > 0;
 
-        // Build a pool excluding items that have already been bought in this shop visit
-        let pool = NYX_POOL.filter(item => !this.purchasedBuffs.includes(item.id));
+        let pool = NYX_POOL.filter(item => {
+            const boughtThisVisit = this.purchasedBuffs.filter(id => id === item.id).length;
+            const boughtPreviousVisits = (this.flags.nyxLevels && this.flags.nyxLevels[item.id]) ? this.flags.nyxLevels[item.id] : 0;
+            const total = boughtThisVisit + boughtPreviousVisits;
+            if (item.maxLevel) {
+                return total < item.maxLevel;
+            } else {
+                return total === 0;
+            }
+        });
+        
+        pool = pool.map(item => {
+            const boughtThisVisit = this.purchasedBuffs.filter(id => id === item.id).length;
+            const boughtPreviousVisits = (this.flags.nyxLevels && this.flags.nyxLevels[item.id]) ? this.flags.nyxLevels[item.id] : 0;
+            const total = boughtThisVisit + boughtPreviousVisits;
+            
+            let newItem = { ...item };
+            if (total > 0) {
+                newItem.cost = Math.round(newItem.cost * (1 + (total * 0.4))); // 40% cost increase per level
+                newItem.name = `${newItem.name} (Lv ${total + 1})`;
+            }
+            return newItem;
+        });
 
         // Append conditional evolution items if tech and in-run requirements are met
         if (hasFusionCore) {

@@ -119,6 +119,9 @@ export default class GameScene extends Phaser.Scene {
         const pDmg = getSafeInt('neon_upg_base_dmg') * 0.15;
         const pSpd = getSafeInt('neon_upg_base_speed') * 0.05;
         const pMag = getSafeInt('neon_upg_magnet') * 40;
+        const pGreed = getSafeInt('neon_upg_greed') * 0.15;
+        const pCrit = getSafeInt('neon_upg_crit') * 0.05;
+        const pCool = getSafeInt('neon_upg_cooldown') * 0.05;
         const pShield = getSafeInt('neon_upg_start_shields');
         const pNova = getSafeInt('neon_upg_start_novas');
 
@@ -167,12 +170,12 @@ export default class GameScene extends Phaser.Scene {
         this.pd = {
             hp: (100 + pHP) * hpMod * meta.hpMult, maxHp: (100 + pHP) * hpMod * meta.hpMult, shield: pShield + shieldMod,
             baseSpeed: (260 * (1 + pSpd)) * spdMod, speed: (260 * (1 + pSpd)) * spdMod,
-            fireDelay: Math.round(380 * weaponFireMod), damage: (18 * (1 + pDmg)) * dmgMod * weaponDmgMod * meta.dmgMult,
+            fireDelay: Math.round(380 * weaponFireMod * Math.max(0.2, 1 - pCool)), damage: (18 * (1 + pDmg)) * dmgMod * weaponDmgMod * meta.dmgMult,
             shots: weaponShotsMod + bonusShots, level: 1, xp: 0, xpToNext: 80,
             weaponLevel: 1, autoTargetCount: autoTargetCount, isExplosive: isExplosive, extraDropChance: extraDropChance,
-            nova: pNova + novaMod, pierce: weaponPierce, crit: critMod, weaponLifespan: weaponLifespan,
+            nova: pNova + novaMod, pierce: weaponPierce, crit: critMod, critBoost: pCrit, weaponLifespan: weaponLifespan,
             magnetRange: 130 + pMag + meta.magnetBonus, regen: baseRegen, aoe: false,
-            greedMult: meta.greedMult,
+            greedMult: meta.greedMult + pGreed,
             orbitals: 0,
             hasLightning: false,
             hasBlackHole: false,
@@ -254,8 +257,15 @@ export default class GameScene extends Phaser.Scene {
         const go = document.getElementById('gameover-overlay');
         if (go) go.style.display = 'none';
 
-        this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,Q,E,SPACE,SHIFT,ESC,F6');
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,Q,E,R,SPACE,SHIFT,ESC,F6');
         this.keys.Q.on('down', () => this.activateNovaBomb());
+        this.keys.R.on('down', () => this.useActiveItem());
+        
+        // Active Item HUD Text
+        this.activeItemText = this.add.text(this.cw / 2, this.ch - 60, '', {
+            fontFamily: 'Orbitron', fontSize: '14px', fontStyle: 'bold',
+            color: '#00ffcc', backgroundColor: '#00000088', padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setDepth(20);
         this.keys.ESC.on('down', () => {
             this.scene.pause();
             this.scene.launch('PauseScene');
@@ -620,97 +630,109 @@ export default class GameScene extends Phaser.Scene {
             delay: this.pd.fireDelay, callback: this.autoShoot, callbackScope: this, loop: true
         });
 
+        this.applyNyxBuff = (b) => {
+            this.pd.nyxLevels = this.pd.nyxLevels || {};
+            this.pd.nyxLevels[b] = (this.pd.nyxLevels[b] || 0) + 1;
+            
+            // ── Evolutionen ──
+            if (b === 'evo_supernova')   this.pd.hasSupernova = true;
+            if (b === 'evo_laser_whip')  this.pd.hasLaserWhip = true;
+            if (b === 'evo_void_vortex') this.pd.hasVoidVortex = true;
+            if (b === 'evo_frost_aegis') this.pd.hasFrostAegis = true;
+
+            // ── Offensiv ──
+            if (b === 'vampire_protocol')  this.pd.vampireProtocol = true;
+            if (b === 'overclock') {
+                this.pd.overclockActive = true;
+                if (this.shootTimer) this.shootTimer.delay = this.pd.fireDelay / 3;
+            }
+            if (b === 'berserker') {
+                this.pd.damage *= 1.5;
+                this.pd.maxHp = Math.max(1, Math.floor(this.pd.maxHp * 0.75)); // -25% max HP
+                this.pd.hp = Math.min(this.pd.hp, this.pd.maxHp);
+                this.updateHUD();
+            }
+            if (b === 'explosive_rounds')  this.pd.explosiveRounds = true;
+            if (b === 'homing_rounds')     this.pd.homingRounds = true;
+            if (b === 'double_fire')       { this.pd.shots += 1; }
+            if (b === 'crit_boost')        { this.pd.critBoost = (this.pd.critBoost || 0) + 0.25; }
+            if (b === 'poison_rounds')     this.pd.poisonRounds = true;
+            if (b === 'ricochet')          this.pd.ricochetRounds = true;
+            if (b === 'overcharge')        { this.pd.overchargeActive = true; this.showBanner('ÜBERLADUNG AKTIV FÜR DIESE WELLE!', '#ffcc00'); }
+            if (b === 'bullet_speed')      { this.pd.bulletSpeedMod = (this.pd.bulletSpeedMod || 1) * 1.4; } // +40% speed per level
+            
+            if (b === 'emp_blast' || b === 'gravity_well' || b === 'kill_weakest') {
+                this.pd.activeItem = b;
+                this.showBanner('AKTIVES ITEM (R): ' + b, '#00ffcc');
+                if (this.activeItemText) this.activeItemText.setText('[R] ' + b.toUpperCase());
+            }
+
+            if (b === 'damage_aura')       {
+                this.pd.damageAura = true;
+                if (!this.damageAuraGraphics) {
+                    this.damageAuraGraphics = this.add.graphics();
+                    this.damageAuraGraphics.setDepth(4);
+                }
+            }
+            if (b === 'kinetic_accelerator') { this.pd.kineticAccelerator = true; } // New upgrade replacing sniper_mode
+            if (b === 'clone_shot')        this.pd.cloneShot = true;
+            if (b === 'time_slow') {
+                this.showBanner('ZEITVERZERRUNG AKTIV!', '#00ffff');
+                this.physics.world.timeScale = 0.5;
+                this.time.delayedCall(8000, () => { this.physics.world.timeScale = 1.0; });
+            }
+
+            // ── Defensiv ──
+            if (b === 'shield_recharge')   { this.pd.shield = Math.max(this.pd.shield, (this.pd.upgLevels['shield'] || 0) + parseInt(localStorage.getItem('neon_upg_start_shields')||'0') + 1); this.updateHUD(); }
+            if (b === 'full_heal')         { this.pd.hp = Math.min(this.pd.maxHp, this.pd.hp + this.pd.maxHp * 0.6); this.updateHUD(); }
+            if (b === 'temp_shield')       { this.pd.shield += 2; this.updateHUD(); }
+            if (b === 'invincible_dash')   this.pd.dashInvincible = true;
+            if (b === 'regen_boost')       { this.pd.regen += 8; }
+            if (b === 'mirror_shield')     {
+                this.pd.mirrorShield = true;
+                if (!this.mirrorShieldGraphics) {
+                    this.mirrorShieldGraphics = this.add.graphics();
+                    this.mirrorShieldGraphics.setDepth(5);
+                }
+            }
+            if (b === 'hp_to_shield')      { const cost = Math.floor(this.pd.hp * 0.25); this.pd.hp = Math.max(1, this.pd.hp - cost); this.pd.shield += 3; this.updateHUD(); }
+            if (b === 'guardian_angel')    this.pd.guardianAngel = true;
+            if (b === 'speed_boost')       { this.pd.speed *= 1.4; this.pd.baseSpeed *= 1.4; }
+
+            // ── Utility ──
+            if (b === 'orbital_strike') {
+                this.pd.orbitalStrikeLevel = (this.pd.orbitalStrikeLevel || 0) + 1;
+                // Handled in update() logic to spawn drone
+            }
+            if (b === 'scrap_magnet')      { this.pd.magnetRange += 200; }
+            if (b === 'xp_boost')          { this.addXP(80); }
+            if (b === 'nova_refill')       { this.pd.nova += 2; this.updateHUD(); }
+            if (b === 'wave_skip')         { this.pd.skipNextWave = true; this.showBanner('NÄCHSTE WELLE ÜBERSPRUNGEN!', '#ff4444'); }
+            if (b === 'score_multiplier')  { this.pd.scoreMultiplier = 2; this.showBanner('2× SCORE AKTIV!', '#ffcc44'); this.time.delayedCall(30000, () => { this.pd.scoreMultiplier = 1; }); }
+            if (b === 'xp_vacuum')         { this.crystals.getChildren().forEach(c => { if (c.active) { this.addXP(c.xpVal); c.destroy(); } }); this.showBanner('XP AUFGESAUGT!', '#88ffcc'); }
+            if (b === 'cube_rain')         { this.pd.cubes = (this.pd.cubes || 0) + 25; this.updateHUD(); }
+
+            // ── Chaos & Risiko ──
+            if (b === 'chaos_mode') {
+                const isBuff = Math.random() < 0.6;
+                if (isBuff) {
+                    const pick = ['double_fire','crit_boost','full_heal','regen_boost','nova_refill','bullet_speed','xp_boost'][Math.floor(Math.random()*7)];
+                    this.time.delayedCall(100, () => { if (!this.isGameOver) this.applyNyxBuff(pick); });
+                    this.showBanner('CHAOS: BUFF!', '#ff44ff');
+                } else {
+                    this.pd.speed *= 0.85;
+                    this.showBanner('CHAOS: DEBUFF! Langsamkeit.', '#884488');
+                }
+            }
+            if (b === 'glass_cannon')      { this.pd.damage *= 3; this.pd.hp = Math.max(1, Math.floor(this.pd.hp * 0.2)); this.pd.maxHp = Math.max(10, Math.floor(this.pd.maxHp * 0.2)); this.showBanner('GLASKANONE! DMG ×3 | HP ×0.2', '#ffaaff'); this.updateHUD(); }
+        };
+
         this.events.on('resume', (scene, data) => {
             if (data) {
                 if (data.cubes !== undefined) this.pd.cubes = data.cubes;
                 if (data.buffs) {
                     data.buffs.forEach(b => {
-                        // ── Evolutionen ──
-                        if (b === 'evo_supernova')   this.pd.hasSupernova = true;
-                        if (b === 'evo_laser_whip')  this.pd.hasLaserWhip = true;
-                        if (b === 'evo_void_vortex') this.pd.hasVoidVortex = true;
-                        if (b === 'evo_frost_aegis') this.pd.hasFrostAegis = true;
-
-                        // ── Offensiv ──
-                        if (b === 'orbital_strike')    this.pd.orbitalStrikeReady = true;
-                        if (b === 'vampire_protocol')  this.pd.vampireProtocol = true;
-                        if (b === 'overclock') {
-                            this.shootTimer.delay = this.pd.fireDelay / 3;
-                            this.time.delayedCall(15000, () => { if (this.shootTimer) this.shootTimer.delay = this.pd.fireDelay; });
-                        }
-                        if (b === 'berserker')         { this.pd.damage *= 1.5; this.pd.damageMitigation = (this.pd.damageMitigation || 1) * 0.7; }
-                        if (b === 'explosive_rounds')  this.pd.explosiveRounds = true;
-                        if (b === 'homing_rounds')     this.pd.homingRounds = true;
-                        if (b === 'double_fire')       { this.pd.shots += 1; }
-                        if (b === 'crit_boost')        { this.pd.critBoost = (this.pd.critBoost || 0) + 0.25; }
-                        if (b === 'poison_rounds')     this.pd.poisonRounds = true;
-                        if (b === 'ricochet')          this.pd.ricochetRounds = true;
-                        if (b === 'overcharge')        { this.pd.overchargeShots = 15; this.showBanner('ÜBERLADUNG AKTIV — 15 SCHÜSSE!', '#ffcc00'); }
-                        if (b === 'bullet_speed')      { this.pd.bulletSpeedMod = (this.pd.bulletSpeedMod || 1) * 1.8; }
-                        if (b === 'emp_blast') {
-                            this.showBanner('EMP AUSGELÖST!', '#88aaff');
-                            this.enemies.getChildren().forEach(e => {
-                                if (!e.active || e.isHitZone) return;
-                                e.stunned = true;
-                                e.oldVelocity = { x: e.body.velocity.x, y: e.body.velocity.y };
-                                e.setVelocity(0, 0);
-                                this.time.delayedCall(3000, () => { if (e.active) { e.stunned = false; } });
-                            });
-                        }
-                        if (b === 'damage_aura')       this.pd.damageAura = true;
-                        if (b === 'sniper_mode')       { this.pd.pierce = true; this.shootTimer.delay = this.pd.fireDelay * 2; }
-                        if (b === 'clone_shot')        this.pd.cloneShot = true;
-                        if (b === 'time_slow') {
-                            this.showBanner('ZEITVERZERRUNG AKTIV!', '#00ffff');
-                            this.physics.world.timeScale = 0.5;
-                            this.time.delayedCall(8000, () => { this.physics.world.timeScale = 1.0; });
-                        }
-
-                        // ── Defensiv ──
-                        if (b === 'shield_recharge')   { this.pd.shield = Math.max(this.pd.shield, (this.pd.upgLevels['shield'] || 0) + parseInt(localStorage.getItem('neon_upg_start_shields')||'0') + 1); this.updateHUD(); }
-                        if (b === 'full_heal')         { this.pd.hp = Math.min(this.pd.maxHp, this.pd.hp + this.pd.maxHp * 0.6); this.updateHUD(); }
-                        if (b === 'temp_shield')       { this.pd.shield += 2; this.updateHUD(); }
-                        if (b === 'invincible_dash')   this.pd.dashInvincible = true;
-                        if (b === 'regen_boost')       { this.pd.regen += 8; }
-                        if (b === 'mirror_shield')     this.pd.mirrorShield = true;
-                        if (b === 'hp_to_shield')      { const cost = Math.floor(this.pd.hp * 0.25); this.pd.hp = Math.max(1, this.pd.hp - cost); this.pd.shield += 3; this.updateHUD(); }
-                        if (b === 'guardian_angel')    this.pd.guardianAngel = true;
-                        if (b === 'speed_boost')       { this.pd.speed *= 1.4; this.pd.baseSpeed *= 1.4; }
-
-                        // ── Utility ──
-                        if (b === 'scrap_magnet')      { this.pd.magnetRange += 200; }
-                        if (b === 'xp_boost')          { this.addXP(80); }
-                        if (b === 'nova_refill')       { this.pd.nova += 2; this.updateHUD(); }
-                        if (b === 'wave_skip')         { this.pd.skipNextWave = true; this.showBanner('NÄCHSTE WELLE ÜBERSPRUNGEN!', '#ff4444'); }
-                        if (b === 'score_multiplier')  { this.pd.scoreMultiplier = 2; this.showBanner('2× SCORE AKTIV!', '#ffcc44'); this.time.delayedCall(30000, () => { this.pd.scoreMultiplier = 1; }); }
-                        if (b === 'xp_vacuum')         { this.crystals.getChildren().forEach(c => { if (c.active) { this.addXP(c.xpVal); c.destroy(); } }); this.showBanner('XP AUFGESAUGT!', '#88ffcc'); }
-                        if (b === 'cube_rain')         { this.pd.cubes = (this.pd.cubes || 0) + 25; this.updateHUD(); }
-                        if (b === 'gravity_well') {
-                            this.showBanner('GRAVITATIONSKAMMER AKTIV!', '#8800ff');
-                            const cx = this.cw / 2, cy = this.ch / 2;
-                            const gravTimer = this.time.addEvent({ delay: 100, repeat: 49, callback: () => {
-                                this.enemies.getChildren().forEach(e => { if (e.active && !e.isHitZone) this.physics.moveToObject(e, { x: cx, y: cy }, 200); });
-                            }});
-                        }
-                        if (b === 'kill_weakest') {
-                            const alive = this.enemies.getChildren().filter(e => e.active && !e.isDying && !e.isHitZone).sort((a, b) => a.hp - b.hp);
-                            alive.slice(0, 10).forEach(e => this.killEnemy(e));
-                            this.showBanner('10 FEINDE AUSSORTIERT!', '#ff0044');
-                        }
-
-                        // ── Chaos & Risiko ──
-                        if (b === 'chaos_mode') {
-                            const isBuff = Math.random() < 0.6;
-                            if (isBuff) {
-                                const pick = ['double_fire','crit_boost','full_heal','regen_boost','nova_refill','bullet_speed','xp_boost'][Math.floor(Math.random()*7)];
-                                this.time.delayedCall(100, () => { if (!this.isGameOver) this.applyNyxBuff(pick); });
-                                this.showBanner('CHAOS: BUFF!', '#ff44ff');
-                            } else {
-                                this.pd.speed *= 0.85;
-                                this.showBanner('CHAOS: DEBUFF! Langsamkeit.', '#884488');
-                            }
-                        }
-                        if (b === 'glass_cannon')      { this.pd.damage *= 3; this.pd.hp = Math.max(1, Math.floor(this.pd.hp * 0.2)); this.pd.maxHp = Math.max(10, Math.floor(this.pd.maxHp * 0.2)); this.showBanner('GLASKANONE! DMG ×3 | HP ×0.2', '#ffaaff'); this.updateHUD(); }
+                        this.applyNyxBuff(b);
                     });
                 }
             }
@@ -1081,9 +1103,14 @@ export default class GameScene extends Phaser.Scene {
 
             this.time.delayedCall(250, () => {
                 pd.isDashing = false;
-                this.playerInvincible = false;
+                if (!pd.dashInvincible) this.playerInvincible = false;
                 pd.dashCooldown = this.time.now + 1200; // 1.2s cooldown
             });
+            if (pd.dashInvincible) {
+                this.time.delayedCall(1000, () => {
+                    this.playerInvincible = false;
+                });
+            }
             return;
         }
 
@@ -1408,7 +1435,10 @@ export default class GameScene extends Phaser.Scene {
         b.hitEnemies = [];
         const critChance = (this.pd.crit ? 0.2 : 0) + (this.pd.critBoost || 0);
         b.isCrit = Math.random() < critChance;
-        b.damage = b.isCrit ? this.pd.damage * 3 : this.pd.damage;
+        b.baseDamage = b.isCrit ? this.pd.damage * 3 : this.pd.damage;
+        b.damage = b.baseDamage;
+        b.startX = x;
+        b.startY = y;
         b.body.reset(x, y);   // reset body position BEFORE setting velocity
         b.spawnTime = this.time.now;
         b.lifespan = this.pd.weaponLifespan;
@@ -1471,7 +1501,10 @@ export default class GameScene extends Phaser.Scene {
         b.hitEnemies = [];
         const critChance = (this.pd.crit ? 0.2 : 0) + (this.pd.critBoost || 0);
         b.isCrit = Math.random() < critChance;
-        b.damage = b.isCrit ? this.pd.damage * 3 : this.pd.damage;
+        b.baseDamage = b.isCrit ? this.pd.damage * 3 : this.pd.damage;
+        b.damage = b.baseDamage;
+        b.startX = x;
+        b.startY = y;
         b.body.reset(x, y);   // reset body position BEFORE setting velocity
         b.spawnTime = this.time.now;
         b.lifespan = this.pd.weaponLifespan;
@@ -2033,6 +2066,8 @@ export default class GameScene extends Phaser.Scene {
     onBulletHitEnemy(bullet, enemy) {
         if (!bullet.active || !enemy.active || enemy.isDying) return;
         
+        if (bullet.hitEnemies && bullet.hitEnemies.includes(enemy)) return;
+        
         if (enemy.isShielded) {
             if (!bullet.pierce) this.bullets.killAndHide(bullet);
             this.showDmgNum(enemy.x, enemy.y - 10, 'BLOCK', '#00aaff');
@@ -2040,12 +2075,41 @@ export default class GameScene extends Phaser.Scene {
             return;
         }
         
-        if (bullet.pierce) {
-            if (!bullet.hitEnemies) bullet.hitEnemies = [];
-            if (bullet.hitEnemies.includes(enemy)) return;
-            bullet.hitEnemies.push(enemy);
-        } else {
-            this.bullets.killAndHide(bullet);
+        if (!bullet.hitEnemies) bullet.hitEnemies = [];
+        bullet.hitEnemies.push(enemy);
+        
+        let appliedDamage = bullet.damage;
+        if (this.pd.kineticAccelerator && bullet.startX !== undefined) {
+            const dist = Phaser.Math.Distance.Between(bullet.startX, bullet.startY, bullet.x, bullet.y);
+            const multiplier = 1 + Math.min(dist / 800, 1) * 1.5; // Up to +150% damage at 800px distance
+            appliedDamage = Math.floor((bullet.baseDamage || bullet.damage) * multiplier);
+            bullet.damage = appliedDamage; // Update for AoE effects if needed
+        }
+        
+        if (!bullet.pierce) {
+            if (this.pd.ricochetRounds && (bullet.bounces || 0) < 3) {
+                bullet.bounces = (bullet.bounces || 0) + 1;
+                
+                let nearest = null;
+                let minDist = 400; // max bounce distance
+                this.enemies.getChildren().forEach(e => {
+                    if (e.active && e !== enemy && !e.isDying && !bullet.hitEnemies.includes(e)) {
+                        let d = Phaser.Math.Distance.Between(bullet.x, bullet.y, e.x, e.y);
+                        if (d < minDist) { minDist = d; nearest = e; }
+                    }
+                });
+                
+                if (nearest && bullet.body) {
+                    let angle = Phaser.Math.Angle.Between(bullet.x, bullet.y, nearest.x, nearest.y);
+                    const speed = Math.sqrt(bullet.body.velocity.x**2 + bullet.body.velocity.y**2) || 800;
+                    bullet.body.setVelocity(Math.cos(angle) * Math.max(speed, 600), Math.sin(angle) * Math.max(speed, 600));
+                    bullet.setRotation(angle + Math.PI/2);
+                } else {
+                    this.bullets.killAndHide(bullet);
+                }
+            } else {
+                this.bullets.killAndHide(bullet);
+            }
         }
 
         if (enemy.isHitZone) {
@@ -2064,8 +2128,8 @@ export default class GameScene extends Phaser.Scene {
             this.weaponSys.triggerSupernova(enemy.x, enemy.y, this.pd.damage * 3, this.enemies);
         }
         
-        if (this.pd.isExplosive) {
-            // Bomber's passive: mini AoE around the hit target
+        if (this.pd.isExplosive || this.pd.explosiveRounds) {
+            // Bomber's passive or Explosive Rounds Nyx Upgrade: mini AoE around the hit target
             const radius = 60;
             const splashDmg = this.pd.damage * 0.5;
             this.spawnDeathFX(enemy.x, enemy.y, 0xff5500); // Orange mini explosion
@@ -2087,6 +2151,35 @@ export default class GameScene extends Phaser.Scene {
             enemy.speed = Math.max(10, enemy.originalSpeed * slowFactor);
             enemy.setTint(0x00ccff);
             enemy.cryoUntil = this.time.now + 2000 + (cryoLvl * 500);
+        }
+
+        if (this.pd.poisonRounds) {
+            enemy.isPoisoned = true;
+            enemy.poisonTicks = 4;
+            enemy.setTint(0x88ff00);
+            if (!enemy.poisonTimer) {
+                enemy.poisonTimer = this.time.addEvent({
+                    delay: 1000,
+                    loop: true,
+                    callback: () => {
+                        if (!enemy.active || enemy.isDying) {
+                            if (enemy.poisonTimer) enemy.poisonTimer.remove();
+                            return;
+                        }
+                        if (enemy.poisonTicks > 0) {
+                            enemy.hp -= 2;
+                            this.showDmgNum(enemy.x, enemy.y, 2, '#88ff00');
+                            if (enemy.hp <= 0 && !enemy.isDying) this.killEnemy(enemy);
+                            enemy.poisonTicks--;
+                        } else {
+                            enemy.isPoisoned = false;
+                            enemy.clearTint();
+                            if (enemy.poisonTimer) enemy.poisonTimer.remove();
+                            enemy.poisonTimer = null;
+                        }
+                    }
+                });
+            }
         }
 
         if (this.audioSys) this.audioSys.playHit();
@@ -2193,6 +2286,14 @@ export default class GameScene extends Phaser.Scene {
      * @param {Phaser.Physics.Arcade.Sprite} enemy - The enemy that just died.
      */
     onEnemyDied(enemy) {
+        if (enemy.type === 'boss') {
+            if (this.pd.overclockActive) {
+                this.pd.overclockActive = false;
+                if (this.shootTimer) this.shootTimer.delay = this.pd.fireDelay;
+                this.showBanner('KOFFEIN-SCHOCK BEENDET', '#ffff00');
+            }
+        }
+        
         if (this.pd.vampireProtocol) {
             this.healPlayer(1);
         }
@@ -2435,6 +2536,27 @@ export default class GameScene extends Phaser.Scene {
     damagePlayer(amount) {
         if (this.isGameOver || !this.player || !this.player.active || this.playerInvincible || this.godMode || this.player.isInvulnerable || this.player.hasAegis) return;
 
+        if (this.pd.mirrorShield && Math.random() < 0.3) {
+            this.showBanner('REFLEKTIERT!', '#aaddff');
+            if (this.audioSys) this.audioSys.playHit();
+            let nearest = null;
+            let minDist = 1000;
+            this.enemies.getChildren().forEach(e => {
+                if (e.active && !e.isDying) {
+                    let d = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y);
+                    if (d < minDist) { minDist = d; nearest = e; }
+                }
+            });
+            if (nearest) {
+                nearest.hp -= amount * 2;
+                this.showDmgNum(nearest.x, nearest.y, amount * 2, '#aaddff');
+                if (nearest.hp <= 0 && !nearest.isDying) this.killEnemy(nearest);
+            }
+            this.playerInvincible = true;
+            this.time.delayedCall(250, () => { this.playerInvincible = false; });
+            return;
+        }
+
         this.triggerHitStop(1.5);
         this.eventSys.triggerCompanionComment('take_damage');
         if(this.audioSys) this.audioSys.playPlayerHit();
@@ -2455,6 +2577,14 @@ export default class GameScene extends Phaser.Scene {
         
         if (this.pd.unlockVoidShield) {
             amount *= 0.85; // 15% damage reduction
+        }
+        
+        if (this.pd.hp <= amount && this.pd.guardianAngel) {
+            this.pd.guardianAngel = false;
+            amount = this.pd.hp - 1;
+            this.showBanner('SCHUTZENGEL AKTIVIERT!', '#ffffaa');
+            this.playerInvincible = true;
+            this.time.delayedCall(2000, () => { this.playerInvincible = false; });
         }
         
         this.pd.hp -= amount;
@@ -2808,6 +2938,43 @@ export default class GameScene extends Phaser.Scene {
     /**
      * @description Standard active: Consumes one Nova charge to wipe standard enemies from the screen and damage bosses.
      */
+    useActiveItem() {
+        if (!this.pd.activeItem || this.isGameOver) return;
+        
+        const item = this.pd.activeItem;
+        this.pd.activeItem = null; // Consume the item
+        
+        // Hide the HUD text
+        if (this.activeItemText) this.activeItemText.setText('');
+        this.showBanner(item.toUpperCase() + ' AUSGELÖST!', '#00ffcc');
+
+        if (item === 'emp_blast') {
+            this.enemies.getChildren().forEach(e => {
+                if (!e.active || e.isHitZone || e.isDying) return;
+                e.stunned = true;
+                e.oldVelocity = { x: e.body.velocity.x, y: e.body.velocity.y };
+                e.setVelocity(0, 0);
+                this.time.delayedCall(3000, () => { if (e.active && !e.isDying) { e.stunned = false; } });
+            });
+            this.cameras.main.flash(200, 136, 170, 255); // #88aaff flash
+            if (this.audioSys) this.audioSys.playNovaBomb(); // Re-use nova bomb sound for impact
+        }
+        else if (item === 'gravity_well') {
+            const cx = this.cw / 2, cy = this.ch / 2;
+            this.time.addEvent({ delay: 100, repeat: 49, callback: () => {
+                this.enemies.getChildren().forEach(e => { 
+                    if (e.active && !e.isHitZone && !e.isDying && e.type !== 'boss') {
+                        this.physics.moveToObject(e, { x: cx, y: cy }, 200);
+                    }
+                });
+            }});
+        }
+        else if (item === 'kill_weakest') {
+            const alive = this.enemies.getChildren().filter(e => e.active && !e.isDying && !e.isHitZone && e.type !== 'boss').sort((a, b) => a.hp - b.hp);
+            alive.slice(0, 10).forEach(e => this.killEnemy(e));
+        }
+    }
+
     activateNovaBomb() {
         if (this.pd.nova <= 0 || this.isGameOver) return;
         this.pd.nova--;
@@ -2881,6 +3048,10 @@ export default class GameScene extends Phaser.Scene {
     startWave(n) {
         this.waveNum = n;
         this.betweenWaves = false;
+
+        if (this.pd.overchargeActive) {
+            this.pd.overchargeActive = false;
+        }
 
         // Wave skip (purchased from Nyx)
         if (this.pd.skipNextWave) {
@@ -3233,6 +3404,62 @@ export default class GameScene extends Phaser.Scene {
             }
         });
 
+        // ── Visuals für Auren & Schilde ──
+        if (this.pd.damageAura && this.damageAuraGraphics) {
+            this.damageAuraGraphics.clear();
+            const dmgAuraLevel = (this.pd.nyxLevels && this.pd.nyxLevels['damage_aura']) ? this.pd.nyxLevels['damage_aura'] : 1;
+            const auraRadius = 100 + (dmgAuraLevel * 20);
+            this.damageAuraGraphics.lineStyle(2, 0xff4400, 0.4);
+            this.damageAuraGraphics.fillStyle(0xff4400, 0.1);
+            this.damageAuraGraphics.strokeCircle(this.player.x, this.player.y, auraRadius);
+            this.damageAuraGraphics.fillCircle(this.player.x, this.player.y, auraRadius);
+            
+            if (!this.lastAuraDmgTime) this.lastAuraDmgTime = time;
+            if (time - this.lastAuraDmgTime > 1000) {
+                this.lastAuraDmgTime = time;
+                const auraDmg = 5 * dmgAuraLevel;
+                this.enemies.getChildren().forEach(e => {
+                    if (e.active && !e.isHitZone && !e.isDying && Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y) < auraRadius) {
+                        e.hp -= auraDmg;
+                        this.showDmgNum(e.x, e.y - 10, auraDmg, '#ff4400');
+                        if (e.hp <= 0) this.killEnemy(e);
+                    }
+                });
+            }
+        }
+        
+        if (this.pd.mirrorShield && this.mirrorShieldGraphics) {
+            this.mirrorShieldGraphics.clear();
+            this.mirrorShieldGraphics.lineStyle(3, 0xaaddff, 0.6);
+            this.mirrorShieldGraphics.strokeCircle(this.player.x, this.player.y, 45);
+        }
+
+        // ── Orbital Strike Drone Companion ──
+        if (this.pd.orbitalStrikeLevel > 0) {
+            if (!this.strikeDrone) {
+                this.strikeDrone = this.add.sprite(this.player.x, this.player.y, 'orbital_blade').setScale(1.2).setDepth(25).setTint(0xff00aa);
+                this.strikeDrone.lastFire = time;
+            }
+            
+            // Follow player slowly
+            const destX = this.player.x - 40;
+            const destY = this.player.y - 40;
+            this.strikeDrone.x += (destX - this.strikeDrone.x) * 0.05;
+            this.strikeDrone.y += (destY - this.strikeDrone.y) * 0.05;
+            this.strikeDrone.rotation += 0.05;
+            
+            const fireRate = Math.max(500, 2000 - (this.pd.orbitalStrikeLevel * 300));
+            if (time - this.strikeDrone.lastFire > fireRate) {
+                this.strikeDrone.lastFire = time;
+                let target = this.findNearestEnemy();
+                if (target) {
+                    const angle = Phaser.Math.Angle.Between(this.strikeDrone.x, this.strikeDrone.y, target.x, target.y);
+                    this.fireBullet(this.strikeDrone.x, this.strikeDrone.y, angle, true);
+                    this.cameras.main.shake(50, 0.005);
+                }
+            }
+        }
+
         // ── Clean out-of-bounds projectiles (use killAndHide to keep pool) ──
         const margin = 90;
         const { cw, ch } = this;
@@ -3242,6 +3469,24 @@ export default class GameScene extends Phaser.Scene {
                 this.bullets.killAndHide(b);
             } else if (b.lifespan > 0 && time - b.spawnTime > b.lifespan) {
                 this.bullets.killAndHide(b);
+            } else if (this.pd.homingRounds && b.body && b.body.velocity.length() > 0) {
+                let nearest = null;
+                let minDist = 250;
+                this.enemies.getChildren().forEach(e => {
+                    if (e.active && !e.isDying && (!b.hitEnemies || !b.hitEnemies.includes(e))) {
+                        let d = Phaser.Math.Distance.Between(b.x, b.y, e.x, e.y);
+                        if (d < minDist) { minDist = d; nearest = e; }
+                    }
+                });
+                if (nearest) {
+                    const targetAngle = Phaser.Math.Angle.Between(b.x, b.y, nearest.x, nearest.y);
+                    let currentAngle = b.body.velocity.angle();
+                    let diff = Phaser.Math.Angle.Wrap(targetAngle - currentAngle);
+                    currentAngle += diff * 0.08;
+                    const speed = b.body.velocity.length();
+                    b.body.setVelocity(Math.cos(currentAngle) * speed, Math.sin(currentAngle) * speed);
+                    b.setRotation(currentAngle + Math.PI/2);
+                }
             }
         });
         this.eBullets.getChildren().forEach(b => {
@@ -3293,10 +3538,10 @@ export default class GameScene extends Phaser.Scene {
         const { width: cw, height: ch } = this.scale;
         this.devMenuContainer = this.add.container(cw / 2, ch / 2).setDepth(9999);
 
-        const bg = this.add.rectangle(0, 0, 400, 500, 0x000000, 0.9).setStrokeStyle(2, 0xff00ff);
+        const bg = this.add.rectangle(0, 0, 400, 600, 0x000000, 0.9).setStrokeStyle(2, 0xff00ff);
         this.devMenuContainer.add(bg);
 
-        this.devMenuContainer.add(this.add.text(0, -220, '[ DEVELOPER MENU ]', {
+        this.devMenuContainer.add(this.add.text(0, -260, '[ DEVELOPER MENU ]', {
             fontFamily: 'Orbitron', fontSize: '20px', color: '#ff00ff', fontStyle: 'bold'
         }).setOrigin(0.5));
 
@@ -3355,13 +3600,18 @@ export default class GameScene extends Phaser.Scene {
             this.scene.launch('ShopScene', { currentPoints: this.pd.skillPoints });
         });
 
-        createBtn(0, 150, 'TOGGLE GODMODE', () => {
+        createBtn(0, 150, 'OPEN NYX SHOP', () => {
+            this.scene.pause();
+            this.scene.launch('InGameShopScene');
+        });
+
+        createBtn(0, 210, 'TOGGLE GODMODE', () => {
             this.godMode = !this.godMode;
             this.player.setAlpha(this.godMode ? 0.5 : 1);
             this.showBanner(this.godMode ? 'GODMODE ON' : 'GODMODE OFF', '#ff00ff');
         });
 
-        createBtn(0, 210, 'CLOSE', () => {
+        createBtn(0, 270, 'CLOSE', () => {
             // handled in toggleDevMenu
         });
     }

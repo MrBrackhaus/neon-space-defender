@@ -67,7 +67,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('ship_arcade_kapsel', 'ship_arcade_kapsel.png?v=1');
         this.load.image('ship_phantom', 'ship_phantom.png?v=8');
         this.load.spritesheet('ship_phantom_sheet', 'assets/ship_phantom_sheet.png?v=1', { frameWidth: 1024, frameHeight: 1024 });
-        this.load.image('ship_paladin', 'ship_paladin.png?v=6');
+        this.load.spritesheet('ship_paladin', 'ship_paladin_sheet.png?v=1', { frameWidth: 512, frameHeight: 512 });
         this.load.image('ship_bomber', 'ship_bomber.png?v=6');
 
         // Sprite sheets for enemies (4 frames each, transparent background)
@@ -347,6 +347,9 @@ export default class BootScene extends Phaser.Scene {
         this.anims.create({ key: 'anim_portrait_talk', frames: this.anims.generateFrameNumbers('boss_cheese_portrait_anim', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'anim_irs_portrait_talk', frames: this.anims.generateFrameNumbers('boss_irs_portrait_anim', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'anim_vacuum_portrait_talk', frames: this.anims.generateFrameNumbers('boss_vacuum_portrait_anim', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
+
+        // Oktohorncat Animation
+        this.anims.create({ key: 'anim_paladin', frames: this.anims.generateFrameNumbers('ship_paladin', { start: 0, end: 7 }), frameRate: 15, repeat: -1 });
 
         // ─────────────────── SCENE TRANSITION ───────────────────
 

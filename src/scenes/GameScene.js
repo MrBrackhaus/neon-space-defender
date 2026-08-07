@@ -337,7 +337,7 @@ export default class GameScene extends Phaser.Scene {
         if (this.shipClass === 'interceptor') { shipScale = 0.11; shipTex = 'ship_neon_flamingo'; shipAnim = null; }
         if (this.shipClass === 'dreadnought') { shipScale = 0.20; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
         if (this.shipClass === 'phantom') { shipScale = 0.155; shipTex = 'ship_phantom'; shipAnim = 'anim_ship_phantom'; }
-        if (this.shipClass === 'paladin') { shipScale = 0.45; shipTex = 'ship_paladin'; shipAnim = null; }
+        if (this.shipClass === 'paladin') { shipScale = 0.45; shipTex = 'ship_paladin'; shipAnim = 'anim_paladin'; this.playerBaseAngle = 90; }
         if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; shipAnim = null; }
 
         this.playerBaseAngle = 0; // New generated ships point UP
@@ -3570,7 +3570,7 @@ export default class GameScene extends Phaser.Scene {
             const color = (r << 16) | (g << 8) | b2;
 
             // 1. Color the entire ship hull (neon elements will pop)
-            this.player.setTint(color);
+                // this.player.setTint(color); // body color handled by spritesheet animation
 
             // 2. Color the horn flowing particles
             if (this.paladinHornEmitter) {

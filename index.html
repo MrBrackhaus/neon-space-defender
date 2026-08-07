@@ -499,37 +499,45 @@
       .menu-item-neon {
         display: block;
         width: 300px;
-        height: 60px;
-        margin: 15px auto;
-        background: rgba(255, 0, 255, 0.1);
-        border: 2px solid #ff00ff;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: block;
+        width: 250px;
+        height: 50px;
+        margin: 0;
+        background: rgba(0, 255, 255, 0.15);
+        border: 2px solid #00ffff;
         border-radius: 8px;
-        color: #ff00ff;
+        color: #ffffff;
         font-family: 'Orbitron', sans-serif;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: bold;
         text-transform: uppercase;
         cursor: pointer;
-        text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
-        box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #ff00ff;
+        text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
+        box-shadow: 0 0 10px #00ffff, inset 0 0 10px #00ffff;
         transition: all 0.2s ease-in-out;
         opacity: 0;
         animation: fadeSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         animation-delay: 0.50s;
         pointer-events: auto;
+        z-index: 1000;
       }
       .menu-item-neon:hover {
-        background: #ff00ff;
-        color: #fff;
-        text-shadow: 0 0 5px #fff, 0 0 10px #fff;
-        box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff, inset 0 0 20px #ff00ff;
+        background: #00ffff;
+        color: #000;
+        text-shadow: none;
+        box-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, inset 0 0 20px #00ffff;
       }
       @media (max-width: 768px) {
         .menu-item-neon {
-          width: 42vw;
+          width: auto;
+          padding: 0 15px;
           height: 40px;
           font-size: 0.8rem;
-          margin: 5px auto;
+          top: 10px;
+          right: 10px;
         }
       }
 
@@ -605,9 +613,11 @@
           <button id="btn-story" class="menu-item-img">STORY-INTRO</button>
           <button id="btn-settings" class="menu-item-img">SETTINGS</button>
           <button id="btn-credits" class="menu-item-img">CREDITS</button>
-          <button id="btn-donate" class="menu-item-neon" onclick="window.open('https://paypal.me/jergeric', '_blank')">SUPPORT / DONATE</button>
         </nav>
       </div>
+      
+      <!-- Moved outside of nav for absolute positioning -->
+      <button id="btn-donate" class="menu-item-neon" onclick="window.open('https://paypal.me/jergeric', '_blank')">SUPPORT / DONATE</button>
 
       <div class="menu-controls" style="margin-top: 2rem;">
         WASD / PFEILTASTEN · Navigieren<br>

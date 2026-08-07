@@ -149,7 +149,7 @@ export default class BossSystem {
         // Add overlap directly instead of polluting eBullets pool
         this.scene.physics.add.overlap(this.scene.player, coin, (player, c) => {
             if (!c.active) return;
-            this.scene.playerHit(1);
+            this.scene.damagePlayer(15);
             c.destroy();
         });
         
@@ -192,7 +192,7 @@ export default class BossSystem {
             // Add overlap directly instead of polluting eBullets pool
             this.scene.physics.add.overlap(this.scene.player, p, (player, proj) => {
                 if (!proj.active) return;
-                this.scene.playerHit(1);
+                this.scene.damagePlayer(15);
                 proj.destroy();
             });
             this.scene.physics.velocityFromRotation(angle, Phaser.Math.Between(150, 300), p.body.velocity);

@@ -444,17 +444,51 @@ export default class WeaponSystem {
   // ⚔️ SONIC WAVE ⚔️
   fireSonicWave(player, enemiesGroup, damage, level = 1) {
     if (!player || !player.active) return;
+    
     const waveWidth = 300 + level * 50;
     const pushForce = 200 + level * 100;
-    const gfx = this.scene.add.graphics();
-    gfx.fillStyle(0x00ccff, 0.4);
-    gfx.fillRect(player.x - waveWidth / 2, player.y - 60, waveWidth, 20);
-    gfx.setDepth(10);
-
+    const px = player.x;
+    const py = player.y - 40;
+    
+    // Draw an actual curved sonic wave that travels upwards
+    const arc = this.scene.add.graphics().setBlendMode('ADD').setDepth(11);
+    const glow = this.scene.add.graphics().setBlendMode('ADD').setDepth(10);
+    
+    // Render the wave
+    const renderWave = (yOffset, scale, alpha) => {
+        arc.clear();
+        glow.clear();
+        
+        arc.lineStyle(10, 0xffffff, alpha);
+        arc.beginPath();
+        arc.arc(px, py + yOffset + 100, waveWidth * scale, Math.PI * 1.1, Math.PI * 1.9);
+        arc.strokePath();
+        
+        glow.lineStyle(30, 0x00ccff, alpha * 0.5);
+        glow.beginPath();
+        glow.arc(px, py + yOffset + 100, waveWidth * scale, Math.PI * 1.1, Math.PI * 1.9);
+        glow.strokePath();
+    };
+    
+    renderWave(0, 0.5, 1);
+    
+    // Animate the sonic wave flying forward (upwards)
+    const waveObj = { yOffset: 0, scale: 0.5, alpha: 1 };
+    
     this.scene.tweens.add({
-      targets: gfx, y: -400, alpha: 0, scaleX: 1.5, scaleY: 3,
-      duration: 600, ease: 'Cubic.easeOut',
-      onComplete: () => gfx.destroy()
+        targets: waveObj,
+        yOffset: -600,
+        scale: 1.5,
+        alpha: 0,
+        duration: 500,
+        ease: 'Cubic.easeOut',
+        onUpdate: () => {
+            renderWave(waveObj.yOffset, waveObj.scale, waveObj.alpha);
+        },
+        onComplete: () => {
+            arc.destroy();
+            glow.destroy();
+        }
     });
 
     const enemies = enemiesGroup.getChildren();
@@ -466,12 +500,15 @@ export default class WeaponSystem {
           enemy.body.velocity.y = -pushForce;
           enemy.setTint(0x00ccff);
           this.scene.time.delayedCall(300, () => { if (enemy.active) enemy.clearTint(); });
+          
+          // Small impact dust
+          const dust = this.scene.add.circle(enemy.x, enemy.y, 20, 0x00ccff, 0.5).setBlendMode('ADD').setDepth(12);
+          this.scene.tweens.add({ targets: dust, scale: 2, alpha: 0, duration: 300, onComplete: () => dust.destroy() });
         }
       }
     });
   }
 
-  // 💣 PROXIMITY MINES 💣
   dropMine(x, y, damage, enemiesGroup, level = 1) {
     const mineRadius = 80 + level * 15;
     const mineDmg = damage * (2 + level * 0.5);
@@ -830,7 +867,8 @@ export default class WeaponSystem {
   spawnSawblades(player, enemiesGroup, damage, level = 1) {
     if (!player || !player.active) return;
     const numBlades = 1 + level;
-    const orbitRadius = 80;
+    // Massive orbit radius so they don't overlap with orbitals
+    const orbitRadius = 220;
     const bladeGraphics = [];
 
     for (let i = 0; i < numBlades; i++) {
@@ -879,8 +917,8 @@ export default class WeaponSystem {
         }
 
         const timeInSec = elapsed / 1000;
-        const orbitSpeed = 4; // Fast orbit
-        const spinSpeed = 15; // Fast individual spin
+        const orbitSpeed = 2; // Slower orbit due to wide radius
+        const spinSpeed = 25; // Extremely fast individual spin
 
         bladeGraphics.forEach(bg => {
           const currentAngle = timeInSec * orbitSpeed + bg.offset;
@@ -891,9 +929,9 @@ export default class WeaponSystem {
           bg.rotation += spinSpeed * 0.016;
           bg.gfx.setRotation(bg.rotation);
           
-          // Motion blur / trail effect (random sparks)
-          if (Math.random() < 0.2) {
-              const trail = this.scene.add.circle(bx, by, 10, 0xff0088, 0.6).setBlendMode('ADD').setDepth(10);
+          // Motion blur / trail effect
+          if (Math.random() < 0.3) {
+              const trail = this.scene.add.circle(bx, by, 12, 0xff0088, 0.6).setBlendMode('ADD').setDepth(10);
               this.scene.tweens.add({ targets: trail, scale: 0, alpha: 0, duration: 300, onComplete: () => trail.destroy() });
           }
 
@@ -902,16 +940,16 @@ export default class WeaponSystem {
           enemies.forEach(enemy => {
             if (enemy && enemy.active) {
               const dist = Phaser.Math.Distance.Between(bx, by, enemy.x, enemy.y);
-              if (dist <= 35) { // Hit radius
+              if (dist <= 45) { // Slightly larger hit radius
                 const lastHit = hitCooldowns.get(enemy) || 0;
-                if (elapsed - lastHit > 200) { // Hit every 200ms
-                  const tickDmg = damage * 1.5;
+                if (elapsed - lastHit > 200) {
+                  const tickDmg = damage * 2;
                   if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
                   else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
                   hitCooldowns.set(enemy, elapsed);
                   
                   // Violent impact spark
-                  const impact = this.scene.add.circle(bx, by, 25, 0xffffff, 1).setBlendMode('ADD').setDepth(15);
+                  const impact = this.scene.add.circle(bx, by, 35, 0xffffff, 1).setBlendMode('ADD').setDepth(15);
                   this.scene.tweens.add({ targets: impact, scale: 0, duration: 150, onComplete: () => impact.destroy() });
                 }
               }
@@ -925,21 +963,28 @@ export default class WeaponSystem {
   fireFocusLaser(player, enemiesGroup, damage, level = 1) {
     if (!player || !player.active) return;
     
-    const beamWidth = 8 + level * 3;
+    const beamWidth = 12 + level * 3;
     const beamDuration = 1500 + level * 500;
     let elapsed = 0;
 
     const core = this.scene.add.graphics().setBlendMode('ADD').setDepth(12);
     const glow = this.scene.add.graphics().setBlendMode('ADD').setDepth(11);
     
-    // Spark particles at the base
+    // Super intense laser start flare
+    const flare = this.scene.add.circle(player.x, player.y - 40, 50, 0xffaa00, 1).setBlendMode('ADD').setDepth(13);
+    this.scene.tweens.add({
+        targets: flare, scaleX: 0.5, scaleY: 1.5, duration: 100, yoyo: true, repeat: -1
+    });
+
+    // Intense particles at the barrel
     const sparks = this.scene.add.particles(player.x, player.y - 30, 'p_glow', {
-        speed: { min: 50, max: 200 },
+        speed: { min: 100, max: 400 },
         angle: { min: 250, max: 290 },
-        scale: { start: 0.5, end: 0 },
-        tint: [0xffffff, 0xffaa00, 0xff0000],
+        scale: { start: 0.8, end: 0 },
+        tint: [0xffffff, 0xffcc00, 0xff2200],
         lifespan: 300,
-        blendMode: 'ADD'
+        blendMode: 'ADD',
+        frequency: 20
     });
     sparks.setDepth(13);
 
@@ -950,9 +995,11 @@ export default class WeaponSystem {
         elapsed += 30;
         if (!player.active || elapsed >= beamDuration) {
           timer.remove();
+          flare.destroy();
           this.scene.tweens.add({
               targets: [core, glow],
               alpha: 0,
+              scaleX: 0.1,
               duration: 250,
               onComplete: () => {
                   core.destroy();
@@ -969,30 +1016,49 @@ export default class WeaponSystem {
         const startY = py - lh;
         
         sparks.setPosition(px, py);
+        flare.setPosition(px, py);
 
-        // Core laser
+        // Core solid laser
         core.clear();
         core.fillStyle(0xffffff, 1);
-        core.fillRoundedRect(px - beamWidth/3, startY, beamWidth*0.66, lh, beamWidth/3);
+        core.fillRect(px - beamWidth/3, startY, beamWidth*0.66, lh);
         
-        // Flickering outer glow
+        // Multi-layered flickering glow
         glow.clear();
-        const flickerAlpha = 0.5 + Math.random() * 0.5;
-        glow.fillStyle(0xff3300, flickerAlpha);
-        glow.fillRoundedRect(px - beamWidth, startY, beamWidth*2, lh, Math.min(beamWidth, lh/2));
+        glow.fillStyle(0xffffff, 0.9);
+        glow.fillRect(px - beamWidth/1.5, startY, beamWidth*1.33, lh);
         
+        const flickerAlpha = 0.6 + Math.random() * 0.4;
+        glow.fillStyle(0xff4400, flickerAlpha);
+        glow.fillRect(px - beamWidth, startY, beamWidth*2, lh);
+        
+        const wideFlicker = 0.3 + Math.random() * 0.3;
+        glow.fillStyle(0xff0000, wideFlicker);
+        glow.fillRect(px - beamWidth*2, startY, beamWidth*4, lh);
+        
+        // Helix wrapping around the laser
+        glow.lineStyle(3, 0xffaa00, 1);
+        glow.beginPath();
+        for (let y = py; y >= startY; y -= 15) {
+            const phase = (py - y) * 0.05 - (elapsed * 0.03);
+            const off = Math.sin(phase) * beamWidth * 1.5;
+            if (y === py) glow.moveTo(px + off, y);
+            else glow.lineTo(px + off, y);
+        }
+        glow.strokePath();
+
         // Damage tick
         const enemies = enemiesGroup.getChildren();
         enemies.forEach(enemy => {
-          if (enemy && enemy.active && Math.abs(enemy.x - px) <= beamWidth && enemy.y < py) {
-            const tickDmg = damage * (0.8 + level * 0.4);
+          if (enemy && enemy.active && Math.abs(enemy.x - px) <= beamWidth * 2 && enemy.y < py) {
+            const tickDmg = damage * (1.2 + level * 0.5);
             if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
             else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
             
-            // Impact sparks on the enemy
-            if (Math.random() < 0.3) {
-                const impact = this.scene.add.circle(enemy.x, enemy.y, 15, 0xffffff, 0.8).setBlendMode('ADD').setDepth(15);
-                this.scene.tweens.add({ targets: impact, scale: 2, alpha: 0, duration: 200, onComplete: () => impact.destroy() });
+            // Violent impact explosions on the enemy
+            if (Math.random() < 0.6) {
+                const impact = this.scene.add.circle(enemy.x, enemy.y + (Math.random() * 40 - 20), 20 + Math.random() * 20, 0xffaa00, 1).setBlendMode('ADD').setDepth(15);
+                this.scene.tweens.add({ targets: impact, scale: 2, alpha: 0, duration: 150, onComplete: () => impact.destroy() });
             }
           }
         });

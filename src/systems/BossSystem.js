@@ -121,9 +121,9 @@ export default class BossSystem {
         if (Math.random() > 0.5) {
             // Milk Laser (thick white projectile)
             const angle = Phaser.Math.Angle.Between(bossSprite.x, bossSprite.y, this.scene.player.x, this.scene.player.y);
-            const laser = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'enemy_projectile').setDepth(6);
+            const laser = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'proj_laser').setDepth(6);
             laser.setTint(0xffffff); // White milk laser
-            laser.setScale(0.8, 2.5); // Thick
+            laser.setScale(1.5, 4.0); // Thick & long
             laser.setRotation(angle);
             this.scene.eBullets.add(laser);
             this.scene.physics.velocityFromRotation(angle, 400, laser.body.velocity);

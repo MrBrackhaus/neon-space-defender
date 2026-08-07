@@ -142,9 +142,8 @@ export default class BossSystem {
         if (!this.scene.player || !this.scene.player.active) return;
         
         // Homing coin
-        const coin = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'scrap_gear');
-        coin.setTint(0xffd700); // Gold
-        coin.setScale(1.5);
+        const coin = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'proj_coin');
+        coin.setScale(1.0);
         coin.setDepth(10);
         
         // Add overlap directly instead of polluting eBullets pool

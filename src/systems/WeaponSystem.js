@@ -999,7 +999,6 @@ export default class WeaponSystem {
           this.scene.tweens.add({
               targets: [core, glow],
               alpha: 0,
-              scaleX: 0.1,
               duration: 250,
               onComplete: () => {
                   core.destroy();

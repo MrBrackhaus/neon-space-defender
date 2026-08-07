@@ -299,8 +299,7 @@ export default class GameScene extends Phaser.Scene {
         });
         this.eBullets = this.physics.add.group({
             classType: Phaser.Physics.Arcade.Image,
-            maxSize: 200, runChildUpdate: false,
-            createCallback: (b) => { b.setTexture('enemy_projectile'); }
+            maxSize: 200, runChildUpdate: false
         });
         this.crystals = this.physics.add.group();
         this.scraps = this.physics.add.group();
@@ -1637,8 +1636,8 @@ export default class GameScene extends Phaser.Scene {
             boss_cheese: { sheet: 'boss_cheese', anim: 'anim_boss_cheese_idle', scale: 1.5 },
             boss_irs: { sheet: 'boss_irs', anim: null, scale: 0.8 },
             boss_irs_p2: { sheet: 'boss_irs_p2', anim: null, scale: 0.9 },
-            boss_vacuum: { sheet: 'boss_vacuum', anim: null, scale: 0.8 },
-            boss_vacuum_p2: { sheet: 'boss_vacuum_p2', anim: null, scale: 0.9 }
+            boss_vacuum: { sheet: 'boss_vacuum', anim: null, scale: 0.3 },
+            boss_vacuum_p2: { sheet: 'boss_vacuum_p2', anim: null, scale: 0.35 }
         };
         const sm  = SPRITE_MAP[type] || SPRITE_MAP.basic;
         const def = ENEMY_DEFS[type] || ENEMY_DEFS.basic;
@@ -2051,8 +2050,9 @@ export default class GameScene extends Phaser.Scene {
         else if (eType === 'laser') textureKey = 'proj_laser';
         else if (eType === 'hivemind_clone') textureKey = 'proj_clone';
 
-        const b = this.eBullets.get(x, y, textureKey);
+        const b = this.eBullets.get(x, y);
         if (!b) return;
+        b.setTexture(textureKey);
         b.setActive(true).setVisible(true).setDepth(6);
         
         if (textureKey === 'proj_laser') {
@@ -3456,7 +3456,7 @@ export default class GameScene extends Phaser.Scene {
         // ── Orbital Strike Drone Companion ──
         if (this.pd.orbitalStrikeLevel > 0) {
             if (!this.strikeDrone) {
-                this.strikeDrone = this.add.sprite(this.player.x, this.player.y, 'orbital_blade').setScale(1.2).setDepth(25).setTint(0xff00aa);
+                this.strikeDrone = this.add.sprite(this.player.x, this.player.y, 'orbital_blade').setScale(0.2).setDepth(25).setTint(0xff00aa);
                 this.strikeDrone.lastFire = time;
             }
             

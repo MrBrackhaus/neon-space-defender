@@ -159,6 +159,8 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('mascot_sheet', 'assets/mascot_sheet.png?v=6', { frameWidth: 117, frameHeight: 103 });
     }
 
+
+
     /**
      * @method create
      * @description Executed after all assets are loaded. Generates procedural textures,
@@ -168,11 +170,41 @@ export default class BootScene extends Phaser.Scene {
     create() {
         // ─────────────────── PROCEDURAL GENERATION ───────────────────
         
+        const g = this.make.graphics({ x: 0, y: 0, add: false });
+
         // Procedural Particles (Global glow texture)
-        const g = this.make.graphics({ add: false });
         g.fillStyle(0xffffff); 
-        g.fillCircle(6,6,6);
+        g.fillCircle(6, 6, 6);
         g.generateTexture('p_glow', 12, 12);
+        g.clear();
+
+        // 1. proj_default
+        g.fillStyle(0xff0000);
+        g.fillCircle(32, 32, 32);
+        g.fillStyle(0xffffff);
+        g.fillCircle(32, 32, 16);
+        g.generateTexture('proj_default', 64, 64);
+        g.clear();
+
+        // 2. proj_shooter
+        g.fillStyle(0xff8800);
+        g.fillCircle(32, 32, 32);
+        g.fillStyle(0xffff00);
+        g.fillCircle(32, 32, 20);
+        g.generateTexture('proj_shooter', 64, 64);
+        g.clear();
+
+        // 3. proj_laser
+        g.fillStyle(0xff0000);
+        g.fillRect(0, 0, 16, 64);
+        g.generateTexture('proj_laser', 16, 64);
+        g.clear();
+
+        // 4. proj_clone
+        g.fillStyle(0x00ff00);
+        g.fillTriangle(32, 0, 64, 64, 0, 64);
+        g.generateTexture('proj_clone', 64, 64);
+
         g.destroy();
 
         // ─────────────────── ANIMATION CREATION ───────────────────

@@ -145,7 +145,13 @@ export default class BossSystem {
         const coin = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'scrap_gear');
         coin.setTint(0xffd700); // Gold
         coin.setScale(1.5);
-        this.scene.eBullets.add(coin);
+        
+        // Add overlap directly instead of polluting eBullets pool
+        this.scene.physics.add.overlap(this.scene.player, coin, (player, c) => {
+            if (!c.active) return;
+            this.scene.playerHit(1);
+            c.destroy();
+        });
         
         // Custom update for homing
         coin.homingUpdate = () => {
@@ -182,7 +188,13 @@ export default class BossSystem {
             const p = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y + 50, 'proj_shooter').setDepth(6);
             p.setTint(0x555555); // Dust color
             p.setScale(0.8);
-            this.scene.eBullets.add(p);
+            
+            // Add overlap directly instead of polluting eBullets pool
+            this.scene.physics.add.overlap(this.scene.player, p, (player, proj) => {
+                if (!proj.active) return;
+                this.scene.playerHit(1);
+                proj.destroy();
+            });
             this.scene.physics.velocityFromRotation(angle, Phaser.Math.Between(150, 300), p.body.velocity);
             
             this.scene.time.delayedCall(4000, () => { if(p.active) p.destroy(); });

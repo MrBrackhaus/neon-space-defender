@@ -517,6 +517,49 @@ export default class GameScene extends Phaser.Scene {
             this.phantomEngines.il = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: -25, y: 45 }, ...ec }).setDepth(9);
             this.phantomEngines.ir = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 25, y: 45 }, ...ec }).setDepth(9);
             this.phantomEngines.or = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 65, y: 35 }, ...ec }).setDepth(9);
+        } else if (this.shipClass === 'paladin') {
+            // ── OKTOHORNCAT: 8 Tentacle Glow Emitters (star pattern) ──
+            this.paladinTentacles = [];
+            const tentacleOffsets = [
+                { x: 0, y: -40 },   // top (horn direction)
+                { x: 30, y: -30 },  // top-right
+                { x: 40, y: 0 },    // right
+                { x: 30, y: 30 },   // bottom-right
+                { x: 0, y: 40 },    // bottom
+                { x: -30, y: 30 },  // bottom-left
+                { x: -40, y: 0 },   // left
+                { x: -30, y: -30 }, // top-left
+            ];
+            const tentColors = [0xff0055, 0xff8800, 0xffff00, 0x00ff66, 0x00ccff, 0x8800ff, 0xff00cc, 0x00ffaa];
+            tentacleOffsets.forEach((off, i) => {
+                const tc = {
+                    speedX: { min: off.x * 2, max: off.x * 4 },
+                    speedY: { min: off.y * 2, max: off.y * 4 },
+                    scale: { start: 0.4, end: 0.05 },
+                    alpha: { start: 0.8, end: 0 },
+                    tint: tentColors[i],
+                    blendMode: 'ADD',
+                    lifespan: { min: 200, max: 400 },
+                    frequency: 60,
+                };
+                const p = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: off, ...tc }).setDepth(9);
+                this.paladinTentacles.push(p);
+            });
+
+            // ── OKTOHORNCAT: Rainbow Horn Glow (overlay circle at horn position) ──
+            this.paladinHornGlow = this.add.circle(0, 0, 8, 0xff0000, 0.6).setDepth(11).setBlendMode('ADD');
+            this.paladinHornHue = 0;
+
+            // ── OKTOHORNCAT: Breathing Scale Animation ──
+            this.tweens.add({
+                targets: this.player,
+                scaleX: shipScale * 1.04,
+                scaleY: shipScale * 0.96,
+                duration: 800,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
 } else {
             this.engineLeft = this.add.particles(0, 0, 'p_glow', {
                 follow: this.player,
@@ -3509,6 +3552,39 @@ export default class GameScene extends Phaser.Scene {
         this.juiceSys.update(time, delta);
         this.abilitySys.update(time, delta);
         this.hazardSys.update(time, delta);
+
+        // ── OKTOHORNCAT: Rainbow Horn Glow + Tentacle Color Cycling ──
+        if (this.shipClass === 'paladin' && this.player && this.player.active) {
+            // Rainbow horn: smoothly cycle through HSL colors
+            if (this.paladinHornGlow) {
+                this.paladinHornHue = (this.paladinHornHue + delta * 0.2) % 360;
+                const h = this.paladinHornHue / 360;
+                // HSL to RGB conversion (s=1, l=0.5 = full saturation)
+                const hue2rgb = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
+                const q = 1, p = 0;
+                const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+                const g = Math.round(hue2rgb(p, q, h) * 255);
+                const b2 = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+                const color = (r << 16) | (g << 8) | b2;
+                this.paladinHornGlow.setFillStyle(color, 0.7);
+                this.paladinHornGlow.setPosition(this.player.x, this.player.y - 28);
+            }
+            // Tentacle color cycling: shift each tentacle's tint over time
+            if (this.paladinTentacles) {
+                const baseHue = (time * 0.1) % 360;
+                this.paladinTentacles.forEach((p, i) => {
+                    const tentHue = (baseHue + i * 45) % 360;
+                    const th = tentHue / 360;
+                    const hue2rgb = (pp, qq, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return pp + (qq - pp) * 6 * t; if (t < 1/2) return qq; if (t < 2/3) return pp + (qq - pp) * (2/3 - t) * 6; return pp; };
+                    const qq = 1, pp = 0;
+                    const rr = Math.round(hue2rgb(pp, qq, th + 1/3) * 255);
+                    const gg = Math.round(hue2rgb(pp, qq, th) * 255);
+                    const bb = Math.round(hue2rgb(pp, qq, th - 1/3) * 255);
+                    const tc = (rr << 16) | (gg << 8) | bb;
+                    p.setParticleTint(tc);
+                });
+            }
+        }
         
         if (Math.random() < 0.0005) {
             this.eventSys.triggerCompanionComment('idle');

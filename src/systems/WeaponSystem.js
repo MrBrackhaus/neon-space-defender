@@ -31,143 +31,190 @@ export default class WeaponSystem {
   fireChainLightning(sourceSprite, enemiesGroup, damage, level = 1) {
     if (!sourceSprite || !sourceSprite.active) return;
     
-    // Scale max jumps and damage based on level
-    const maxJumps = Math.min(10, 3 + level);
-    const appliedDamage = damage * (1 + level * 0.2);
     let currentSource = sourceSprite;
+    const maxJumps = 2 + level;
+    let jumps = 0;
     const hitEnemies = new Set();
-    
-    // Graphics object to render the lightning path
-    const graphics = this.scene.add.graphics();
-    graphics.lineStyle(3, 0x00ffff, 1);
-    
-    for (let i = 0; i < maxJumps; i++) {
-      // Filter out inactive enemies and ones already hit by this lightning chain
-      const activeEnemies = enemiesGroup.getChildren().filter(e => e.active && !hitEnemies.has(e));
-      if (activeEnemies.length === 0) break;
-      
-      const closest = this.scene.physics.closest(currentSource, activeEnemies);
-      if (!closest) break;
-      
-      graphics.beginPath();
-      graphics.moveTo(currentSource.x, currentSource.y);
-      
-      // Create a jagged lightning effect by adding a midpoint with a random offset
-      let midX = (currentSource.x + closest.x) / 2;
-      let midY = (currentSource.y + closest.y) / 2;
-      const offset = 30; 
-      midX += (Math.random() - 0.5) * offset;
-      midY += (Math.random() - 0.5) * offset;
-      
-      graphics.lineTo(midX, midY);
-      graphics.lineTo(closest.x, closest.y);
-      graphics.strokePath();
-      
-      // Apply damage (try both method or direct property to support different enemy types)
-      if (typeof closest.takeDamage === 'function') {
-        closest.takeDamage(appliedDamage);
-      } else if (closest.hp !== undefined) {
-        closest.hp -= appliedDamage;
+    let delay = 0;
+
+    const findNextTarget = (source) => {
+      let nearest = null;
+      let minD = 250; // Jump radius
+      const enemies = enemiesGroup.getChildren();
+      for (const e of enemies) {
+        if (e.active && !hitEnemies.has(e) && e.y < this.scene.scale.height) {
+          const d = Phaser.Math.Distance.Between(source.x, source.y, e.x, e.y);
+          if (d < minD) {
+            minD = d;
+            nearest = e;
+          }
+        }
       }
-      
-      hitEnemies.add(closest);
-      currentSource = closest; // Next jump originates from the hit enemy
-    }
-    
-    // Fade out and destroy the lightning line
-    this.scene.tweens.add({
-      targets: graphics,
-      alpha: 0,
-      duration: 300,
-      onComplete: () => {
-        graphics.destroy();
-      }
-    });
+      return nearest;
+    };
+
+    const doJump = (source) => {
+      if (jumps >= maxJumps) return;
+      const target = findNextTarget(source);
+      if (!target) return;
+
+      hitEnemies.add(target);
+
+      this.scene.time.delayedCall(delay, () => {
+        if (!source.active && source !== sourceSprite) return;
+        if (!target.active) return;
+
+        // Draw premium jagged lightning arc
+        const arc = this.scene.add.graphics().setDepth(13);
+        arc.setBlendMode('ADD');
+        
+        const drawLightning = () => {
+          arc.clear();
+          arc.lineStyle(4, 0xffffff, 1);
+          arc.beginPath();
+          arc.moveTo(source.x, source.y);
+          
+          let cx = source.x;
+          let cy = source.y;
+          const segments = 5;
+          const dx = (target.x - source.x) / segments;
+          const dy = (target.y - source.y) / segments;
+          
+          for (let i = 1; i < segments; i++) {
+              cx += dx + (Math.random() * 40 - 20);
+              cy += dy + (Math.random() * 40 - 20);
+              arc.lineTo(cx, cy);
+          }
+          arc.lineTo(target.x, target.y);
+          arc.strokePath();
+          
+          // Outer blue glow
+          arc.lineStyle(10, 0x00aaff, 0.6);
+          arc.strokePath();
+        };
+        
+        drawLightning();
+        
+        // Flicker effect
+        this.scene.time.delayedCall(30, drawLightning);
+        this.scene.time.delayedCall(60, drawLightning);
+
+        // Flash screen slightly for each jump
+        this.scene.cameras.main.shake(100, 0.005);
+        
+        // Retinal burn fade-out
+        this.scene.tweens.add({
+            targets: arc,
+            alpha: 0,
+            duration: 150,
+            delay: 100,
+            onComplete: () => arc.destroy()
+        });
+
+        // Impact spark on the target
+        const spark = this.scene.add.circle(target.x, target.y, 25, 0x00ffff, 0.8).setBlendMode('ADD').setDepth(14);
+        this.scene.tweens.add({ targets: spark, scale: 0, alpha: 0, duration: 200, onComplete: () => spark.destroy() });
+
+        if (typeof target.takeDamage === 'function') target.takeDamage(damage * 1.2);
+        else if (target.hp !== undefined) target.hp -= damage * 1.2;
+
+        jumps++;
+        doJump(target); // Next jump immediately queues with increased delay
+      });
+      delay += 80; // Delay for the cascading effect
+    };
+
+    doJump(currentSource);
   }
 
-  /**
-   * @description Spawns a black hole that pulls in enemies and deals damage over time.
-   * @param {number} x - The x-coordinate for the black hole.
-   * @param {number} y - The y-coordinate for the black hole.
-   * @param {number} duration - Base duration in ms.
-   * @param {number} pullRadius - Base pull radius.
-   * @param {number} damage - Tick damage applied to enemies inside.
-   * @param {Phaser.Physics.Arcade.Group} enemiesGroup - The group containing active enemies.
-   * @param {number} [level=1] - Determines the scaling of duration, radius, and damage.
-   * @returns {void}
-   */
   fireBlackHole(x, y, duration, pullRadius, damage, enemiesGroup, level = 1) {
-    const actualDuration = duration + (level * 1000);
-    const actualPullRadius = pullRadius + (level * 30);
-    const tickDamage = damage * (1 + level * 0.2);
-
-    const graphics = this.scene.add.graphics();
-    // Dark purple swirling circle representation
-    graphics.fillStyle(0x4a0072, 0.9);
-    graphics.fillCircle(x, y, 40);
+    const bhRadius = 20 + level * 5;
     
-    // Simple visual pulsing effect
-    this.scene.tweens.add({
-      targets: graphics,
-      scaleX: 1.3,
-      scaleY: 1.3,
-      alpha: 0.6,
-      yoyo: true,
-      repeat: -1,
-      duration: 600
-    });
+    // Core pitch-black circle
+    const core = this.scene.add.circle(x, y, bhRadius, 0x000000).setDepth(11);
     
-    // Target point for enemies to move towards
-    const blackHolePoint = { x: x, y: y };
+    // Swirling accretion disk
+    const disk = this.scene.add.graphics().setDepth(10).setBlendMode('ADD');
+    
+    let elapsed = 0;
+    
+    // Heavy localized camera shake upon spawning
+    this.scene.cameras.main.shake(300, 0.02);
 
-    // Timer that continuously applies pull physics and damage
-    const pullTimer = this.scene.time.addEvent({
-      delay: 100,
+    const timer = this.scene.time.addEvent({
+      delay: 30,
+      loop: true,
       callback: () => {
+        elapsed += 30;
+        if (elapsed >= duration) {
+          timer.remove();
+          // Violent collapse
+          this.scene.tweens.add({
+              targets: core,
+              scale: 0,
+              duration: 300,
+              ease: 'Back.easeIn',
+              onComplete: () => {
+                  core.destroy();
+                  disk.destroy();
+                  // Final explosive shockwave
+                  const nova = this.scene.add.circle(x, y, 10, 0xff00ff, 1).setBlendMode('ADD').setDepth(13);
+                  this.scene.tweens.add({ targets: nova, scale: 20, alpha: 0, duration: 400, onComplete: () => nova.destroy() });
+              }
+          });
+          return;
+        }
+
+        // Rotate and pulsate accretion disk
+        disk.clear();
+        const numRings = 3;
+        for (let r = 1; r <= numRings; r++) {
+            const rot = elapsed * 0.01 * r;
+            const radius = bhRadius + 15 * r + Math.sin(elapsed * 0.01) * 5;
+            
+            disk.lineStyle(3, r % 2 === 0 ? 0x00ffff : 0xaa00ff, 0.8 / r);
+            disk.beginPath();
+            disk.arc(x, y, radius, rot, rot + Math.PI * 1.5);
+            disk.strokePath();
+        }
+        
+        // Random inward-flying particles (event horizon)
+        if (Math.random() < 0.5) {
+            const angle = Math.random() * Math.PI * 2;
+            const pDist = pullRadius;
+            const px = x + Math.cos(angle) * pDist;
+            const py = y + Math.sin(angle) * pDist;
+            
+            const p = this.scene.add.circle(px, py, 4, 0xff00ff, 1).setBlendMode('ADD').setDepth(9);
+            this.scene.tweens.add({
+                targets: p, x: x, y: y, alpha: 0, scale: 0.1, duration: 400,
+                onComplete: () => p.destroy()
+            });
+        }
+
         const enemies = enemiesGroup.getChildren();
         enemies.forEach(enemy => {
           if (enemy && enemy.active) {
             const dist = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-            if (dist <= actualPullRadius) {
-              // Pull enemy towards the black hole
-              this.scene.physics.moveToObject(enemy, blackHolePoint, 150);
+            if (dist <= pullRadius) {
+              const pullFactor = 1 - (dist / pullRadius);
+              const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, x, y);
               
-              // Apply tick damage
-              if (typeof enemy.takeDamage === 'function') {
-                enemy.takeDamage(tickDamage);
-              } else if (enemy.hp !== undefined) {
-                enemy.hp -= tickDamage;
+              enemy.x += Math.cos(angle) * pullFactor * (5 + level);
+              enemy.y += Math.sin(angle) * pullFactor * (5 + level);
+              
+              if (elapsed % 300 === 0) { // Tick damage every 300ms
+                  const tickDmg = damage * 0.8;
+                  if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
+                  else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
               }
             }
           }
         });
-      },
-      loop: true
-    });
-    
-    // Destroy the black hole when its duration ends
-    this.scene.time.delayedCall(actualDuration, () => {
-      pullTimer.remove();
-      this.scene.tweens.add({
-          targets: graphics,
-          scaleX: 0,
-          scaleY: 0,
-          alpha: 0,
-          duration: 300,
-          onComplete: () => {
-              graphics.destroy();
-          }
-      });
+      }
     });
   }
 
-  /**
-   * @description Fires a chaotic laser whip that strikes multiple random enemies at once.
-   * @param {Phaser.GameObjects.Sprite} sourceSprite - The origin of the whip.
-   * @param {Phaser.Physics.Arcade.Group} enemiesGroup - The group containing active enemies.
-   * @param {number} damage - Damage applied to each struck enemy.
-   * @returns {void}
-   */
   fireLaserWhip(sourceSprite, enemiesGroup, damage) {
     if (!sourceSprite || !sourceSprite.active) return;
     const activeEnemies = enemiesGroup.getChildren().filter(e => e.active);
@@ -669,35 +716,81 @@ export default class WeaponSystem {
   // 💥 DOOM BEAM 💥
   fireDoomBeam(player, enemiesGroup, damage) {
     if (!player || !player.active) return;
-    const beamWidth = 30;
-    const gfx = this.scene.add.graphics();
-    gfx.fillStyle(0x8800ff, 0.9);
-    gfx.fillRect(player.x - beamWidth / 2, 0, beamWidth, player.y);
-    gfx.setDepth(10);
+    
+    const lh = this.scene.scale.height * 1.5;
+    const px = player.x;
+    
+    // Core beam
+    const core = this.scene.add.graphics().setBlendMode('ADD').setDepth(15);
+    // Outer dark matter aura (using multiply or normal blend mode with dark colors)
+    const aura = this.scene.add.graphics().setDepth(14);
+    
+    const beamWidth = 60;
+    
+    // Draw the static core
+    core.fillStyle(0xffffff, 1);
+    core.fillRoundedRect(px - 10, player.y - 50 - lh, 20, lh, 10);
+    core.fillStyle(0x8800ff, 0.8);
+    core.fillRoundedRect(px - 25, player.y - 50 - lh, 50, lh, 25);
+    
+    // Dark matter aura
+    aura.fillStyle(0x220044, 0.7);
+    aura.fillRoundedRect(px - beamWidth, player.y - 50 - lh, beamWidth * 2, lh, beamWidth);
+    
+    // Intense camera shake
+    this.scene.cameras.main.shake(600, 0.04);
+    
+    // Base impact flare
+    const flare = this.scene.add.circle(px, player.y - 50, 80, 0xaa00ff, 1).setBlendMode('ADD').setDepth(16);
+    this.scene.tweens.add({
+        targets: flare,
+        scaleX: 1.5,
+        scaleY: 1.5,
+        alpha: 0,
+        duration: 300,
+        yoyo: true,
+        repeat: 1,
+        onComplete: () => flare.destroy()
+    });
 
-    const core = this.scene.add.graphics();
-    core.fillStyle(0xffffff, 0.6);
-    core.fillRect(player.x - 4, 0, 8, player.y);
-    core.setDepth(11);
-
+    // Void particles surging UP
+    const voidParticles = this.scene.add.particles(px, player.y - 50, 'p_glow', {
+        x: { min: -beamWidth, max: beamWidth },
+        y: { min: -lh, max: 0 },
+        speedY: { min: -1500, max: -3000 },
+        scale: { start: 1.2, end: 0 },
+        tint: [0x8800ff, 0xff00ff, 0x440088, 0x000000],
+        lifespan: 400,
+        blendMode: 'ADD',
+        quantity: 5
+    });
+    voidParticles.setDepth(15);
+    
+    // Deal massive damage
     const enemies = enemiesGroup.getChildren();
     enemies.forEach(enemy => {
       if (enemy && enemy.active) {
         if (Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
-          if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 5);
-          else if (enemy.hp !== undefined) enemy.hp -= damage * 5;
+          if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * 10);
+          else if (enemy.hp !== undefined) enemy.hp -= damage * 10;
         }
       }
     });
 
-    this.scene.cameras.main.shake(200, 0.015);
+    // Fade out everything
     this.scene.tweens.add({
-      targets: [gfx, core], alpha: 0,
-      duration: 500, onComplete: () => { gfx.destroy(); core.destroy(); }
+      targets: [core, aura],
+      alpha: 0,
+      duration: 600,
+      ease: 'Power2',
+      onComplete: () => {
+          core.destroy();
+          aura.destroy();
+          voidParticles.destroy();
+      }
     });
   }
 
-  // 🛡️ MIRROR SHIELD 🛡️
   fireMirrorShieldProjectiles(player, enemiesGroup, damage) {
     if (!player || !player.active) return;
     const numProjectiles = 8;
@@ -735,23 +828,34 @@ export default class WeaponSystem {
 
   // 🔴 NEON SAWBLADES 🔴
   spawnSawblades(player, enemiesGroup, damage, level = 1) {
+    if (!player || !player.active) return;
     const numBlades = 1 + level;
-    const orbitRadius = 70;
+    const orbitRadius = 80;
     const bladeGraphics = [];
 
     for (let i = 0; i < numBlades; i++) {
       const gfx = this.scene.add.graphics();
-      gfx.lineStyle(3, 0xff0088, 1);
-      for (let t = 0; t < 8; t++) {
-        const a = (Math.PI * 2 / 8) * t;
-        gfx.moveTo(0, 0);
-        gfx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14);
+      // Draw a highly stylized circular neon sawblade
+      gfx.lineStyle(4, 0xffffff, 1);
+      gfx.strokeCircle(0, 0, 16);
+      
+      gfx.lineStyle(6, 0xff0088, 0.8);
+      gfx.strokeCircle(0, 0, 20);
+      
+      // Draw teeth
+      gfx.fillStyle(0xffffff, 1);
+      for (let t = 0; t < 6; t++) {
+        const a = (Math.PI * 2 / 6) * t;
+        gfx.beginPath();
+        gfx.moveTo(Math.cos(a)*15, Math.sin(a)*15);
+        gfx.lineTo(Math.cos(a + 0.3)*28, Math.sin(a + 0.3)*28);
+        gfx.lineTo(Math.cos(a + 0.6)*15, Math.sin(a + 0.6)*15);
+        gfx.fillPath();
       }
-      gfx.strokePath();
-      gfx.fillStyle(0xff0088, 0.8);
-      gfx.fillCircle(0, 0, 6);
-      gfx.setDepth(10);
-      bladeGraphics.push({ gfx, offset: (Math.PI * 2 / numBlades) * i });
+      
+      gfx.setBlendMode('ADD');
+      gfx.setDepth(11);
+      bladeGraphics.push({ gfx, offset: (Math.PI * 2 / numBlades) * i, rotation: 0 });
     }
 
     let elapsed = 0;
@@ -760,122 +864,198 @@ export default class WeaponSystem {
 
     const updateTimer = this.scene.time.addEvent({
       delay: 16,
+      loop: true,
       callback: () => {
         elapsed += 16;
         if (!player.active || elapsed >= duration) {
           updateTimer.remove();
-          bladeGraphics.forEach(b => {
-            this.scene.tweens.add({ targets: b.gfx, alpha: 0, scale: 0, duration: 200, onComplete: () => b.gfx.destroy() });
+          bladeGraphics.forEach(bg => {
+              this.scene.tweens.add({
+                  targets: bg.gfx, alpha: 0, scale: 2, duration: 300,
+                  onComplete: () => bg.gfx.destroy()
+              });
           });
           return;
         }
 
-        const speed = 3 + level * 0.5;
-        bladeGraphics.forEach(b => {
-          const angle = (elapsed / 1000) * speed + b.offset;
-          b.gfx.x = player.x + Math.cos(angle) * orbitRadius;
-          b.gfx.y = player.y + Math.sin(angle) * orbitRadius;
-          b.gfx.angle += 10;
+        const timeInSec = elapsed / 1000;
+        const orbitSpeed = 4; // Fast orbit
+        const spinSpeed = 15; // Fast individual spin
 
+        bladeGraphics.forEach(bg => {
+          const currentAngle = timeInSec * orbitSpeed + bg.offset;
+          const bx = player.x + Math.cos(currentAngle) * orbitRadius;
+          const by = player.y + Math.sin(currentAngle) * orbitRadius;
+          
+          bg.gfx.setPosition(bx, by);
+          bg.rotation += spinSpeed * 0.016;
+          bg.gfx.setRotation(bg.rotation);
+          
+          // Motion blur / trail effect (random sparks)
+          if (Math.random() < 0.2) {
+              const trail = this.scene.add.circle(bx, by, 10, 0xff0088, 0.6).setBlendMode('ADD').setDepth(10);
+              this.scene.tweens.add({ targets: trail, scale: 0, alpha: 0, duration: 300, onComplete: () => trail.destroy() });
+          }
+
+          // Damage enemies
           const enemies = enemiesGroup.getChildren();
           enemies.forEach(enemy => {
             if (enemy && enemy.active) {
-              const dist = Phaser.Math.Distance.Between(b.gfx.x, b.gfx.y, enemy.x, enemy.y);
-              if (dist < 30) {
-                const key = enemy.x + '_' + enemy.y;
-                const lastHit = hitCooldowns.get(key) || 0;
-                if (elapsed - lastHit > 300) {
-                  hitCooldowns.set(key, elapsed);
-                  if (typeof enemy.takeDamage === 'function') enemy.takeDamage(damage * (1 + level * 0.15));
-                  else if (enemy.hp !== undefined) enemy.hp -= damage * (1 + level * 0.15);
+              const dist = Phaser.Math.Distance.Between(bx, by, enemy.x, enemy.y);
+              if (dist <= 35) { // Hit radius
+                const lastHit = hitCooldowns.get(enemy) || 0;
+                if (elapsed - lastHit > 200) { // Hit every 200ms
+                  const tickDmg = damage * 1.5;
+                  if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
+                  else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
+                  hitCooldowns.set(enemy, elapsed);
+                  
+                  // Violent impact spark
+                  const impact = this.scene.add.circle(bx, by, 25, 0xffffff, 1).setBlendMode('ADD').setDepth(15);
+                  this.scene.tweens.add({ targets: impact, scale: 0, duration: 150, onComplete: () => impact.destroy() });
                 }
               }
             }
           });
         });
-      },
-      loop: true
+      }
     });
   }
 
-  // 🔴 FOKUS-LASER 🔴
   fireFocusLaser(player, enemiesGroup, damage, level = 1) {
     if (!player || !player.active) return;
-    const beamWidth = 6 + level * 2;
+    
+    const beamWidth = 8 + level * 3;
     const beamDuration = 1500 + level * 500;
     let elapsed = 0;
 
-    const gfx = this.scene.add.graphics().setDepth(10);
+    const core = this.scene.add.graphics().setBlendMode('ADD').setDepth(12);
+    const glow = this.scene.add.graphics().setBlendMode('ADD').setDepth(11);
+    
+    // Spark particles at the base
+    const sparks = this.scene.add.particles(player.x, player.y - 30, 'p_glow', {
+        speed: { min: 50, max: 200 },
+        angle: { min: 250, max: 290 },
+        scale: { start: 0.5, end: 0 },
+        tint: [0xffffff, 0xffaa00, 0xff0000],
+        lifespan: 300,
+        blendMode: 'ADD'
+    });
+    sparks.setDepth(13);
 
     const timer = this.scene.time.addEvent({
-      delay: 50,
+      delay: 30,
+      loop: true,
       callback: () => {
-        elapsed += 50;
+        elapsed += 30;
         if (!player.active || elapsed >= beamDuration) {
           timer.remove();
-          this.scene.tweens.add({ targets: gfx, alpha: 0, duration: 200, onComplete: () => gfx.destroy() });
+          this.scene.tweens.add({
+              targets: [core, glow],
+              alpha: 0,
+              duration: 250,
+              onComplete: () => {
+                  core.destroy();
+                  glow.destroy();
+                  sparks.destroy();
+              }
+          });
           return;
         }
+        
+        const px = player.x;
+        const py = player.y - 40;
+        const lh = this.scene.scale.height * 1.5;
+        const startY = py - lh;
+        
+        sparks.setPosition(px, py);
 
-        gfx.clear();
-        gfx.fillStyle(0xff2200, 0.5);
-        gfx.fillRect(player.x - beamWidth, 0, beamWidth * 2, player.y);
-        gfx.fillStyle(0xffffff, 0.8);
-        gfx.fillRect(player.x - 2, 0, 4, player.y);
-
+        // Core laser
+        core.clear();
+        core.fillStyle(0xffffff, 1);
+        core.fillRoundedRect(px - beamWidth/3, startY, beamWidth*0.66, lh, beamWidth/3);
+        
+        // Flickering outer glow
+        glow.clear();
+        const flickerAlpha = 0.5 + Math.random() * 0.5;
+        glow.fillStyle(0xff3300, flickerAlpha);
+        glow.fillRoundedRect(px - beamWidth, startY, beamWidth*2, lh, Math.min(beamWidth, lh/2));
+        
+        // Damage tick
         const enemies = enemiesGroup.getChildren();
         enemies.forEach(enemy => {
-          if (enemy && enemy.active && Math.abs(enemy.x - player.x) <= beamWidth && enemy.y < player.y) {
-            const tickDmg = damage * (0.5 + level * 0.3);
+          if (enemy && enemy.active && Math.abs(enemy.x - px) <= beamWidth && enemy.y < py) {
+            const tickDmg = damage * (0.8 + level * 0.4);
             if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
             else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
-          }
-        });
-      },
-      loop: true
-    });
-  }
-
-  // 💛 HEAVY CANNON 💛
-  fireHeavyCannon(player, enemiesGroup, damage, level = 1) {
-    if (!player || !player.active) return;
-    const size = 10 + level * 5;
-    const cannonDmg = damage * (2 + level * 0.5);
-    const gfx = this.scene.add.graphics();
-    gfx.fillStyle(0xffcc00, 0.4);
-    gfx.fillCircle(0, 0, size + 6);
-    gfx.fillStyle(0xffaa00, 1);
-    gfx.fillCircle(0, 0, size);
-    gfx.fillStyle(0xffffff, 0.7);
-    gfx.fillCircle(0, 0, size * 0.4);
-    gfx.setPosition(player.x, player.y - 20).setDepth(10);
-
-    const startY = player.y - 20;
-    const hitEnemies = new Set();
-
-    this.scene.tweens.add({
-      targets: gfx, y: -50,
-      duration: 1200, ease: 'Linear',
-      onUpdate: () => {
-        if (!gfx.active) return;
-        const enemies = enemiesGroup.getChildren();
-        enemies.forEach(enemy => {
-          if (enemy && enemy.active && !hitEnemies.has(enemy)) {
-            const dist = Phaser.Math.Distance.Between(gfx.x, gfx.y, enemy.x, enemy.y);
-            if (dist <= size + 15) {
-              hitEnemies.add(enemy);
-              if (typeof enemy.takeDamage === 'function') enemy.takeDamage(cannonDmg);
-              else if (enemy.hp !== undefined) enemy.hp -= cannonDmg;
-              this.scene.cameras.main.shake(80, 0.008);
+            
+            // Impact sparks on the enemy
+            if (Math.random() < 0.3) {
+                const impact = this.scene.add.circle(enemy.x, enemy.y, 15, 0xffffff, 0.8).setBlendMode('ADD').setDepth(15);
+                this.scene.tweens.add({ targets: impact, scale: 2, alpha: 0, duration: 200, onComplete: () => impact.destroy() });
             }
           }
         });
-      },
-      onComplete: () => gfx.destroy()
+      }
     });
   }
 
-  // 🔥 DAMAGE AURA 🔥
+  fireHeavyCannon(player, enemiesGroup, damage, level = 1) {
+    if (!player || !player.active) return;
+    
+    // Muzzle flash
+    const flash = this.scene.add.circle(player.x, player.y - 40, 40, 0xffcc00, 1).setBlendMode('ADD').setDepth(13);
+    this.scene.tweens.add({ targets: flash, scale: 0, alpha: 0, duration: 200, onComplete: () => flash.destroy() });
+    
+    // Screen shake for heavy recoil
+    this.scene.cameras.main.shake(150, 0.02);
+
+    // Render a high-quality glowing plasma sphere
+    const projectile = this.scene.add.graphics().setDepth(12);
+    // Draw base shape at 0,0 and rely on positioning
+    projectile.fillStyle(0xffaa00, 0.6);
+    projectile.fillCircle(0, 0, 25);
+    projectile.fillStyle(0xffffff, 1);
+    projectile.fillCircle(0, 0, 12);
+    projectile.setBlendMode('ADD');
+    
+    this.scene.physics.add.existing(projectile);
+    projectile.body.setCircle(20, -20, -20); // Center physics body
+    projectile.setPosition(player.x, player.y - 40);
+    projectile.body.setVelocityY(-400); // Slow but heavy
+    
+    projectile.damage = damage * (3 + level); // Massive damage
+    projectile.pierce = true; // Blows through everything
+    
+    // Comet trail effect
+    const trailTimer = this.scene.time.addEvent({
+        delay: 50,
+        loop: true,
+        callback: () => {
+            if (!projectile || !projectile.active) {
+                trailTimer.remove();
+                return;
+            }
+            const trail = this.scene.add.circle(projectile.x, projectile.y, 20, 0xffaa00, 0.6).setBlendMode('ADD').setDepth(11);
+            this.scene.tweens.add({ targets: trail, scale: 0, alpha: 0, duration: 400, onComplete: () => trail.destroy() });
+        }
+    });
+    
+    // Explosive impact shockwave
+    projectile.onHit = (enemyX, enemyY) => {
+        const shockwave = this.scene.add.circle(enemyX, enemyY, 20, 0xffffff, 0.8).setBlendMode('ADD').setDepth(14);
+        this.scene.tweens.add({
+            targets: shockwave,
+            scale: 6,
+            alpha: 0,
+            duration: 300,
+            onComplete: () => shockwave.destroy()
+        });
+    };
+
+    this.scene.bullets.add(projectile);
+  }
+
   updateDamageAura(player, enemiesGroup, damage, level = 1) {
     const radius = 60 + level * 20;
     const tickDmg = damage * (0.3 + level * 0.15);

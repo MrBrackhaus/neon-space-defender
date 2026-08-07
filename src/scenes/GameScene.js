@@ -1748,8 +1748,9 @@ export default class GameScene extends Phaser.Scene {
                 let avoidX = 0, avoidY = 0, avoids = 0;
                 this.hazardSys.asteroids.getChildren().forEach(a => {
                     if (a.active) {
-                        const dist = Phaser.Math.Distance.Between(e.x, e.y, a.x, a.y);
-                        if (dist > 0 && dist < 200) {
+                        const distSq = Phaser.Math.Distance.BetweenSq(e.x, e.y, a.x, a.y);
+                        if (distSq > 0 && distSq < 40000) { // 200 * 200 = 40000
+                            const dist = Math.sqrt(distSq);
                             const repAngle = Phaser.Math.Angle.Between(a.x, a.y, e.x, e.y);
                             const strength = 1 - (dist / 200);
                             avoidX += Math.cos(repAngle) * strength;
@@ -2709,17 +2710,17 @@ export default class GameScene extends Phaser.Scene {
      */
     updateXPMagnet() {
         const px = this.player.x, py = this.player.y;
-        const range = this.pd.magnetRange;
+        const rangeSq = this.pd.magnetRange * this.pd.magnetRange;
         this.crystals.getChildren().forEach(c => {
             if (!c.active) return;
-            const dist = Phaser.Math.Distance.Between(px, py, c.x, c.y);
-            if (dist < range || c.magnetized) {
+            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
                 c.setAlpha(0.6);
             }
-            if (dist < 60) {
+            if (distSq < 3600) { // 60 * 60 = 3600
                 if(this.audioSys) this.audioSys.playPickup('xp');
                 this.addXP(c.xpVal);
                 c.destroy();
@@ -2728,27 +2729,27 @@ export default class GameScene extends Phaser.Scene {
 
         this.scraps.getChildren().forEach(c => {
             if (!c.active) return;
-            const dist = Phaser.Math.Distance.Between(px, py, c.x, c.y);
-            if (dist < range || c.magnetized) {
+            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
             }
-            if (dist < 60) {
+            if (distSq < 3600) {
                 this.onScrapCollect(this.player, c);
             }
         });
 
         this.cubesGroup.getChildren().forEach(c => {
             if (!c.active) return;
-            const dist = Phaser.Math.Distance.Between(px, py, c.x, c.y);
-            if (dist < range || c.magnetized) {
+            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
                 c.setAlpha(0.6);
             }
-            if (dist < 60) {
+            if (distSq < 3600) {
                 this.pd.cubes += 1;
                 this.audioSys.playHover();
                 c.destroy();
@@ -2757,8 +2758,8 @@ export default class GameScene extends Phaser.Scene {
         
         this.weaponUpgradesGroup.getChildren().forEach(c => {
             if (!c.active) return;
-            const dist = Phaser.Math.Distance.Between(px, py, c.x, c.y);
-            if (dist < range || c.magnetized) {
+            const distSq = Phaser.Math.Distance.BetweenSq(px, py, c.x, c.y);
+            if (distSq < rangeSq || c.magnetized) {
                 c.magnetized = true;
                 const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
                 c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);

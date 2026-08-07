@@ -521,14 +521,14 @@ export default class GameScene extends Phaser.Scene {
             // ── OKTOHORNCAT: 8 Tentacle Glow Emitters (star pattern) ──
             this.paladinTentacles = [];
             const tentacleOffsets = [
-                { x: 0, y: -40 },   // top (horn direction)
-                { x: 30, y: -30 },  // top-right
-                { x: 40, y: 0 },    // right
-                { x: 30, y: 30 },   // bottom-right
-                { x: 0, y: 40 },    // bottom
-                { x: -30, y: 30 },  // bottom-left
-                { x: -40, y: 0 },   // left
-                { x: -30, y: -30 }, // top-left
+                { x: 0, y: -90 },   // top (horn direction)
+                { x: 65, y: -65 },  // top-right
+                { x: 90, y: 0 },    // right
+                { x: 65, y: 65 },   // bottom-right
+                { x: 0, y: 90 },    // bottom
+                { x: -65, y: 65 },  // bottom-left
+                { x: -90, y: 0 },   // left
+                { x: -65, y: -65 }, // top-left
             ];
             const tentColors = [0xff0055, 0xff8800, 0xffff00, 0x00ff66, 0x00ccff, 0x8800ff, 0xff00cc, 0x00ffaa];
             tentacleOffsets.forEach((off, i) => {
@@ -3567,7 +3567,7 @@ export default class GameScene extends Phaser.Scene {
                 const b2 = Math.round(hue2rgb(p, q, h - 1/3) * 255);
                 const color = (r << 16) | (g << 8) | b2;
                 this.paladinHornGlow.setFillStyle(color, 0.7);
-                this.paladinHornGlow.setPosition(this.player.x, this.player.y - 28);
+                this.paladinHornGlow.setPosition(this.player.x, this.player.y - 95);
             }
             // Tentacle color cycling: shift each tentacle's tint over time
             if (this.paladinTentacles) {

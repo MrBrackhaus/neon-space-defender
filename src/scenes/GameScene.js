@@ -1675,6 +1675,16 @@ export default class GameScene extends Phaser.Scene {
             e.scoreVal *= 3;
             e.xpVal *= 3;
         }
+
+        // Wave 10+: Armor Plating
+        if (this.waveNum >= 10 && Math.random() < 0.15 && !type.startsWith('boss') && type !== 'mothership' && type !== 'hivemind') {
+            e.hasArmor = true;
+            // Draw a cyan ring indicating armor
+            const gfx = this.add.graphics();
+            gfx.lineStyle(2, 0x00ffff, 0.8);
+            gfx.strokeCircle(0, 0, (e.width * finalScale) / 2 + 8);
+            e.armorGraphics = gfx;
+        }
         
         e.lastShot = 0; e.isDying = false;
         e.tOffset = Math.random() * 100; // Fixed time offset for smooth sine waves
@@ -1737,11 +1747,47 @@ export default class GameScene extends Phaser.Scene {
                     e.auraGraphics.destroy();
                     e.auraGraphics = null;
                 }
+                if (e.hasArmor && e.armorGraphics) {
+                    e.armorGraphics.destroy();
+                    e.armorGraphics = null;
+                }
                 e.setVelocity(0, 0);
                 return;
             }
+
+            // Update Wave 10 Armor Graphics
+            if (e.hasArmor && e.armorGraphics) {
+                e.armorGraphics.setPosition(e.x, e.y);
+            }
+
+            // Wave 50+: Nano Regeneration
+            if (this.waveNum >= 50 && e.hp < e.maxHp && e.type !== 'boss' && e.type !== 'mothership' && e.type !== 'hivemind') {
+                e.hp += e.maxHp * 0.02 * (this.game.loop.delta / 1000); // 2% per second
+                if (e.hp > e.maxHp) e.hp = e.maxHp;
+            }
+
             const angle = Phaser.Math.Angle.Between(e.x, e.y, player.x, player.y);
             let moveAngle = angle;
+            
+            // Wave 40+: Warp Drive (Blink)
+            if (this.waveNum >= 40 && Math.random() < 0.005 && e.type !== 'boss' && e.type !== 'mothership' && e.type !== 'hivemind') {
+                const distSq = (e.x - player.x) * (e.x - player.x) + (e.y - player.y) * (e.y - player.y);
+                if (distSq > 160000) { // Only if far away (>400px)
+                    // Warp effect
+                    const p = this.add.particles(e.x, e.y, 'm_dust', {
+                        speed: { min: 20, max: 80 },
+                        scale: { start: 0.6, end: 0 },
+                        tint: 0xaa00ff,
+                        blendMode: 'ADD',
+                        lifespan: 300,
+                        quantity: 10
+                    });
+                    this.time.delayedCall(300, () => p.destroy());
+                    
+                    e.x += Math.cos(angle) * 150;
+                    e.y += Math.sin(angle) * 150;
+                }
+            }
             
             // Asteroid Avoidance Steering
             if (this.hazardSys && this.hazardSys.asteroids) {
@@ -2114,6 +2160,31 @@ export default class GameScene extends Phaser.Scene {
             if (this.audioSys) this.audioSys.playHit();
             return;
         }
+
+        // Wave 10: Armor Plating Block
+        if (enemy.hasArmor) {
+            enemy.hasArmor = false;
+            if (enemy.armorGraphics) {
+                enemy.armorGraphics.destroy();
+                enemy.armorGraphics = null;
+            }
+            if (!bullet.pierce) this.bullets.killAndHide(bullet);
+            this.showDmgNum(enemy.x, enemy.y - 10, 'ARMOR', '#00ffff');
+            if (this.audioSys) this.audioSys.playHit();
+            
+            // Armor break particle effect
+            const p = this.add.particles(enemy.x, enemy.y, 'm_dust', {
+                speed: { min: 50, max: 150 },
+                scale: { start: 0.5, end: 0 },
+                tint: 0x00ffff,
+                blendMode: 'ADD',
+                lifespan: 400,
+                quantity: 10
+            });
+            this.time.delayedCall(400, () => p.destroy());
+            
+            return; // Block all damage
+        }
         
         if (!bullet.hitEnemies) bullet.hitEnemies = [];
         bullet.hitEnemies.push(enemy);
@@ -2336,6 +2407,24 @@ export default class GameScene extends Phaser.Scene {
         
         if (this.pd.vampireProtocol) {
             this.healPlayer(1);
+        }
+
+        // Wave 30+: Volatile Blood (Säure-Explosion)
+        if (this.waveNum >= 30 && Math.random() < 0.20 && enemy.type !== 'boss' && enemy.type !== 'mothership' && enemy.type !== 'hivemind') {
+            const angles = [Math.PI/4, 3*Math.PI/4, 5*Math.PI/4, 7*Math.PI/4]; // X pattern
+            angles.forEach(a => {
+                this.fireEnemyBullet(enemy.x, enemy.y, a, 180, 1.2, enemy.type);
+            });
+            // Explosion visual
+            const p = this.add.particles(enemy.x, enemy.y, 'm_dust', {
+                speed: { min: 100, max: 200 },
+                scale: { start: 0.8, end: 0 },
+                tint: 0x00ff00,
+                blendMode: 'ADD',
+                lifespan: 500,
+                quantity: 15
+            });
+            this.time.delayedCall(500, () => p.destroy());
         }
         
         if (this.shipClass === 'paladin') {

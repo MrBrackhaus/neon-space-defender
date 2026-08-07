@@ -145,6 +145,7 @@ export default class BossSystem {
         const coin = this.scene.physics.add.sprite(bossSprite.x, bossSprite.y, 'scrap_gear');
         coin.setTint(0xffd700); // Gold
         coin.setScale(1.5);
+        coin.setDepth(10);
         
         // Add overlap directly instead of polluting eBullets pool
         this.scene.physics.add.overlap(this.scene.player, coin, (player, c) => {
@@ -375,6 +376,7 @@ export default class BossSystem {
         bossSprite.isInvulnerable = true;
         const shieldVisual = this.scene.add.circle(0, 0, 150, 0x00aaff, 0.2);
         shieldVisual.setStrokeStyle(4, 0x00ffff);
+        shieldVisual.setDepth(10);
         
         bossSprite.updateHitZones = () => {
             if (!bossSprite.active) {

@@ -260,12 +260,7 @@ export default class GameScene extends Phaser.Scene {
         this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,Q,E,R,SPACE,SHIFT,ESC,F6');
         this.keys.Q.on('down', () => this.activateNovaBomb());
         this.keys.R.on('down', () => this.useActiveItem());
-        
-        // Active Item HUD Text
-        this.activeItemText = this.add.text(this.cw / 2, this.ch - 60, '', {
-            fontFamily: 'Orbitron', fontSize: '14px', fontStyle: 'bold',
-            color: '#00ffcc', backgroundColor: '#00000088', padding: { x: 10, y: 5 }
-        }).setOrigin(0.5).setDepth(20);
+
         this.keys.ESC.on('down', () => {
             this.scene.pause();
             this.scene.launch('PauseScene');
@@ -664,7 +659,7 @@ export default class GameScene extends Phaser.Scene {
             if (b === 'emp_blast' || b === 'gravity_well' || b === 'kill_weakest') {
                 this.pd.activeItem = b;
                 this.showBanner('AKTIVES ITEM (R): ' + b, '#00ffcc');
-                if (this.activeItemText) this.activeItemText.setText('[R] ' + b.toUpperCase());
+                this.updateHUD();
             }
 
             if (b === 'damage_aura')       {
@@ -934,7 +929,9 @@ export default class GameScene extends Phaser.Scene {
             lvl: { el: getEl('hud-lvl'), val: '' },
             xpBar: { el: getEl('hud-xp-bar'), val: '' },
             abText: { el: getEl('hud-ability'), val: '' },
-            abCd: { el: getEl('hud-ability-cd'), val: '' }
+            abCd: { el: getEl('hud-ability-cd'), val: '' },
+            itemText: { el: getEl('hud-item'), val: '' },
+            itemCd: { el: getEl('hud-item-cd'), val: '' }
         };
     }
 
@@ -995,6 +992,17 @@ export default class GameScene extends Phaser.Scene {
                 updateColor('abText', '#fff');
                 updateWidth('abCd', '0%');
             }
+        }
+
+        // Active Item (consumable)
+        if (pd.activeItem) {
+            updateText('itemText', pd.activeItem.toUpperCase());
+            updateColor('itemText', '#00ffcc');
+            updateWidth('itemCd', '100%');
+        } else {
+            updateText('itemText', 'NONE');
+            updateColor('itemText', '#888');
+            updateWidth('itemCd', '0%');
         }
 
         // Active Upgrades List
@@ -2149,14 +2157,14 @@ export default class GameScene extends Phaser.Scene {
             enemy.isFrozen = true;
             const slowFactor = Math.max(0.1, 0.85 - (cryoLvl * 0.15));
             enemy.speed = Math.max(10, enemy.originalSpeed * slowFactor);
-            enemy.setTint(0x00ccff);
+            if (enemy.setTint) enemy.setTint(0x00ccff);
             enemy.cryoUntil = this.time.now + 2000 + (cryoLvl * 500);
         }
 
         if (this.pd.poisonRounds) {
             enemy.isPoisoned = true;
             enemy.poisonTicks = 4;
-            enemy.setTint(0x88ff00);
+            if (enemy.setTint) enemy.setTint(0x88ff00);
             if (!enemy.poisonTimer) {
                 enemy.poisonTimer = this.time.addEvent({
                     delay: 1000,
@@ -2173,7 +2181,7 @@ export default class GameScene extends Phaser.Scene {
                             enemy.poisonTicks--;
                         } else {
                             enemy.isPoisoned = false;
-                            enemy.clearTint();
+                            if (enemy.clearTint) enemy.clearTint();
                             if (enemy.poisonTimer) enemy.poisonTimer.remove();
                             enemy.poisonTimer = null;
                         }
@@ -2945,7 +2953,7 @@ export default class GameScene extends Phaser.Scene {
         this.pd.activeItem = null; // Consume the item
         
         // Hide the HUD text
-        if (this.activeItemText) this.activeItemText.setText('');
+        this.updateHUD();
         this.showBanner(item.toUpperCase() + ' AUSGELÖST!', '#00ffcc');
 
         if (item === 'emp_blast') {
@@ -3602,6 +3610,8 @@ export default class GameScene extends Phaser.Scene {
 
         createBtn(0, 150, 'OPEN NYX SHOP', () => {
             this.scene.pause();
+            const htmlHud = document.getElementById('html-hud');
+            if (htmlHud) htmlHud.style.display = 'none';
             this.scene.launch('InGameShopScene');
         });
 

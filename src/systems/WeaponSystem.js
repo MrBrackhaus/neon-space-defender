@@ -419,7 +419,7 @@ export default class WeaponSystem {
                   this.scene.killEnemy(enemy);
               }
               enemy.isFrozen = true;
-              enemy.setTint(0x00ffff);
+              if (enemy.setTint) enemy.setTint(0x00ffff);
               enemy.speed = 0;
               enemy.cryoUntil = this.scene.time.now + 1500;
             }
@@ -498,8 +498,8 @@ export default class WeaponSystem {
         if (dx <= waveWidth / 2 && enemy.y < player.y) {
           enemy.hp -= damage * (1 + level * 0.3);
           enemy.body.velocity.y = -pushForce;
-          enemy.setTint(0x00ccff);
-          this.scene.time.delayedCall(300, () => { if (enemy.active) enemy.clearTint(); });
+          if (enemy.setTint) enemy.setTint(0x00ccff);
+          this.scene.time.delayedCall(300, () => { if (enemy.active && enemy.clearTint) enemy.clearTint(); });
           
           // Small impact dust
           const dust = this.scene.add.circle(enemy.x, enemy.y, 20, 0x00ccff, 0.5).setBlendMode('ADD').setDepth(12);
@@ -1156,8 +1156,8 @@ export default class WeaponSystem {
         if (dist <= radius) {
           if (typeof enemy.takeDamage === 'function') enemy.takeDamage(tickDmg);
           else if (enemy.hp !== undefined) enemy.hp -= tickDmg;
-          enemy.setTint(0xff4400);
-          this.scene.time.delayedCall(200, () => { if (enemy.active) enemy.clearTint(); });
+          if (enemy.setTint) enemy.setTint(0xff4400);
+          this.scene.time.delayedCall(200, () => { if (enemy.active && enemy.clearTint) enemy.clearTint(); });
         }
       }
     });

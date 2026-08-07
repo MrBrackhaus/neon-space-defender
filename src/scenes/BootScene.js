@@ -90,7 +90,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.spritesheet('enemy_protector_sheet','enemy_protector_sheet.png?v=6',{ frameWidth: FW, frameHeight: FH });
 
         // Boss Overhaul Sprites
-        this.load.spritesheet('boss_cheese', 'assets/boss_cheese.png?v=5', { frameWidth: 224, frameHeight: 240 });
+        this.load.spritesheet('boss_cheese', 'assets/boss_cheese.png?v=8', { frameWidth: 224, frameHeight: 240 });
         this.load.image('boss_cheese_portrait', 'assets/boss_cheese_portrait.png?v=1');
         this.load.spritesheet('boss_phase1', 'assets/boss_phase1.png?v=2', { frameWidth: 224, frameHeight: 240 });
         this.load.spritesheet('boss_cheese_portrait_anim', 'assets/boss_cheese_portrait_anim.png?v=2', { frameWidth: 512, frameHeight: 512 });
@@ -98,8 +98,8 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('boss_irs', 'assets/boss_irs.png?v=3');
         this.load.image('boss_irs_p2', 'assets/boss_irs_p2.png?v=1');
         this.load.spritesheet('boss_irs_portrait_anim', 'assets/boss_irs_portrait_anim.png?v=1', { frameWidth: 512, frameHeight: 512 });
-        this.load.image('boss_vacuum', 'assets/boss_vacuum.png?v=3');
-        this.load.image('boss_vacuum_p2', 'assets/boss_vacuum_p2.png?v=1');
+        this.load.image('boss_vacuum', 'assets/boss_vacuum.png?v=8');
+        this.load.image('boss_vacuum_p2', 'assets/boss_vacuum_p2.png?v=8');
         this.load.spritesheet('boss_vacuum_portrait_anim', 'assets/boss_vacuum_portrait_anim.png?v=1', { frameWidth: 512, frameHeight: 512 });
 
         // Cinematic intro images
@@ -152,7 +152,7 @@ export default class BootScene extends Phaser.Scene {
         
         // VFX Images for weapons and projectiles
         this.load.image('enemy_projectile', 'enemy_projectile.png?v=6');
-        this.load.image('orbital_blade',    'orbital_blade.png?v=6');
+        this.load.image('orbital_blade',    'orbital_blade.png?v=8');
         this.load.image('missile_bomb',     'missile_bomb.png?v=6');
         
         // Mascot Pet spritesheet for various states

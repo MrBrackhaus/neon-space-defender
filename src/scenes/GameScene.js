@@ -1637,7 +1637,7 @@ export default class GameScene extends Phaser.Scene {
             boss_irs: { sheet: 'boss_irs', anim: null, scale: 0.8 },
             boss_irs_p2: { sheet: 'boss_irs_p2', anim: null, scale: 0.9 },
             boss_vacuum: { sheet: 'boss_vacuum', anim: null, scale: 0.3 },
-            boss_vacuum_p2: { sheet: 'boss_vacuum_p2', anim: null, scale: 0.35 }
+            boss_vacuum_p2: { sheet: 'boss_vacuum_p2', anim: null, scale: 1.2 }
         };
         const sm  = SPRITE_MAP[type] || SPRITE_MAP.basic;
         const def = ENEMY_DEFS[type] || ENEMY_DEFS.basic;
@@ -1664,6 +1664,18 @@ export default class GameScene extends Phaser.Scene {
         e.type = type; e.speed = def.speed; e.originalSpeed = def.speed;
         e.waveNum = this.waveNum;
         e.scoreVal = def.score; e.xpVal = def.xp;
+        
+        // Elite Mechanics (Wave 20+)
+        if (this.waveNum >= 20 && Math.random() < 0.25 && !type.startsWith('boss') && type !== 'mothership' && type !== 'hivemind') {
+            e.isElite = true;
+            e.setScale(finalScale * 1.2);
+            e.setTint(0xff5555); // Red tint for elites
+            e.hp = Math.floor(e.hp * 2.5);
+            e.maxHp = e.hp;
+            e.scoreVal *= 3;
+            e.xpVal *= 3;
+        }
+        
         e.lastShot = 0; e.isDying = false;
         e.tOffset = Math.random() * 100; // Fixed time offset for smooth sine waves
 
@@ -1900,7 +1912,13 @@ export default class GameScene extends Phaser.Scene {
 
                 if (dist < 800 && this.time.now - e.lastShot > 1800) {
                     e.lastShot = this.time.now;
-                    this.fireEnemyBullet(e.x, e.y, angle, 230, 1.0, e.type);
+                    if (e.isElite) {
+                        this.fireEnemyBullet(e.x, e.y, angle, 230, 1.0, e.type);
+                        this.fireEnemyBullet(e.x, e.y, angle - 0.25, 230, 1.0, e.type);
+                        this.fireEnemyBullet(e.x, e.y, angle + 0.25, 230, 1.0, e.type);
+                    } else {
+                        this.fireEnemyBullet(e.x, e.y, angle, 230, 1.0, e.type);
+                    }
                 }
             } else if (e.type === 'boss' || e.type === 'mothership' || e.type === 'hivemind' || e.type === 'destroyer') {
                 this.updateBoss(e, player, angle);

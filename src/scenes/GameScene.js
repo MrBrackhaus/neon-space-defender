@@ -518,27 +518,27 @@ export default class GameScene extends Phaser.Scene {
             this.phantomEngines.ir = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 25, y: 45 }, ...ec }).setDepth(9);
             this.phantomEngines.or = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 65, y: 35 }, ...ec }).setDepth(9);
         } else if (this.shipClass === 'paladin') {
-            // ── OKTOHORNCAT: Tentacle Flames & Sparkles ──
+            // ── OKTOHORNCAT: Tentacle Flames & Sparkles (Squid downward trailing) ──
             this.paladinFlames = [];
             this.paladinSparks = [];
-            // tentacle index: 0=top, 1=TR, 2=R, 3=BR, 4=B, 5=BL, 6=L, 7=TL
+            // tentacle index: 0=Left Thruster, 1=Right Thruster
             const tentacleOffsets = [
-                { x: 0, y: -90 },   { x: 65, y: -65 },  { x: 90, y: 0 },    { x: 65, y: 65 },
-                { x: 0, y: 90 },    { x: -65, y: 65 },  { x: -90, y: 0 },   { x: -65, y: -65 }
+                { x: -35, y: 100 },  // Left bottom
+                { x: 35, y: 100 }    // Right bottom
             ];
             tentacleOffsets.forEach((off, i) => {
                 const f = this.add.particles(0, 0, 'p_glow', {
                     follow: this.player, followOffset: off,
-                    speedX: { min: off.x * 2, max: off.x * 3.5 }, speedY: { min: off.y * 2, max: off.y * 3.5 },
-                    scale: { start: 0.5, end: 0 }, alpha: { start: 1, end: 0 },
+                    speedX: { min: off.x * 0.5, max: off.x * 1.5 }, speedY: { min: 200, max: 350 },
+                    scale: { start: 0.6, end: 0 }, alpha: { start: 1, end: 0 },
                     blendMode: 'ADD', lifespan: 300, frequency: -1
                 }).setDepth(9);
                 this.paladinFlames.push(f);
                 
                 const s = this.add.particles(0, 0, 'p_glow', {
                     follow: this.player, followOffset: off,
-                    speedX: { min: off.x * 3, max: off.x * 5 }, speedY: { min: off.y * 3, max: off.y * 5 },
-                    scale: { start: 0.15, end: 0 }, alpha: { start: 1, end: 0 },
+                    speedX: { min: off.x, max: off.x * 2 }, speedY: { min: 250, max: 450 },
+                    scale: { start: 0.2, end: 0 }, alpha: { start: 1, end: 0 },
                     blendMode: 'ADD', lifespan: 400, frequency: -1
                 }).setDepth(9);
                 this.paladinSparks.push(s);
@@ -3578,27 +3578,29 @@ export default class GameScene extends Phaser.Scene {
             }
 
             // 3. Dynamic Thrusters (Flames & Sparks)
-            if (this.paladinFlames && this.paladinSparks) {
+            if (this.paladinFlames && this.paladinSparks && this.paladinFlames.length === 2) {
                 // Determine movement direction
                 const isW = this.controls.W.isDown || this.controls.UP.isDown;
-                const isS = this.controls.S.isDown || this.controls.DOWN.isDown;
                 const isA = this.controls.A.isDown || this.controls.LEFT.isDown;
                 const isD = this.controls.D.isDown || this.controls.RIGHT.isDown;
                 
-                // Indexes: 0=top, 1=TR, 2=R, 3=BR, 4=B, 5=BL, 6=L, 7=TL
-                const activeThrusters = new Set([3, 4, 5]); // Bottom thrusters always on (forward movement)
+                // Indexes: 0=Left Thruster, 1=Right Thruster
+                // Both are always on (forward movement), but frequency increases based on steering
                 
-                if (isA) { activeThrusters.add(1); activeThrusters.add(2); } // Moving left -> Right thrusters
-                if (isD) { activeThrusters.add(6); activeThrusters.add(7); } // Moving right -> Left thrusters
-                if (isS) { activeThrusters.add(0); activeThrusters.add(1); activeThrusters.add(7); } // Braking/Moving down -> Top thrusters
-                
-                // Update frequencies and tints
                 this.paladinFlames.forEach((f, i) => {
-                    f.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 30 : 60) : -1;
+                    let freq = 60; // default cruise
+                    if (isW) freq = 30; // boosting
+                    if (isA && i === 1) freq = 20; // turning left -> fire right thruster harder
+                    if (isD && i === 0) freq = 20; // turning right -> fire left thruster harder
+                    f.frequency = freq;
                     f.setParticleTint(color);
                 });
                 this.paladinSparks.forEach((s, i) => {
-                    s.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 50 : 100) : -1;
+                    let freq = 100;
+                    if (isW) freq = 50;
+                    if (isA && i === 1) freq = 30;
+                    if (isD && i === 0) freq = 30;
+                    s.frequency = freq;
                     s.setParticleTint(color);
                 });
             }

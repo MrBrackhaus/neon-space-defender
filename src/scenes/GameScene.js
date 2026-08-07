@@ -337,7 +337,7 @@ export default class GameScene extends Phaser.Scene {
         if (this.shipClass === 'interceptor') { shipScale = 0.11; shipTex = 'ship_neon_flamingo'; shipAnim = null; }
         if (this.shipClass === 'dreadnought') { shipScale = 0.20; shipTex = 'ship_arcade_kapsel'; shipAnim = null; }
         if (this.shipClass === 'phantom') { shipScale = 0.155; shipTex = 'ship_phantom'; shipAnim = 'anim_ship_phantom'; }
-        if (this.shipClass === 'paladin') { shipScale = 0.45; shipTex = 'ship_paladin'; shipAnim = 'anim_paladin'; this.playerBaseAngle = 90; }
+        if (this.shipClass === 'paladin') { shipScale = 0.45; shipTex = 'ship_paladin'; shipAnim = 'anim_paladin'; }
         if (this.shipClass === 'bomber') { shipScale = 0.125; shipTex = 'ship_bomber'; shipAnim = null; }
 
         this.playerBaseAngle = 0; // New generated ships point UP
@@ -521,10 +521,10 @@ export default class GameScene extends Phaser.Scene {
             // ── OKTOHORNCAT: Tentacle Flames & Sparkles ──
             this.paladinFlames = [];
             this.paladinSparks = [];
-            // tentacle index: 0=top, 1=TR, 2=R, 3=BR, 4=B, 5=BL, 6=L, 7=TL
+            // tentacle index: 0=B, 1=BR, 2=R, 3=TR, 4=T, 5=TL, 6=L, 7=BL (flipped image)
             const tentacleOffsets = [
-                { x: 0, y: -90 },   { x: 65, y: -65 },  { x: 90, y: 0 },    { x: 65, y: 65 },
-                { x: 0, y: 90 },    { x: -65, y: 65 },  { x: -90, y: 0 },   { x: -65, y: -65 }
+                { x: 0, y: 90 },    { x: 65, y: 65 },   { x: 90, y: 0 },    { x: 65, y: -65 },
+                { x: 0, y: -90 },   { x: -65, y: -65 }, { x: -90, y: 0 },   { x: -65, y: 65 }
             ];
             tentacleOffsets.forEach((off, i) => {
                 const f = this.add.particles(0, 0, 'p_glow', {
@@ -544,9 +544,9 @@ export default class GameScene extends Phaser.Scene {
                 this.paladinSparks.push(s);
             });
 
-            // ── OKTOHORNCAT: Rainbow Horn Flow (upward flowing rgb particles) ──
+            // ── OKTOHORNCAT: Rainbow Horn Flow (horn is now at bottom, particles shoot upward) ──
             this.paladinHornEmitter = this.add.particles(0, 0, 'p_glow', {
-                follow: this.player, followOffset: { x: 0, y: -90 },
+                follow: this.player, followOffset: { x: 0, y: 90 },
                 speedY: { min: -40, max: -90 }, speedX: { min: -8, max: 8 },
                 scale: { start: 0.25, end: 0 }, alpha: { start: 1, end: 0 },
                 blendMode: 'ADD', lifespan: 400, frequency: 15

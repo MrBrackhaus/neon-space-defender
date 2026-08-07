@@ -518,36 +518,39 @@ export default class GameScene extends Phaser.Scene {
             this.phantomEngines.ir = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 25, y: 45 }, ...ec }).setDepth(9);
             this.phantomEngines.or = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: { x: 65, y: 35 }, ...ec }).setDepth(9);
         } else if (this.shipClass === 'paladin') {
-            // ── OKTOHORNCAT: 8 Tentacle Glow Emitters (star pattern) ──
-            this.paladinTentacles = [];
+            // ── OKTOHORNCAT: Tentacle Flames & Sparkles ──
+            this.paladinFlames = [];
+            this.paladinSparks = [];
+            // tentacle index: 0=top, 1=TR, 2=R, 3=BR, 4=B, 5=BL, 6=L, 7=TL
             const tentacleOffsets = [
-                { x: 0, y: -90 },   // top (horn direction)
-                { x: 65, y: -65 },  // top-right
-                { x: 90, y: 0 },    // right
-                { x: 65, y: 65 },   // bottom-right
-                { x: 0, y: 90 },    // bottom
-                { x: -65, y: 65 },  // bottom-left
-                { x: -90, y: 0 },   // left
-                { x: -65, y: -65 }, // top-left
+                { x: 0, y: -90 },   { x: 65, y: -65 },  { x: 90, y: 0 },    { x: 65, y: 65 },
+                { x: 0, y: 90 },    { x: -65, y: 65 },  { x: -90, y: 0 },   { x: -65, y: -65 }
             ];
-            const tentColors = [0xff0055, 0xff8800, 0xffff00, 0x00ff66, 0x00ccff, 0x8800ff, 0xff00cc, 0x00ffaa];
             tentacleOffsets.forEach((off, i) => {
-                const tc = {
-                    speedX: { min: off.x * 2, max: off.x * 4 },
-                    speedY: { min: off.y * 2, max: off.y * 4 },
-                    scale: { start: 0.4, end: 0.05 },
-                    alpha: { start: 0.8, end: 0 },
-                    tint: tentColors[i],
-                    blendMode: 'ADD',
-                    lifespan: { min: 200, max: 400 },
-                    frequency: 60,
-                };
-                const p = this.add.particles(0, 0, 'p_glow', { follow: this.player, followOffset: off, ...tc }).setDepth(9);
-                this.paladinTentacles.push(p);
+                const f = this.add.particles(0, 0, 'p_glow', {
+                    follow: this.player, followOffset: off,
+                    speedX: { min: off.x * 2, max: off.x * 3.5 }, speedY: { min: off.y * 2, max: off.y * 3.5 },
+                    scale: { start: 0.5, end: 0 }, alpha: { start: 1, end: 0 },
+                    blendMode: 'ADD', lifespan: 300, frequency: -1
+                }).setDepth(9);
+                this.paladinFlames.push(f);
+                
+                const s = this.add.particles(0, 0, 'p_glow', {
+                    follow: this.player, followOffset: off,
+                    speedX: { min: off.x * 3, max: off.x * 5 }, speedY: { min: off.y * 3, max: off.y * 5 },
+                    scale: { start: 0.15, end: 0 }, alpha: { start: 1, end: 0 },
+                    blendMode: 'ADD', lifespan: 400, frequency: -1
+                }).setDepth(9);
+                this.paladinSparks.push(s);
             });
 
-            // ── OKTOHORNCAT: Rainbow Horn Glow (overlay circle at horn position) ──
-            this.paladinHornGlow = this.add.circle(0, 0, 8, 0xff0000, 0.6).setDepth(11).setBlendMode('ADD');
+            // ── OKTOHORNCAT: Rainbow Horn Flow (upward flowing rgb particles) ──
+            this.paladinHornEmitter = this.add.particles(0, 0, 'p_glow', {
+                follow: this.player, followOffset: { x: 0, y: -90 },
+                speedY: { min: -40, max: -90 }, speedX: { min: -8, max: 8 },
+                scale: { start: 0.25, end: 0 }, alpha: { start: 1, end: 0 },
+                blendMode: 'ADD', lifespan: 400, frequency: 15
+            }).setDepth(11);
             this.paladinHornHue = 0;
 
             // ── OKTOHORNCAT: Breathing Scale Animation ──
@@ -3553,35 +3556,50 @@ export default class GameScene extends Phaser.Scene {
         this.abilitySys.update(time, delta);
         this.hazardSys.update(time, delta);
 
-        // ── OKTOHORNCAT: Rainbow Horn Glow + Tentacle Color Cycling ──
+        // ── OKTOHORNCAT: Rainbow Effects & Dynamic Thrusters ──
         if (this.shipClass === 'paladin' && this.player && this.player.active) {
-            // Rainbow horn: smoothly cycle through HSL colors
-            if (this.paladinHornGlow) {
-                this.paladinHornHue = (this.paladinHornHue + delta * 0.2) % 360;
-                const h = this.paladinHornHue / 360;
-                // HSL to RGB conversion (s=1, l=0.5 = full saturation)
-                const hue2rgb = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
-                const q = 1, p = 0;
-                const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
-                const g = Math.round(hue2rgb(p, q, h) * 255);
-                const b2 = Math.round(hue2rgb(p, q, h - 1/3) * 255);
-                const color = (r << 16) | (g << 8) | b2;
-                this.paladinHornGlow.setFillStyle(color, 0.7);
-                this.paladinHornGlow.setPosition(this.player.x, this.player.y - 95);
+            
+            // Smoothly cycle through HSL colors
+            this.paladinHornHue = (this.paladinHornHue + delta * 0.2) % 360;
+            const h = this.paladinHornHue / 360;
+            const hue2rgb = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
+            const q = 1, p = 0;
+            const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+            const g = Math.round(hue2rgb(p, q, h) * 255);
+            const b2 = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+            const color = (r << 16) | (g << 8) | b2;
+
+            // 1. Color the entire ship hull (neon elements will pop)
+            this.player.setTint(color);
+
+            // 2. Color the horn flowing particles
+            if (this.paladinHornEmitter) {
+                this.paladinHornEmitter.setParticleTint(color);
             }
-            // Tentacle color cycling: shift each tentacle's tint over time
-            if (this.paladinTentacles) {
-                const baseHue = (time * 0.1) % 360;
-                this.paladinTentacles.forEach((p, i) => {
-                    const tentHue = (baseHue + i * 45) % 360;
-                    const th = tentHue / 360;
-                    const hue2rgb = (pp, qq, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return pp + (qq - pp) * 6 * t; if (t < 1/2) return qq; if (t < 2/3) return pp + (qq - pp) * (2/3 - t) * 6; return pp; };
-                    const qq = 1, pp = 0;
-                    const rr = Math.round(hue2rgb(pp, qq, th + 1/3) * 255);
-                    const gg = Math.round(hue2rgb(pp, qq, th) * 255);
-                    const bb = Math.round(hue2rgb(pp, qq, th - 1/3) * 255);
-                    const tc = (rr << 16) | (gg << 8) | bb;
-                    p.setParticleTint(tc);
+
+            // 3. Dynamic Thrusters (Flames & Sparks)
+            if (this.paladinFlames && this.paladinSparks) {
+                // Determine movement direction
+                const isW = this.controls.W.isDown || this.controls.UP.isDown;
+                const isS = this.controls.S.isDown || this.controls.DOWN.isDown;
+                const isA = this.controls.A.isDown || this.controls.LEFT.isDown;
+                const isD = this.controls.D.isDown || this.controls.RIGHT.isDown;
+                
+                // Indexes: 0=top, 1=TR, 2=R, 3=BR, 4=B, 5=BL, 6=L, 7=TL
+                const activeThrusters = new Set([3, 4, 5]); // Bottom thrusters always on (forward movement)
+                
+                if (isA) { activeThrusters.add(1); activeThrusters.add(2); } // Moving left -> Right thrusters
+                if (isD) { activeThrusters.add(6); activeThrusters.add(7); } // Moving right -> Left thrusters
+                if (isS) { activeThrusters.add(0); activeThrusters.add(1); activeThrusters.add(7); } // Braking/Moving down -> Top thrusters
+                
+                // Update frequencies and tints
+                this.paladinFlames.forEach((f, i) => {
+                    f.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 30 : 60) : -1;
+                    f.setParticleTint(color);
+                });
+                this.paladinSparks.forEach((s, i) => {
+                    s.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 50 : 100) : -1;
+                    s.setParticleTint(color);
                 });
             }
         }

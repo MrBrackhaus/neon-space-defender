@@ -3580,10 +3580,10 @@ export default class GameScene extends Phaser.Scene {
             // 3. Dynamic Thrusters (Flames & Sparks)
             if (this.paladinFlames && this.paladinSparks) {
                 // Determine movement direction
-                const isW = this.controls.W.isDown || this.controls.UP.isDown;
-                const isS = this.controls.S.isDown || this.controls.DOWN.isDown;
-                const isA = this.controls.A.isDown || this.controls.LEFT.isDown;
-                const isD = this.controls.D.isDown || this.controls.RIGHT.isDown;
+                const isW = this.keys.W.isDown || this.keys.UP.isDown;
+                const isS = this.keys.S.isDown || this.keys.DOWN.isDown;
+                const isA = this.keys.A.isDown || this.keys.LEFT.isDown;
+                const isD = this.keys.D.isDown || this.keys.RIGHT.isDown;
                 
                 // Indexes: 0=top, 1=TR, 2=R, 3=BR, 4=B, 5=BL, 6=L, 7=TL
                 const activeThrusters = new Set([3, 4, 5]); // Bottom thrusters always on (forward movement)

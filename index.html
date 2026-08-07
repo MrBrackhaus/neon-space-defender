@@ -495,6 +495,44 @@
       #btn-credits { background-image: url('ui/btn_credits.png'); }
       @media (hover: hover) and (pointer: fine) { #btn-credits:hover { background-image: url('ui/btn_credits_hover.png'); } }
 
+      /* Neon Donate Button */
+      .menu-item-neon {
+        display: block;
+        width: 300px;
+        height: 60px;
+        margin: 15px auto;
+        background: rgba(255, 0, 255, 0.1);
+        border: 2px solid #ff00ff;
+        border-radius: 8px;
+        color: #ff00ff;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
+        box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #ff00ff;
+        transition: all 0.2s ease-in-out;
+        opacity: 0;
+        animation: fadeSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation-delay: 0.50s;
+        pointer-events: auto;
+      }
+      .menu-item-neon:hover {
+        background: #ff00ff;
+        color: #fff;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+        box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff, inset 0 0 20px #ff00ff;
+      }
+      @media (max-width: 768px) {
+        .menu-item-neon {
+          width: 42vw;
+          height: 40px;
+          font-size: 0.8rem;
+          margin: 5px auto;
+        }
+      }
+
     </style>
     <link rel="preload" href="ui/btn_newgame_hover.png" as="image">
     <link rel="preload" href="ui/btn_techtree_hover.png" as="image">
@@ -567,6 +605,7 @@
           <button id="btn-story" class="menu-item-img">STORY-INTRO</button>
           <button id="btn-settings" class="menu-item-img">SETTINGS</button>
           <button id="btn-credits" class="menu-item-img">CREDITS</button>
+          <button id="btn-donate" class="menu-item-neon" onclick="window.open('https://paypal.me/jergeric', '_blank')">SUPPORT / DONATE</button>
         </nav>
       </div>
 

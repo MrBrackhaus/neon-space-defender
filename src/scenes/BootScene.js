@@ -117,7 +117,7 @@ export default class BootScene extends Phaser.Scene {
         // Static images for UI, items, and environment
         this.load.image('jergeric',     'jergeric.jpg?v=6');
         this.load.image('jergeric_cmd', 'jergeric_cmd.jpg?v=6');
-        this.load.image('jergeric_sheet', 'jergeric_sheet.jpg?v=6');
+        // NOTE: jergeric_sheet.jpg was removed - superseded by npc_jergeric spritesheet below
         
         // NPC Spritesheets
         this.load.spritesheet('npc_jergeric', 'npc_jergeric_sheet.jpg?v=6', { frameWidth: 344, frameHeight: 768 });

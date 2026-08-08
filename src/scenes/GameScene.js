@@ -258,6 +258,14 @@ export default class GameScene extends Phaser.Scene {
         if (go) go.style.display = 'none';
 
         this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,Q,E,R,SPACE,SHIFT,ESC,F6');
+        this.events.once('shutdown', () => {
+            if (this.keys.Q) this.keys.Q.off('down');
+            if (this.keys.E) this.keys.E.off('down');
+            if (this.keys.R) this.keys.R.off('down');
+            if (this.keys.F) this.keys.F.off('down');
+            if (this.keys.SPACE) this.keys.SPACE.off('down');
+        });
+
         this.keys.Q.on('down', () => this.activateNovaBomb());
         this.keys.R.on('down', () => this.useActiveItem());
 
@@ -347,6 +355,10 @@ export default class GameScene extends Phaser.Scene {
             .setScale(shipScale)
             .setTint(shipTint)
             .setCollideWorldBounds(true);
+            
+        if (this.shipClass === 'paladin') {
+            this.player.setAngle(180);
+        }
             
         if (shipAnim) {
             this.player.play(shipAnim);
@@ -690,7 +702,7 @@ export default class GameScene extends Phaser.Scene {
                 this.pd.damage *= 1.5;
                 this.pd.maxHp = Math.max(1, Math.floor(this.pd.maxHp * 0.75)); // -25% max HP
                 this.pd.hp = Math.min(this.pd.hp, this.pd.maxHp);
-                this.updateHUD();
+                if (time - (this._lastHudUpdate || 0) > 100) { this._lastHudUpdate = time; this.updateHUD(); }
             }
             if (b === 'explosive_rounds')  this.pd.explosiveRounds = true;
             if (b === 'homing_rounds')     this.pd.homingRounds = true;
@@ -980,7 +992,9 @@ export default class GameScene extends Phaser.Scene {
         };
     }
 
-    updateHUD() {
+    updateHUD(force = false) {
+        if (!force && this.time && this.time.now - (this._lastHudUpdate || 0) < 100) return;
+        if (this.time) this._lastHudUpdate = this.time.now;
         const { pd, score, waveNum } = this;
         
         if (!this.domCache) return;
@@ -1519,88 +1533,21 @@ export default class GameScene extends Phaser.Scene {
      */
     findNearestEnemies(count) {
         const alive = this.enemies.getChildren().filter(e => e.active && !e.isHitZone && !e.isDying);
+        const px = this.player.x;
+        const py = this.player.y;
+        
+        // Use squared distance to avoid Math.sqrt in sorting
         alive.sort((a, b) => {
-            return Phaser.Math.Distance.Between(this.player.x, this.player.y, a.x, a.y) - Phaser.Math.Distance.Between(this.player.x, this.player.y, b.x, b.y);
+            const dxA = px - a.x; const dyA = py - a.y;
+            const distSqA = dxA * dxA + dyA * dyA;
+            const dxB = px - b.x; const dyB = py - b.y;
+            const distSqB = dxB * dxB + dyB * dyB;
+            return distSqA - distSqB;
         });
         return alive.slice(0, count);
     }
 
-    /**
-     * @description Spawns a player projectile from the object pool with given coordinates and trajectory.
-     * @param {number} x - Origin X coordinate.
-     * @param {number} y - Origin Y coordinate.
-     * @param {number} angle - Firing angle in radians.
-     */
-    fireBullet(x, y, angle, isLaserDrone = false) {
-        if (this.audioSys) this.audioSys.playShoot(this.weaponClass);
 
-        let tex = 'bullet_pulse';
-        if (this.weaponClass === 'scatter') tex = 'bullet_scatter';
-        if (this.weaponClass === 'railgun') tex = 'bullet_railgun';
-        if (isLaserDrone) tex = 'bullet_railgun';
-
-        const b = this.bullets.get(x, y, tex);
-        if (!b) return;
-        if (typeof b.setTexture === 'function') { b.setTexture(tex); } else { b.destroy(); return; }
-        if (isLaserDrone) b.setTint(0xff00ff); // Purple lasers
-
-        b.setActive(true).setVisible(true);
-        if (b.body) {
-            b.body.enable = true;
-            b.body.setSize(b.width, b.height);
-        }
-        b.setDepth(8).setRotation(angle + Math.PI / 2);
-        b.pierce = isLaserDrone ? (this.pd.pierce || 0) + 2 : this.pd.pierce;
-        b.hitEnemies = [];
-        const critChance = (this.pd.crit ? 0.2 : 0) + (this.pd.critBoost || 0);
-        b.isCrit = Math.random() < critChance;
-        b.baseDamage = b.isCrit ? this.pd.damage * 3 : this.pd.damage;
-        b.damage = b.baseDamage;
-        b.startX = x;
-        b.startY = y;
-        b.body.reset(x, y);   // reset body position BEFORE setting velocity
-        b.spawnTime = this.time.now;
-        b.lifespan = this.pd.weaponLifespan;
-        b.setVelocity(Math.cos(angle) * 560, Math.sin(angle) * 560);
-    }
-
-    /**
-     * @description Locates the closest active enemy to the player.
-     * @returns {Phaser.Physics.Arcade.Sprite|null} The nearest enemy sprite or null if none exist.
-     */
-    findNearestEnemy() {
-        let best = null, bestDist = Infinity;
-        this.enemies.getChildren().forEach(e => {
-            if (!e.active || e.isHitZone || e.isDying) return;
-            const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y);
-            if (d < bestDist) { bestDist = d; best = e; }
-        });
-        return best;
-    }
-
-    /**
-     * @description Locates a specific number of nearest active enemies.
-     * @param {number} count - Maximum number of enemies to return.
-     * @returns {Array<Phaser.Physics.Arcade.Sprite>} Array of the nearest enemy sprites.
-     */
-    findNearestEnemies(count) {
-        const alive = this.enemies.getChildren().filter(e => e.active && !e.isHitZone && !e.isDying);
-        alive.sort((a, b) => {
-            return Phaser.Math.Distance.Between(this.player.x, this.player.y, a.x, a.y) - Phaser.Math.Distance.Between(this.player.x, this.player.y, b.x, b.y);
-        });
-        return alive.slice(0, count);
-    }
-
-    // ─────────────────────────────────────────────────────
-    // ENEMY SPAWNING & AI
-    // ─────────────────────────────────────────────────────
-    /**
-     * @description Displays a stylized dialogue box for boss taunts or story events.
-     * @param {string} title - Speaker name or title.
-     * @param {string} text - The message to display.
-     * @param {string} [color='#ff0000'] - Theme color for the dialog borders and title.
-     * @param {number} [duration=4000] - How long the dialog remains on screen in milliseconds.
-     */
     showDialog(title, text, color = '#ff0000', duration = 4000) {
         if (this.dialogBox) this.dialogBox.destroy();
         
@@ -2434,6 +2381,21 @@ export default class GameScene extends Phaser.Scene {
             enemy.state.telegraph = null;
         }
         
+        // Kill all tweens attached to this enemy to prevent tween leaks
+        this.tweens.killTweensOf(enemy);
+        
+        // Clean up armor ring graphics
+        if (enemy.armorGraphics) {
+            enemy.armorGraphics.destroy();
+            enemy.armorGraphics = null;
+        }
+        
+        // Clean up damage aura graphics
+        if (enemy.auraGraphics) {
+            enemy.auraGraphics.destroy();
+            enemy.auraGraphics = null;
+        }
+        
         enemy.isDying = true;
         this.onEnemyDied(enemy);
     }
@@ -2544,10 +2506,7 @@ export default class GameScene extends Phaser.Scene {
             this.bossRef = null;
         }
 
-        if (enemy.auraGraphics) {
-            enemy.auraGraphics.destroy();
-            enemy.auraGraphics = null;
-        }
+        // (armorGraphics and auraGraphics already cleaned in killEnemy)
         enemy.destroy();
         if (enemy.waveNum === this.waveNum) {
             this.waveLeft--;
@@ -2848,58 +2807,77 @@ export default class GameScene extends Phaser.Scene {
     updateXPMagnet() {
         const px = this.player.x, py = this.player.y;
         const rangeSq = this.pd.magnetRange * this.pd.magnetRange;
+        const isMagnetTick = this.sys.game.loop.frame % 4 === 0;
+
         this.crystals.getChildren().forEach(c => {
             if (!c.active) return;
             const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
-            if (distSq < rangeSq || c.magnetized) {
-                c.magnetized = true;
-                const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
-                c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
-                c.setAlpha(0.6);
-            }
-            if (distSq < 3600) { // 60 * 60 = 3600
+            
+            if (distSq < 3600) {
                 if(this.audioSys) this.audioSys.playPickup('xp');
                 this.addXP(c.xpVal);
                 c.destroy();
+                return;
+            }
+            
+            if (c.magnetized || (isMagnetTick && distSq < rangeSq)) {
+                c.magnetized = true;
+                if (isMagnetTick) {
+                    const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
+                    c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
+                    c.setAlpha(0.6);
+                }
             }
         });
 
         this.scraps.getChildren().forEach(c => {
             if (!c.active) return;
             const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
-            if (distSq < rangeSq || c.magnetized) {
-                c.magnetized = true;
-                const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
-                c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
-            }
+            
             if (distSq < 3600) {
                 this.onScrapCollect(this.player, c);
+                return;
+            }
+            
+            if (c.magnetized || (isMagnetTick && distSq < rangeSq)) {
+                c.magnetized = true;
+                if (isMagnetTick) {
+                    const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
+                    c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
+                }
             }
         });
 
         this.cubesGroup.getChildren().forEach(c => {
             if (!c.active) return;
             const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
-            if (distSq < rangeSq || c.magnetized) {
-                c.magnetized = true;
-                const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
-                c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
-                c.setAlpha(0.6);
-            }
+            
             if (distSq < 3600) {
                 this.pd.cubes += 1;
                 this.audioSys.playHover();
                 c.destroy();
+                return;
+            }
+            
+            if (c.magnetized || (isMagnetTick && distSq < rangeSq)) {
+                c.magnetized = true;
+                if (isMagnetTick) {
+                    const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
+                    c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
+                    c.setAlpha(0.6);
+                }
             }
         });
         
         this.weaponUpgradesGroup.getChildren().forEach(c => {
             if (!c.active) return;
             const distSq = (px - c.x) * (px - c.x) + (py - c.y) * (py - c.y);
-            if (distSq < rangeSq || c.magnetized) {
+            if (c.magnetized || (isMagnetTick && distSq < rangeSq)) {
                 c.magnetized = true;
-                const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
-                c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
+                if (isMagnetTick) {
+                    const a = Phaser.Math.Angle.Between(c.x, c.y, px, py);
+                    c.setVelocity(Math.cos(a) * 1200, Math.sin(a) * 1200);
+                }
             }
         });
     }
@@ -3545,6 +3523,7 @@ export default class GameScene extends Phaser.Scene {
      * @param {number} delta - Delta time since last frame.
      */
     update(time, delta) {
+        if (time - (this._lastHudUpdate || 0) > 100) { this._lastHudUpdate = time; this.updateHUD(); }
         if (this.isGameOver || this.isDevMenuOpen) return;
 
         this.handleMovement();
@@ -3561,19 +3540,25 @@ export default class GameScene extends Phaser.Scene {
             
             // Smoothly cycle through HSL colors
             this.paladinHornHue = (this.paladinHornHue + delta * 0.2) % 360;
-            const h = this.paladinHornHue / 360;
-            const hue2rgb = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
-            const q = 1, p = 0;
-            const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
-            const g = Math.round(hue2rgb(p, q, h) * 255);
-            const b2 = Math.round(hue2rgb(p, q, h - 1/3) * 255);
-            const color = (r << 16) | (g << 8) | b2;
+            
+            // Throttle color recalculation to every 3 frames — imperceptible at 60fps
+            const frame = this.sys.game.loop.frame;
+            if (frame % 3 === 0) {
+                const h = this.paladinHornHue / 360;
+                const hue2rgb = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
+                const q = 1, p = 0;
+                const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+                const g = Math.round(hue2rgb(p, q, h) * 255);
+                const b2 = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+                this._paladinColor = (r << 16) | (g << 8) | b2;
+            }
+            const color = this._paladinColor || 0xffffff;
 
             // 1. Color the entire ship hull (neon elements will pop)
                 // this.player.setTint(color); // body color handled by spritesheet animation
 
             // 2. Color the horn flowing particles
-            if (this.paladinHornEmitter) {
+            if (this.paladinHornEmitter && frame % 3 === 0) {
                 this.paladinHornEmitter.setParticleTint(color);
             }
 
@@ -3585,22 +3570,26 @@ export default class GameScene extends Phaser.Scene {
                 const isA = this.keys.A.isDown || this.keys.LEFT.isDown;
                 const isD = this.keys.D.isDown || this.keys.RIGHT.isDown;
                 
-                // Indexes: 0=top, 1=TR, 2=R, 3=BR, 4=B, 5=BL, 6=L, 7=TL
+                // Rotated Indexes: 0=T, 1=TL, 2=L, 3=BL, 4=B, 5=BR, 6=R, 7=TR
                 const activeThrusters = new Set([3, 4, 5]); // Bottom thrusters always on (forward movement)
                 
-                if (isA) { activeThrusters.add(1); activeThrusters.add(2); } // Moving left -> Right thrusters
-                if (isD) { activeThrusters.add(6); activeThrusters.add(7); } // Moving right -> Left thrusters
+                if (isA) { activeThrusters.add(5); activeThrusters.add(6); activeThrusters.add(7); } // Moving left -> Right thrusters
+                if (isD) { activeThrusters.add(1); activeThrusters.add(2); activeThrusters.add(3); } // Moving right -> Left thrusters
                 if (isS) { activeThrusters.add(0); activeThrusters.add(1); activeThrusters.add(7); } // Braking/Moving down -> Top thrusters
                 
-                // Update frequencies and tints
-                this.paladinFlames.forEach((f, i) => {
-                    f.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 30 : 60) : -1;
-                    f.setParticleTint(color);
-                });
-                this.paladinSparks.forEach((s, i) => {
-                    s.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 50 : 100) : -1;
-                    s.setParticleTint(color);
-                });
+                // Throttled Update for frequencies and tints
+                const thrusterState = (isW?1:0) | (isS?2:0) | (isA?4:0) | (isD?8:0);
+                if (this._lastThrusterState !== thrusterState || frame % 5 === 0) {
+                    this._lastThrusterState = thrusterState;
+                    this.paladinFlames.forEach((f, i) => {
+                        f.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 30 : 60) : -1;
+                        f.setParticleTint(color);
+                    });
+                    this.paladinSparks.forEach((s, i) => {
+                        s.frequency = activeThrusters.has(i) ? (isW && [3,4,5].includes(i) ? 50 : 100) : -1;
+                        s.setParticleTint(color);
+                    });
+                }
             }
         }
         
@@ -3693,15 +3682,21 @@ export default class GameScene extends Phaser.Scene {
             } else if (b.lifespan > 0 && time - b.spawnTime > b.lifespan) {
                 this.bullets.killAndHide(b);
             } else if (this.pd.homingRounds && b.body && b.body.velocity.length() > 0) {
-                let nearest = null;
-                let minDist = 250;
-                this.enemies.getChildren().forEach(e => {
-                    if (e.active && !e.isDying && (!b.hitEnemies || !b.hitEnemies.includes(e))) {
-                        let d = Phaser.Math.Distance.Between(b.x, b.y, e.x, e.y);
-                        if (d < minDist) { minDist = d; nearest = e; }
-                    }
-                });
-                if (nearest) {
+                const frame = this.sys.game.loop.frame;
+                if (!b._homingTarget || !b._homingTarget.active || b._homingTarget.isDying || frame % 6 === 0) {
+                    let nearest = null;
+                    let minDistSq = 62500; // 250 * 250
+                    this.enemies.getChildren().forEach(e => {
+                        if (e.active && !e.isDying && (!b.hitEnemies || !b.hitEnemies.includes(e))) {
+                            let dSq = (b.x - e.x)*(b.x - e.x) + (b.y - e.y)*(b.y - e.y);
+                            if (dSq < minDistSq) { minDistSq = dSq; nearest = e; }
+                        }
+                    });
+                    b._homingTarget = nearest;
+                }
+                
+                if (b._homingTarget) {
+                    const nearest = b._homingTarget;
                     const targetAngle = Phaser.Math.Angle.Between(b.x, b.y, nearest.x, nearest.y);
                     let currentAngle = b.body.velocity.angle();
                     let diff = Phaser.Math.Angle.Wrap(targetAngle - currentAngle);

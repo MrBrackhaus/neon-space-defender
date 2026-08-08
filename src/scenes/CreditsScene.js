@@ -45,15 +45,7 @@ export default class CreditsScene extends Phaser.Scene {
         const creditsContainer = this.add.container(cw / 2, ch + 50);
 
         // ─────────────────── TYPOGRAPHY ───────────────────
-        
-        const titleStyle = { 
-            fontFamily: 'Orbitron', fontSize: '22px', color: '#00ffff', fontStyle: 'bold', 
-            align: 'center', shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 10, fill: true } 
-        };
-        const nameStyle = { 
-            fontFamily: 'Share Tech Mono', fontSize: '32px', color: '#ffffff', 
-            align: 'center', shadow: { offsetX: 0, offsetY: 0, color: '#ffffff', blur: 10, fill: true } 
-        };
+        // (Styles moved inline below — see comboStyle)
 
         // ─────────────────── ROLES DATA ───────────────────
         
@@ -117,6 +109,18 @@ export default class CreditsScene extends Phaser.Scene {
 
         let currentY = 0;
         
+        // ─────────────────── COMBINED STYLE ───────────────────
+        // Merge title+name into ONE text object per role.
+        // This halves the text object count from 110 → 55, reducing GPU overhead.
+        const comboStyle = {
+            fontFamily: 'Orbitron',
+            fontSize: '22px',
+            color: '#00ffff',
+            fontStyle: 'bold',
+            align: 'center',
+            shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 8, fill: true }
+        };
+
         // Add huge game header at the very top of the credits roll
         const mainTitle = this.add.text(0, currentY, 'NEON SPACE DEFENDER', {
             fontFamily: 'Orbitron', fontSize: '54px', color: '#ff00ff', fontStyle: 'bold', 
@@ -125,11 +129,13 @@ export default class CreditsScene extends Phaser.Scene {
         creditsContainer.add(mainTitle);
         currentY += 150;
 
-        // Iterate through all roles and dynamically position them in the container
+        // Iterate through all roles — one text object per entry (title\nname)
         roles.forEach(role => {
-            const tText = this.add.text(0, currentY, role.title, titleStyle).setOrigin(0.5);
-            const nText = this.add.text(0, currentY + 35, role.name, nameStyle).setOrigin(0.5);
-            creditsContainer.add([tText, nText]);
+            const entry = this.add.text(0, currentY,
+                `${role.title}\n${role.name}`,
+                { ...comboStyle, lineSpacing: 10 }
+            ).setOrigin(0.5, 0);
+            creditsContainer.add(entry);
             currentY += 120;
         });
 

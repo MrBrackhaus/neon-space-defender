@@ -105,13 +105,17 @@ export default class PauseScene extends Phaser.Scene {
 
         // Instantiate Settings button — opens as overlay, game stays paused
         createButton(ch * 0.6, 'SETTINGS', () => {
+            this.input.keyboard.off('keydown-ESC', resumeGame);
             this.scene.launch('SettingsScene', { returnTo: 'PauseScene' });
             this.scene.setVisible(false);
         });
 
         // When we resume from SettingsScene, make ourselves visible again
-        this.events.on('wake', () => this.scene.setVisible(true));
-        this.events.on('resume', () => this.scene.setVisible(true));
+        this.events.on('wake', () => {
+            this.scene.setVisible(true);
+            this.input.keyboard.on('keydown-ESC', resumeGame);
+        });
+        // this.events.on('resume') duplicate removed, wake is sufficient or we use once
 
         // Instantiate Quit button
         createButton(ch * 0.8, 'QUIT TO MENU', () => {

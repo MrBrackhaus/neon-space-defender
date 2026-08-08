@@ -198,6 +198,25 @@ export default class ShipSelectScene extends Phaser.Scene {
      * Indicates unlock status, active status, and handles unlocking ships via Scrap.
      * @returns {void}
      */
+
+    refreshUI() {
+        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10);
+        this.unlockedShips = JSON.parse(localStorage.getItem('neon_unlocked_ships') || '["standard"]');
+        this.selectedShip = localStorage.getItem('neon_selected_ship') || 'standard';
+        this.selectedWeapon = localStorage.getItem('neon_selected_weapon') || 'pulse';
+        
+        if (this.listItems) this.listItems.forEach(item => item.destroy());
+        this.listItems = [];
+        
+        if (this.weaponTabs) this.weaponTabs.forEach(item => item.destroy());
+        this.weaponTabs = [];
+        
+        this.buildShipList();
+        this.buildWeaponTabs();
+        this.updateInfoCard();
+        this.scrapText.setText(`SCRAP: ${this.scrap}`);
+    }
+
     buildShipList() {
         const startY = this.ch * 0.25;
         const spacing = 75;
@@ -258,7 +277,7 @@ export default class ShipSelectScene extends Phaser.Scene {
                 if (isUnlocked) {
                     // Equip ship
                     localStorage.setItem('neon_selected_ship', s.id);
-                    this.scene.restart();
+                    this.refreshUI();
                 } else if (this.scrap >= s.cost) {
                     // Buy and unlock ship
                     this.scrap -= s.cost;
@@ -266,7 +285,8 @@ export default class ShipSelectScene extends Phaser.Scene {
                     localStorage.setItem('neon_scrap', this.scrap);
                     localStorage.setItem('neon_unlocked_ships', JSON.stringify(this.unlockedShips));
                     localStorage.setItem('neon_selected_ship', s.id);
-                    this.scene.restart({ boughtShip: true }); // Refresh the UI completely
+                    this.refreshUI();
+                    this.eventSys.triggerCompanionComment('unlock_ship'); // Refresh the UI completely
                 } else {
                     // Not enough scrap feedback
                     this.cameras.main.shake(200, 0.01);
@@ -331,14 +351,15 @@ export default class ShipSelectScene extends Phaser.Scene {
             const isUnlocked = this.unlockedShips.includes(s.id);
             if (isUnlocked) {
                 localStorage.setItem('neon_selected_ship', s.id);
-                this.scene.restart();
+                this.refreshUI();
             } else if (this.scrap >= s.cost) {
                 this.scrap -= s.cost;
                 this.unlockedShips.push(s.id);
                 localStorage.setItem('neon_scrap', this.scrap);
                 localStorage.setItem('neon_unlocked_ships', JSON.stringify(this.unlockedShips));
                 localStorage.setItem('neon_selected_ship', s.id);
-                this.scene.restart({ boughtShip: true });
+                this.refreshUI();
+                    this.eventSys.triggerCompanionComment('unlock_ship');
             } else {
                 this.cameras.main.shake(200, 0.01);
             }
@@ -467,6 +488,7 @@ export default class ShipSelectScene extends Phaser.Scene {
             const isUnlocked = !w.techKey || parseInt(localStorage.getItem(w.techKey) || '0') > 0;
             const isSelected = this.selectedWeapon === w.id;
             
+            this.weaponTabs = this.weaponTabs || [];
             const tab = this.add.container(startX + i * 180, startY);
             
             // Tab Background
@@ -486,13 +508,14 @@ export default class ShipSelectScene extends Phaser.Scene {
             else if (isUnlocked) { status = 'WÄHLEN'; sCol = '#aaaaaa'; }
             
             tab.add(this.add.text(-20, 10, status, { fontFamily: 'Orbitron', fontSize: '9px', color: sCol }).setOrigin(0, 0.5));
+            this.weaponTabs.push(tab);
             
             // Allow selection only if unlocked
             bg.on('pointerdown', () => {
             if(this.game && this.game.audioSys) this.game.audioSys.playClick();
                 if (isUnlocked) {
                     localStorage.setItem('neon_selected_weapon', w.id);
-                    this.scene.restart(); // Refresh UI completely
+                    this.refreshUI(); // Refresh UI completely
                 } else {
                     this.cameras.main.shake(200, 0.015); // visual denial
                 }

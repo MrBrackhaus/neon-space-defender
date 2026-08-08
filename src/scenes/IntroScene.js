@@ -86,18 +86,14 @@ export default class IntroScene extends Phaser.Scene {
         // ─────────────────── VISUAL OVERLAYS ───────────────────
 
         // Scanline overlay (subtle, retro CRT feeling)
-        const scanlines = this.add.graphics();
-        scanlines.setDepth(100);
-        for (let y = 0; y < ch; y += 4) {
-            scanlines.lineStyle(1, 0x000000, 0.12);
-            scanlines.lineBetween(0, y, cw, y);
-        }
+        // Removed manual graphics loop - relying on global CSS #scanline-overlay
 
         // Main image display for slide backgrounds
         this.bgImg = this.add.image(cw / 2, ch / 2, 'bg').setDisplaySize(cw, ch);
 
         // Vignette effect to draw focus to the center
-        const vig = this.add.graphics().setDepth(90);
+        // Remove stale texture from previous visit to prevent VRAM leak
+        if (this.textures.exists('vig_tex')) { this.textures.remove('vig_tex'); }
         const vigGrad = this.textures.createCanvas('vig_tex', cw, ch);
         const ctx = vigGrad.getContext();
         const grad = ctx.createRadialGradient(cw/2, ch/2, ch * 0.3, cw/2, ch/2, ch * 0.8);
@@ -107,6 +103,10 @@ export default class IntroScene extends Phaser.Scene {
         ctx.fillRect(0, 0, cw, ch);
         vigGrad.refresh();
         this.add.image(cw/2, ch/2, 'vig_tex').setDepth(90);
+        // Clean up canvas texture when scene is shut down
+        this.events.once('shutdown', () => {
+            if (this.textures.exists('vig_tex')) { this.textures.remove('vig_tex'); }
+        });
 
         // Black bars for cinematic letterbox look
         const barH = ch * 0.09;

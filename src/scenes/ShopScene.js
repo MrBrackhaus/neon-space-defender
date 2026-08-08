@@ -44,6 +44,9 @@ export default class ShopScene extends Phaser.Scene {
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
+        
+        // Kill all tweens on scene shutdown to prevent leaks
+        this.events.once('shutdown', () => this.tweens.killAll());
 
         // Dust particles
         const particles = this.add.particles(0, 0, 'asteroid_1', {
@@ -147,17 +150,33 @@ export default class ShopScene extends Phaser.Scene {
         backZone.on('pointerout', () => btnBack.setColor('#00ffcc'));
     }
 
+refreshShop() {
+        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10) || 0;
+        this.scrapText.setText(`SCRAP: ${this.scrap}`);
+        
+        if (this.listContainer) {
+            this.listContainer.destroy(true);
+        }
+        
+        const cw = this.scale.width;
+        const uiCenterX = cw * 0.68;
+        this._buildList(cw, this.scale.height, uiCenterX);
+    }
+
     _buildList(cw, ch, uiCenterX) {
+        this.listContainer = this.add.container(0, 0);
+        
         const startY = 185;
         const rowH = 75;
         const listWidth = 620;
 
         // Container background for the list
-        const listBg = this.add.graphics();
-        listBg.fillStyle(0x000000, 0.6);
-        listBg.lineStyle(1, 0x333344, 1);
-        listBg.fillRoundedRect(uiCenterX - listWidth/2 - 10, startY - 10, listWidth + 20, (SHOP_UPGRADES.length * rowH) + 10, 10);
-        listBg.strokeRoundedRect(uiCenterX - listWidth/2 - 10, startY - 10, listWidth + 20, (SHOP_UPGRADES.length * rowH) + 10, 10);
+        const unifiedGraphics = this.add.graphics();
+        unifiedGraphics.fillStyle(0x000000, 0.6);
+        unifiedGraphics.lineStyle(1, 0x333344, 1);
+        unifiedGraphics.fillRoundedRect(uiCenterX - listWidth/2 - 10, startY - 10, listWidth + 20, (SHOP_UPGRADES.length * rowH) + 10, 10);
+        unifiedGraphics.strokeRoundedRect(uiCenterX - listWidth/2 - 10, startY - 10, listWidth + 20, (SHOP_UPGRADES.length * rowH) + 10, 10);
+        this.listContainer.add(unifiedGraphics);
 
         SHOP_UPGRADES.forEach((upg, i) => {
             const level = parseInt(localStorage.getItem(`neon_upg_${upg.id}`) || '0', 10);
@@ -168,53 +187,51 @@ export default class ShopScene extends Phaser.Scene {
             const y = startY + i * rowH;
             
             // Row Box
-            const rowGraphics = this.add.graphics();
             const rowColor = isMaxed ? 0x003311 : (canAfford ? 0x332200 : 0x11111a);
             const rowStroke = isMaxed ? 0x00ff66 : (canAfford ? 0xffaa00 : 0x333344);
             
-            rowGraphics.fillStyle(rowColor, 0.85);
-            rowGraphics.lineStyle(1, rowStroke, 0.8);
-            rowGraphics.fillRoundedRect(uiCenterX - listWidth/2, y, listWidth, rowH - 10, 6);
-            rowGraphics.strokeRoundedRect(uiCenterX - listWidth/2, y, listWidth, rowH - 10, 6);
+            unifiedGraphics.fillStyle(rowColor, 0.85);
+            unifiedGraphics.lineStyle(1, rowStroke, 0.8);
+            unifiedGraphics.fillRoundedRect(uiCenterX - listWidth/2, y, listWidth, rowH - 10, 6);
+            unifiedGraphics.strokeRoundedRect(uiCenterX - listWidth/2, y, listWidth, rowH - 10, 6);
 
             // Icon
-            this.add.text(uiCenterX - listWidth/2 + 25, y + (rowH-10)/2, upg.icon, {
+            this.listContainer.add(this.add.text(uiCenterX - listWidth/2 + 25, y + (rowH-10)/2, upg.icon, {
                 fontSize: '24px'
-            }).setOrigin(0.5);
+            }).setOrigin(0.5));
 
             // Texts
-            this.add.text(uiCenterX - listWidth/2 + 55, y + 18, upg.name, {
+            this.listContainer.add(this.add.text(uiCenterX - listWidth/2 + 55, y + 18, upg.name, {
                 fontFamily: 'Orbitron', fontSize: '15px', color: isMaxed ? '#00ff66' : '#ffffff', fontStyle: 'bold'
-            }).setOrigin(0, 0.5);
+            }).setOrigin(0, 0.5));
             
-            this.add.text(uiCenterX - listWidth/2 + 55, y + 42, upg.desc, {
+            this.listContainer.add(this.add.text(uiCenterX - listWidth/2 + 55, y + 42, upg.desc, {
                 fontFamily: 'Orbitron', fontSize: '12px', color: '#99aabb'
-            }).setOrigin(0, 0.5);
+            }).setOrigin(0, 0.5));
 
             // Value / Unit
-            this.add.text(uiCenterX + 30, y + (rowH-10)/2, upg.unit, {
+            this.listContainer.add(this.add.text(uiCenterX + 30, y + (rowH-10)/2, upg.unit, {
                 fontFamily: 'Orbitron', fontSize: '14px', color: '#ffcc00', fontStyle: 'bold'
-            }).setOrigin(0.5);
+            }).setOrigin(0.5));
 
             // Level Pips or Text
             const lvlText = isMaxed ? 'MAXIMUM' : `Level ${level}/${upg.max}`;
-            this.add.text(uiCenterX + 120, y + (rowH-10)/2, lvlText, {
+            this.listContainer.add(this.add.text(uiCenterX + 120, y + (rowH-10)/2, lvlText, {
                 fontFamily: 'Orbitron', fontSize: '13px', color: isMaxed ? '#00ff66' : '#aaaaaa', fontStyle: 'bold'
-            }).setOrigin(0.5);
+            }).setOrigin(0.5));
 
             // Buy Button
             const btnW = 130, btnH = 42;
             const btnX = uiCenterX + listWidth/2 - btnW/2 - 15;
             const btnY = y + (rowH-10)/2;
             
-            const btnBg = this.add.graphics();
             const btnColor = isMaxed ? 0x004422 : (canAfford ? 0xffaa00 : 0x2a2a35);
             const btnStroke = isMaxed ? 0x00ff66 : (canAfford ? 0xffcc00 : 0x444455);
             
-            btnBg.fillStyle(btnColor, 0.9);
-            btnBg.lineStyle(2, btnStroke, 1);
-            btnBg.fillRoundedRect(btnX - btnW/2, btnY - btnH/2, btnW, btnH, 6);
-            btnBg.strokeRoundedRect(btnX - btnW/2, btnY - btnH/2, btnW, btnH, 6);
+            unifiedGraphics.fillStyle(btnColor, 0.9);
+            unifiedGraphics.lineStyle(2, btnStroke, 1);
+            unifiedGraphics.fillRoundedRect(btnX - btnW/2, btnY - btnH/2, btnW, btnH, 6);
+            unifiedGraphics.strokeRoundedRect(btnX - btnW/2, btnY - btnH/2, btnW, btnH, 6);
 
             const btnLabel = isMaxed ? 'MAXED' : (canAfford ? `KAUFEN (${cost})` : `${cost} SCRAP`);
             const btnTxtColor = isMaxed ? '#00ffaa' : (canAfford ? '#000000' : '#888899');
@@ -222,9 +239,11 @@ export default class ShopScene extends Phaser.Scene {
             const btnText = this.add.text(btnX, btnY, btnLabel, {
                 fontFamily: 'Orbitron', fontSize: '13px', color: btnTxtColor, fontStyle: 'bold'
             }).setOrigin(0.5);
+            this.listContainer.add(btnText);
 
             if (canAfford) {
                 const zone = this.add.zone(btnX, btnY, btnW, btnH).setInteractive({ useHandCursor: true });
+                this.listContainer.add(zone);
                 
                 zone.on('pointerover', () => {
                     btnBg.clear();
@@ -252,9 +271,11 @@ export default class ShopScene extends Phaser.Scene {
                     this.scrap -= cost;
                     localStorage.setItem('neon_scrap', this.scrap);
                     localStorage.setItem(`neon_upg_${upg.id}`, level + 1);
-                    this.scene.restart();
+                    this.refreshShop();
                 });
             }
         });
     }
+
+
 }

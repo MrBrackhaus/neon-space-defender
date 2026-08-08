@@ -200,7 +200,7 @@ export default class SettingsScene extends Phaser.Scene {
                 display.setText(`${Math.round(volMusic * 100)}%`);
                 // Dynamically update audio system if GameScene is running
                 if (this.game.audioSys) {
-                    this.game.audioSys.volMusic = volMusic;
+                    this.game.audioSys.volSfx = volSfx;
                     this.game.audioSys.updateVolumes();
                 }
             },
@@ -223,7 +223,7 @@ export default class SettingsScene extends Phaser.Scene {
                 localStorage.setItem('neon_vol_sfx', volSfx.toString());
                 display.setText(`${Math.round(volSfx * 100)}%`);
                 if (this.game.audioSys) {
-                    this.game.audioSys.volMusic = volMusic;
+                    this.game.audioSys.volSfx = volSfx;
                     this.game.audioSys.updateVolumes();
                 }
             },
@@ -232,7 +232,7 @@ export default class SettingsScene extends Phaser.Scene {
                 localStorage.setItem('neon_vol_sfx', volSfx.toString());
                 display.setText(`${Math.round(volSfx * 100)}%`);
                 if (this.game.audioSys) {
-                    this.game.audioSys.volMusic = volMusic;
+                    this.game.audioSys.volSfx = volSfx;
                     this.game.audioSys.updateVolumes();
                 }
             }

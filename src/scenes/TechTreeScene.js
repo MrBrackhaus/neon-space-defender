@@ -20,7 +20,15 @@ export default class TechTreeScene extends Phaser.Scene {
 
         // --- CAMERA SETTINGS ---
         this.cam = this.cameras.main;
-        this.uiCam = this.cameras.add(0, 0, width, height);
+        if (!this.uiCam) { this.uiCam = this.cameras.add(0, 0, width, height); }
+        this.energyFlowDots = []; // Track energy flow dots for cleanup
+        this.events.once('shutdown', () => {
+            // Kill all infinite tweens and energy dots to prevent leaks
+            this.tweens.killAll();
+            this.energyFlowDots.forEach(d => { if (d && d.active) d.destroy(); });
+            this.energyFlowDots = [];
+            if (this.uiCam) { this.cameras.remove(this.uiCam); this.uiCam = null; }
+        });
         
         this.cam.fadeIn(500, 0, 0, 0);
         // The virtual world size for the tech tree
@@ -311,6 +319,7 @@ export default class TechTreeScene extends Phaser.Scene {
         // Simple visual polish: draw a small glowing circle moving from parent to skill
         const dot = this.add.circle(parent.x, parent.y, 4, 0xffffff).setDepth(5);
         if (this.uiCam) this.uiCam.ignore(dot);
+        this.energyFlowDots.push(dot);
         
         // Calculate distance to adjust duration so speed is constant
         const dist = Phaser.Math.Distance.Between(parent.x, parent.y, skill.x, skill.y);
@@ -328,7 +337,33 @@ export default class TechTreeScene extends Phaser.Scene {
         });
     }
 
-            createNode(skill) {
+        
+    refreshTechTree() {
+        // Clean up old energy flow dots before recreating
+        this.energyFlowDots.forEach(d => { if (d && d.active) { this.tweens.killTweensOf(d); d.destroy(); } });
+        this.energyFlowDots = [];
+        
+        // Re-evaluate unlock status
+        this.skills.forEach(skill => {
+            skill.unlocked = parseInt(localStorage.getItem(skill.key) || '0', 10) > 0;
+        });
+        
+        // Re-draw connections
+        this.drawConnections();
+        
+        // Destroy old nodes
+        Object.values(this.nodes).forEach(container => container.destroy());
+        this.nodes = {};
+        
+        // Create new nodes
+        this.skills.forEach(skill => this.createNode(skill));
+        
+        // Update scrap display
+        this.scrap = parseInt(localStorage.getItem('neon_scrap') || '0', 10) || 0;
+        this.scrapText.setText(`AVAILABLE SCRAP: ${this.scrap}`);
+    }
+
+    createNode(skill) {
         let reqsMet = true;
         if (skill.req) {
             const reqs = Array.isArray(skill.req) ? skill.req : [skill.req];
@@ -556,7 +591,8 @@ export default class TechTreeScene extends Phaser.Scene {
                 duration: 400,
                 onComplete: () => { 
                     flash.destroy();
-                    this.scene.restart({ boughtTech: true }); 
+                    this.refreshTechTree();
+                    this.eventSys.triggerCompanionComment('unlock_tech'); 
                 }
             });
         } else if (isAvailable && this.scrap < skill.cost) {

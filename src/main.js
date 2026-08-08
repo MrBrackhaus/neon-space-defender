@@ -26,15 +26,28 @@ import TechTreeScene from './scenes/TechTreeScene.js';
  * @description The core configuration object for the Phaser engine.
  */
 const config = {
-    type: Phaser.AUTO, // Automatically select WebGL or Canvas rendering
+    type: Phaser.WEBGL, // Force WebGL for best performance
     width: window.innerWidth,
     height: window.innerHeight,
     parent: 'game-container', // The DOM element ID to mount the game canvas
     backgroundColor: '#05050f', // Deep dark space background color
+    render: {
+        antialias: false,        // Disable anti-aliasing for pixel-perfect sprites & perf
+        roundPixels: true,       // Snap to whole pixels to avoid sub-pixel rendering cost
+        powerPreference: 'high-performance', // Request discrete GPU on dual-GPU systems
+        batchSize: 4096,         // Larger batch = fewer draw calls for sprite-heavy scenes
+        maxLights: 0             // We don't use Phaser's light pipeline
+    },
+    fps: {
+        target: 60,
+        forceSetTimeOut: false   // Use rAF, not setTimeout
+    },
     physics: {
         default: 'arcade',
         arcade: { 
-            debug: false // Set to true to see hitboxes for debugging
+            debug: false, // Set to true to see hitboxes for debugging
+            fps: 60,
+            tileBias: 16
         }
     },
     scale: {
@@ -44,6 +57,7 @@ const config = {
     input: {
         gamepad: true // Enable gamepad support globally
     },
+    banner: false, // Suppress Phaser boot banner in console
     // Array of scenes, ordered such that BootScene starts first
     scene: [
         BootScene, 

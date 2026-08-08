@@ -74,6 +74,15 @@ export default class AchievementScene extends Phaser.Scene {
 
         // ─────────────────── RENDER ACHIEVEMENT CARDS ───────────────────
         
+        // Bundle Graphics objects: one for all unlocked, one for all locked
+        const bgUnlocked = this.add.graphics();
+        bgUnlocked.lineStyle(3, 0x00ffff, 1);
+        bgUnlocked.fillStyle(0x00ffff, 0.1);
+
+        const bgLocked = this.add.graphics();
+        bgLocked.lineStyle(2, 0x333333, 1);
+        bgLocked.fillStyle(0x111111, 0.8);
+
         achievements.forEach((ach, index) => {
             // Calculate grid position (row, col)
             const row = Math.floor(index / cols);
@@ -83,7 +92,7 @@ export default class AchievementScene extends Phaser.Scene {
             const x = startX + col * colWidth;
             const y = startY + row * spacing;
 
-            const bg = this.add.graphics();
+            // (Unified graphics used instead of individual objects)
             const w = colWidth - 40;
             const h = 90;
             const rx = x - w / 2;
@@ -91,10 +100,9 @@ export default class AchievementScene extends Phaser.Scene {
             
             if (ach.unlocked) {
                 // Style for UNLOCKED achievements: bright neon cyan glow
-                bg.lineStyle(3, 0x00ffff, 1);
-                bg.fillStyle(0x00ffff, 0.1);
-                bg.strokeRoundedRect(rx, ry, w, h, 12);
-                bg.fillRoundedRect(rx, ry, w, h, 12);
+                bgUnlocked.strokeRoundedRect(rx, ry, w, h, 12);
+                bgUnlocked.fillRoundedRect(rx, ry, w, h, 12);
+                
                 
                 // Show actual title
                 this.add.text(x, y - 15, ach.name, {
@@ -108,10 +116,8 @@ export default class AchievementScene extends Phaser.Scene {
                 }).setOrigin(0.5);
             } else {
                 // Style for LOCKED achievements: muted, grayed out outline
-                bg.lineStyle(2, 0x333333, 1);
-                bg.fillStyle(0x111111, 0.8);
-                bg.strokeRoundedRect(rx, ry, w, h, 12);
-                bg.fillRoundedRect(rx, ry, w, h, 12);
+                bgLocked.strokeRoundedRect(rx, ry, w, h, 12);
+                bgLocked.fillRoundedRect(rx, ry, w, h, 12);
                 
                 // Obscure the title
                 this.add.text(x, y - 15, '???', {

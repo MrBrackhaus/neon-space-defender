@@ -166,6 +166,7 @@ export default class MenuScene extends Phaser.Scene {
             document.removeEventListener('click', unlockAudio);
         };
         document.addEventListener('click', unlockAudio);
+        this.events.once('shutdown', () => document.removeEventListener('click', unlockAudio));
 
 
         // Fade in the camera nicely when scene starts

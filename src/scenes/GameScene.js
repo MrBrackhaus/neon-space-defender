@@ -702,7 +702,7 @@ export default class GameScene extends Phaser.Scene {
                 this.pd.damage *= 1.5;
                 this.pd.maxHp = Math.max(1, Math.floor(this.pd.maxHp * 0.75)); // -25% max HP
                 this.pd.hp = Math.min(this.pd.hp, this.pd.maxHp);
-                if (time - (this._lastHudUpdate || 0) > 100) { this._lastHudUpdate = time; this.updateHUD(); }
+                if (this.time.now - (this._lastHudUpdate || 0) > 100) { this._lastHudUpdate = this.time.now; this.updateHUD(); }
             }
             if (b === 'explosive_rounds')  this.pd.explosiveRounds = true;
             if (b === 'homing_rounds')     this.pd.homingRounds = true;
@@ -3291,7 +3291,7 @@ export default class GameScene extends Phaser.Scene {
      */
     spawnLaserCatMerchant() {
         this.merchant = this.physics.add.sprite(-50, this.ch/2, 'nyx_merchant').setDepth(15);
-        this.merchant.setScale(0.06);
+        this.merchant.setScale(0.15); // Increased from 0.06 to make her more visible
         
         this.tweens.add({
             targets: this.merchant, x: this.cw + 50, duration: 8000,

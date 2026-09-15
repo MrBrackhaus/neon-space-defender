@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Helper / Dev scripts
+*.py
+*.cjs
+*.ps1
+*_backup.*
+*backup*
+
+# Agent & Task Artifacts
+task.md
+walkthrough.md
+implementation_plan*.md
+runs.json
